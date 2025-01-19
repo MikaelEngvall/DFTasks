@@ -40,7 +40,9 @@ export const saveProfile = (token) => async (dispatch) => {
       payload: { user: data.user, token },
     });
   } catch (error) {
-    // console.log(error);
+    const msg = error.response?.data?.msg || error.message;
+    console.error("Error fetching profile:", msg);
+    // Optionally, dispatch an error action or show a toast notification
   }
 };
 
