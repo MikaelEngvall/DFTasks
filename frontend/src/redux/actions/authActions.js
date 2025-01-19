@@ -7,8 +7,27 @@ import {
   LOGIN_SUCCESS,
   LOGOUT,
   SAVE_PROFILE,
+  SIGNUP_REQUEST,
+  SIGNUP_SUCCESS,
+  SIGNUP_FAILURE,
 } from "./actionTypes";
+
 import { toast } from "react-toastify";
+
+export const postSignupData = (name, email, password) => async (dispatch) => {
+  try {
+    dispatch({ type: SIGNUP_REQUEST });
+
+    const { data } = await api.post("/auth/signup", { name, email, password });
+    dispatch({ type: SIGNUP_SUCCESS, payload: data });
+    toast.success(data.msg);
+  } catch (error) {
+    const msg = error.response?.data?.msg || "An error occurred.";
+    dispatch({ type: SIGNUP_FAILURE, payload: { msg } });
+    toast.error(msg); // Display error toast
+    console.error("Signup error:", msg); // Log the error for debugging
+  }
+};
 
 export const postLoginData = (email, password) => async (dispatch) => {
   try {
