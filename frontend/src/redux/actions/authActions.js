@@ -21,6 +21,7 @@ export const postSignupData = (name, email, password) => async (dispatch) => {
     const { data } = await api.post("/auth/signup", { name, email, password });
     dispatch({ type: SIGNUP_SUCCESS, payload: data });
     toast.success(data.msg);
+    console.log("Signup Payload:", { name, email, password });
   } catch (error) {
     const msg = error.response?.data?.msg || "An error occurred.";
     dispatch({ type: SIGNUP_FAILURE, payload: { msg } });
