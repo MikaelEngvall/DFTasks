@@ -31,16 +31,16 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Ogiltiga inloggningsuppgifter");
+      setError("Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light dark:bg-dark transition-colors duration-200">
+    <div className="min-h-screen flex items-center justify-center bg-df-light dark:bg-dark py-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+      <div className="max-w-md w-full space-y-8">
         <div className="flex flex-col items-center">
           <img
             src={
@@ -54,17 +54,19 @@ function Login() {
             DFTasks
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Fastighetsförvaltning
+            Property Management System
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
-            <div className="text-red-500 text-center text-sm">{error}</div>
+            <div className="text-red-500 text-center text-sm">
+              Invalid credentials
+            </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email-address" className="sr-only">
-                E-postadress
+                Email address
               </label>
               <input
                 id="email-address"
@@ -72,14 +74,14 @@ function Login() {
                 type="email"
                 required
                 className="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-df-secondary focus:border-df-secondary focus:z-10 sm:text-sm"
-                placeholder="E-postadress"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Lösenord
+                Password
               </label>
               <input
                 id="password"
@@ -87,7 +89,7 @@ function Login() {
                 type="password"
                 required
                 className="appearance-none rounded-b-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-df-secondary focus:border-df-secondary focus:z-10 sm:text-sm"
-                placeholder="Lösenord"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -99,7 +101,7 @@ function Login() {
               type="submit"
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
             >
-              Logga in
+              Sign in
             </button>
           </div>
         </form>

@@ -26,7 +26,7 @@ function AdminDashboard() {
                         : "border-transparent text-df-primary/60 hover:text-df-primary dark:text-gray-400 dark:hover:text-gray-300 hover:border-df-primary/30"
                     }`}
                   >
-                    Uppgifter
+                    Tasks
                   </button>
                   <button
                     onClick={() => setActiveView("users")}
@@ -36,7 +36,7 @@ function AdminDashboard() {
                         : "border-transparent text-df-primary/60 hover:text-df-primary dark:text-gray-400 dark:hover:text-gray-300 hover:border-df-primary/30"
                     }`}
                   >
-                    Användare
+                    Users
                   </button>
                 </div>
               </div>

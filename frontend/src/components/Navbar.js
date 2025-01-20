@@ -39,7 +39,7 @@ function Navbar() {
               className="flex items-center px-3 py-2 text-sm sm:text-base text-df-primary dark:text-white hover:text-df-accent"
             >
               <FaSignOutAlt className="mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Logga ut</span>
+              <span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
         </div>
