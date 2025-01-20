@@ -54,14 +54,12 @@ function Login() {
             DFTasks
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Property Management System
+            Property Management
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
-            <div className="text-red-500 text-center text-sm">
-              Invalid credentials
-            </div>
+            <div className="text-red-500 text-center text-sm">{error}</div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
