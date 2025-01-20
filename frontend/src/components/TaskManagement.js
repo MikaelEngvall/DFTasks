@@ -116,6 +116,23 @@ function TaskManagement() {
     }
   };
 
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const response = await axiosInstance.put(`/api/tasks/${taskId}/status`, {
+        status: newStatus,
+      });
+      setTasks(
+        tasks.map((task) => (task._id === taskId ? response.data : task))
+      );
+
+      if (selectedTaskDetails && selectedTaskDetails._id === taskId) {
+        setSelectedTaskDetails(response.data);
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "new":
@@ -124,6 +141,8 @@ function TaskManagement() {
         return "bg-yellow-100 text-yellow-800";
       case "completed":
         return "bg-green-100 text-green-800";
+      case "cannot fix":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -235,6 +254,8 @@ function TaskManagement() {
                           ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                           : task.status === "in progress"
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                          : task.status === "cannot fix"
+                          ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
                           : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                       }`}
                     >
@@ -335,6 +356,8 @@ function TaskManagement() {
                           ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                           : selectedTaskDetails.status === "in progress"
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                          : selectedTaskDetails.status === "cannot fix"
+                          ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
                           : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                       }`}
                     >

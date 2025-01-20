@@ -3,7 +3,12 @@ import axiosInstance from "../utils/axios";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "./Navbar";
 import { useTheme } from "../context/ThemeContext";
-import { FaCheckCircle, FaClock, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaClock,
+  FaExclamationCircle,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 
 function UserDashboard() {
   const [tasks, setTasks] = useState([]);
@@ -77,6 +82,8 @@ function UserDashboard() {
         return <FaCheckCircle className="text-green-500" />;
       case "in progress":
         return <FaClock className="text-yellow-500" />;
+      case "cannot fix":
+        return <FaExclamationTriangle className="text-red-500" />;
       default:
         return <FaExclamationCircle className="text-blue-500" />;
     }
@@ -119,11 +126,11 @@ function UserDashboard() {
                       onChange={(e) =>
                         handleStatusChange(task._id, e.target.value)
                       }
-                      className="block w-32 pl-3 pr-10 py-2 text-base border-df-primary/20 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                      className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="new">Ny</option>
-                      <option value="in progress">Pågående</option>
-                      <option value="completed">Klar</option>
+                      <option value="in progress">In Progress</option>
+                      <option value="completed">Done</option>
+                      <option value="cannot fix">Cannot Fix</option>
                     </select>
                   </div>
                 </div>
