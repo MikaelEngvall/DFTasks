@@ -91,53 +91,37 @@ function UserManagement() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
-          Användarhantering
-        </h2>
+        <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
+          User Management
+        </h1>
         <button
-          onClick={() => {
-            setSelectedUser(null);
-            setShowModal(true);
-          }}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
+          onClick={() => setShowModal(true)}
+          className="bg-df-primary text-white px-4 py-2 rounded-md hover:bg-df-dark transition-colors duration-150"
         >
-          <FaUserPlus className="mr-2" />
-          Lägg till användare
+          Add User
         </button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-df-primary/10 dark:border-gray-700">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-df-primary/10 dark:divide-gray-700">
-            <thead className="bg-df-primary/5 dark:bg-gray-700">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Namn
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Name
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  E-post
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Email
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Roll
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Role
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Åtgärder
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-df-primary/10 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {users.map((user) => (
                 <tr
                   key={user._id}

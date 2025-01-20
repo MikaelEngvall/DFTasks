@@ -3,6 +3,7 @@ import axiosInstance from "../utils/axios";
 import { FaEdit, FaTrash, FaPlus, FaComments } from "react-icons/fa";
 import TaskForm from "./TaskForm";
 import { useTheme } from "../context/ThemeContext";
+import { format } from "date-fns";
 
 function TaskManagement() {
   const [tasks, setTasks] = useState([]);
@@ -15,6 +16,7 @@ function TaskManagement() {
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [comment, setComment] = useState("");
   const { darkMode } = useTheme();
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -148,6 +150,25 @@ function TaskManagement() {
     }
   };
 
+  const handleCreateTask = () => {
+    setSelectedTask(null);
+    setShowTaskForm(true);
+  };
+
+  const handleTaskSubmit = async (taskData) => {
+    try {
+      if (selectedTask) {
+        await axiosInstance.put(`/api/tasks/${selectedTask._id}`, taskData);
+      } else {
+        await axiosInstance.post("/api/tasks", taskData);
+      }
+      setShowTaskForm(false);
+      await fetchTasks();
+    } catch (error) {
+      console.error("Error saving task:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -157,67 +178,45 @@ function TaskManagement() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="relative">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
-          Uppgiftshantering
-        </h2>
+        <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
+          Task Management
+        </h1>
         <button
-          onClick={() => {
-            setSelectedTask(null);
-            setShowModal(true);
-          }}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
+          onClick={handleCreateTask}
+          className="bg-df-primary text-white px-4 py-2 rounded-md hover:bg-df-dark transition-colors duration-150"
         >
-          <FaPlus className="mr-2" />
-          Lägg till uppgift
+          Add Task
         </button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-df-primary/10 dark:border-gray-700">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-df-primary/10 dark:divide-gray-700">
-            <thead className="bg-df-primary/5 dark:bg-gray-700">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Titel
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  TITLE
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Beskrivning
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  DESCRIPTION
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Status
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  STATUS
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Tilldelad till
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  ASSIGNED TO
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Förfallodatum
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  DUE DATE
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Åtgärder
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  ACTIONS
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-df-primary/10 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {tasks.map((task) => (
                 <tr
                   key={task._id}
@@ -275,7 +274,7 @@ function TaskManagement() {
                     onClick={() => openTaskDetails(task)}
                   >
                     <div className="text-sm text-df-primary/80 dark:text-gray-300">
-                      {new Date(task.dueDate).toLocaleDateString()}
+                      {format(new Date(task.dueDate), "yyyy-MM-dd")}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -379,9 +378,10 @@ function TaskManagement() {
                       Förfallodatum
                     </h4>
                     <p className="mt-1 text-df-primary dark:text-white">
-                      {new Date(
-                        selectedTaskDetails.dueDate
-                      ).toLocaleDateString()}
+                      {format(
+                        new Date(selectedTaskDetails.dueDate),
+                        "yyyy-MM-dd"
+                      )}
                     </p>
                   </div>
                 </div>
@@ -401,7 +401,10 @@ function TaskManagement() {
                         </p>
                         <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
                           {comment.createdBy?.name} -{" "}
-                          {new Date(comment.createdAt).toLocaleString()}
+                          {format(
+                            new Date(comment.createdAt),
+                            "yyyy-MM-dd HH:mm"
+                          )}
                         </div>
                       </div>
                     ))}
@@ -425,6 +428,18 @@ function TaskManagement() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showTaskForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <TaskForm
+              task={selectedTask}
+              onSubmit={handleTaskSubmit}
+              onCancel={() => setShowTaskForm(false)}
+            />
           </div>
         </div>
       )}
