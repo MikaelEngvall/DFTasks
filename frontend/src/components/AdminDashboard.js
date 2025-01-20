@@ -10,12 +10,12 @@ function AdminDashboard() {
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex justify-center h-16">
+            <div className="flex space-x-4 md:space-x-8">
               <button
                 onClick={() => setActiveView("users")}
-                className={`inline-flex items-center px-4 py-2 border-b-2 ${
+                className={`inline-flex items-center px-3 py-2 text-sm md:text-base border-b-2 ${
                   activeView === "users"
                     ? "border-indigo-500 text-indigo-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -25,7 +25,7 @@ function AdminDashboard() {
               </button>
               <button
                 onClick={() => setActiveView("tasks")}
-                className={`ml-8 inline-flex items-center px-4 py-2 border-b-2 ${
+                className={`inline-flex items-center px-3 py-2 text-sm md:text-base border-b-2 ${
                   activeView === "tasks"
                     ? "border-indigo-500 text-indigo-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -38,7 +38,7 @@ function AdminDashboard() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-4 px-2 sm:px-4 md:px-6 lg:px-8">
         {activeView === "users" ? <UserManagement /> : <TaskManagement />}
       </main>
     </div>
