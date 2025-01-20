@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axios";
 import { FaEdit, FaTrash, FaUserPlus } from "react-icons/fa";
 import UserForm from "./UserForm";
+import { useTheme } from "../context/ThemeContext";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -9,6 +10,7 @@ function UserManagement() {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const { darkMode } = useTheme();
 
   useEffect(() => {
     fetchUsers();
@@ -78,106 +80,104 @@ function UserManagement() {
     setShowModal(true);
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary dark:border-df-accent"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 w-full max-w-md">
-            <div className="bg-white rounded-lg shadow-xl p-4">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                  {selectedUser ? "Edit User" : "Create New User"}
-                </h3>
-                <UserForm
-                  user={selectedUser}
-                  onSubmit={selectedUser ? handleEdit : handleCreate}
-                  onCancel={() => {
-                    setShowModal(false);
-                    setSelectedUser(null);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-          User Management
-        </h1>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
+          Användarhantering
+        </h2>
         <button
-          className="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center gap-2"
-          onClick={openCreateModal}
+          onClick={() => {
+            setSelectedUser(null);
+            setShowModal(true);
+          }}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
         >
-          <FaUserPlus />
-          Add User
+          <FaUserPlus className="mr-2" />
+          Lägg till användare
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow rounded-lg">
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-df-primary/10 dark:border-gray-700">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-df-primary/10 dark:divide-gray-700">
+            <thead className="bg-df-primary/5 dark:bg-gray-700">
               <tr>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Name
+                  Namn
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Email
+                  E-post
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Role
+                  Roll
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Actions
+                  Åtgärder
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-df-primary/10 dark:divide-gray-700">
               {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
-                  <td className="px-3 py-4 whitespace-nowrap text-sm">
-                    <div className="font-medium text-gray-900">{user.name}</div>
+                <tr
+                  key={user._id}
+                  className="hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-df-primary dark:text-white">
+                      {user.name}
+                    </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm">
-                    <div className="text-gray-500 truncate max-w-[150px] sm:max-w-none">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-df-primary/80 dark:text-gray-300">
                       {user.email}
                     </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.role === "ADMIN"
+                          ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                          : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                      }`}
+                    >
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex space-x-3">
                       <button
-                        onClick={() => openEditModal(user)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowModal(true);
+                        }}
+                        className="text-df-secondary hover:text-df-primary dark:text-df-accent dark:hover:text-white transition-colors duration-150"
                       >
                         <FaEdit className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(user._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors duration-150"
                       >
                         <FaTrash className="h-5 w-5" />
                       </button>
@@ -189,6 +189,14 @@ function UserManagement() {
           </table>
         </div>
       </div>
+
+      {showModal && (
+        <UserForm
+          user={selectedUser}
+          onClose={() => setShowModal(false)}
+          onSubmit={selectedUser ? handleEdit : handleCreate}
+        />
+      )}
     </div>
   );
 }

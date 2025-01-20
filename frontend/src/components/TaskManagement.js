@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axios";
 import { FaEdit, FaTrash, FaPlus, FaComments } from "react-icons/fa";
 import TaskForm from "./TaskForm";
+import { useTheme } from "../context/ThemeContext";
 
 function TaskManagement() {
   const [tasks, setTasks] = useState([]);
@@ -12,6 +13,7 @@ function TaskManagement() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [comment, setComment] = useState("");
+  const { darkMode } = useTheme();
 
   useEffect(() => {
     fetchTasks();
@@ -130,268 +132,133 @@ function TaskManagement() {
     }
   };
 
-  if (loading) return <div className="text-center py-4">Loading...</div>;
-  if (error)
-    return <div className="text-red-600 text-center py-4">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary dark:border-df-accent"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 w-full max-w-md">
-            <div className="bg-white rounded-lg shadow-xl p-4">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                  {selectedTask ? "Edit Task" : "Create New Task"}
-                </h3>
-                <TaskForm
-                  task={selectedTask}
-                  users={users}
-                  onSubmit={selectedTask ? handleEdit : handleCreate}
-                  onCancel={() => {
-                    setShowModal(false);
-                    setSelectedTask(null);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ny Modal för Task Details och Comments */}
-      {showDetailsModal && selectedTask && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 w-full max-w-md md:max-w-xl">
-            <div className="bg-white rounded-lg shadow-xl p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-medium text-gray-900">
-                  {selectedTask.title}
-                </h3>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <span className="sr-only">Close</span>
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">
-                    Description
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedTask.description}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Status</h4>
-                  <span
-                    className={`mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                      selectedTask.status
-                    )}`}
-                  >
-                    {selectedTask.status}
-                  </span>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">
-                    Assigned To
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedTask.assignedTo?.name || "Unassigned"}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">
-                    Due Date
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {new Date(selectedTask.dueDate).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">
-                    Comments
-                  </h4>
-                  <div className="space-y-3 max-h-48 overflow-y-auto">
-                    {selectedTask.comments?.map((comment, index) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-900">
-                          {comment.content}
-                        </p>
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-gray-500">
-                            By: {comment.createdBy?.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4">
-                    <textarea
-                      rows="3"
-                      className="shadow-sm block w-full focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md"
-                      placeholder="Add a comment..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                    ></textarea>
-                    <button
-                      onClick={handleAddComment}
-                      className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      Add Comment
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-          Task Management
-        </h1>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
+          Uppgiftshantering
+        </h2>
         <button
-          className="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center gap-2"
-          onClick={openCreateModal}
+          onClick={() => {
+            setSelectedTask(null);
+            setShowModal(true);
+          }}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
         >
-          <FaPlus />
-          Add Task
+          <FaPlus className="mr-2" />
+          Lägg till uppgift
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow rounded-lg">
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-df-primary/10 dark:border-gray-700">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-df-primary/10 dark:divide-gray-700">
+            <thead className="bg-df-primary/5 dark:bg-gray-700">
               <tr>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Title
+                  Titel
                 </th>
                 <th
                   scope="col"
-                  className="hidden sm:table-cell px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Description
+                  Beskrivning
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
                   Status
                 </th>
                 <th
                   scope="col"
-                  className="hidden sm:table-cell px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Assigned To
+                  Tilldelad till
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Due Date
+                  Förfallodatum
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-df-primary dark:text-gray-300 uppercase tracking-wider"
                 >
-                  Actions
+                  Åtgärder
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-df-primary/10 dark:divide-gray-700">
               {tasks.map((task) => (
                 <tr
                   key={task._id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => openDetailsModal(task)}
+                  className="hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150"
                 >
-                  <td className="px-3 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-df-primary dark:text-white">
                         {task.title}
-                      </div>
+                      </span>
                       {task.comments?.length > 0 && (
-                        <div className="ml-2 text-indigo-600">
-                          <FaComments
-                            title={`${task.comments.length} comments`}
-                          />
-                        </div>
+                        <FaComments className="ml-2 text-df-secondary dark:text-df-accent" />
                       )}
                     </div>
                   </td>
-                  <td className="hidden sm:table-cell px-3 py-4">
-                    <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-df-primary/80 dark:text-gray-300 max-w-xs truncate">
                       {task.description}
                     </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                        task.status
-                      )}`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        task.status === "completed"
+                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                          : task.status === "in progress"
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                          : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                      }`}
                     >
                       {task.status}
                     </span>
                   </td>
-                  <td className="hidden sm:table-cell px-3 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {task.assignedTo?.name || "Unassigned"}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-df-primary/80 dark:text-gray-300">
+                      {task.assignedTo?.name || "Ej tilldelad"}
                     </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-df-primary/80 dark:text-gray-300">
                       {new Date(task.dueDate).toLocaleDateString()}
                     </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex space-x-3">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(task);
+                        onClick={() => {
+                          setSelectedTask(task);
+                          setShowModal(true);
                         }}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-df-secondary hover:text-df-primary dark:text-df-accent dark:hover:text-white transition-colors duration-150"
                       >
                         <FaEdit className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(task._id);
-                        }}
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDelete(task._id)}
+                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors duration-150"
                       >
                         <FaTrash className="h-5 w-5" />
                       </button>
@@ -403,6 +270,15 @@ function TaskManagement() {
           </table>
         </div>
       </div>
+
+      {showModal && (
+        <TaskForm
+          task={selectedTask}
+          users={users}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleEdit}
+        />
+      )}
     </div>
   );
 }
