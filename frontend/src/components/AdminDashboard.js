@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import UserManagement from "./UserManagement";
 import TaskManagement from "./TaskManagement";
+import Navbar from "./Navbar";
 
 function AdminDashboard() {
   const [activeView, setActiveView] = useState("users");
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Navbar />
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">

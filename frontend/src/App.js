@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import AdminDashboard from "./components/AdminDashboard";
 import UserDashboard from "./components/UserDashboard";
 import Login from "./components/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -19,8 +20,22 @@ function App() {
 
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRole="USER">
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Fånga alla andra routes och omdirigera till login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
