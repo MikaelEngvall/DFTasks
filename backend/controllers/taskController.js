@@ -32,13 +32,13 @@ const taskController = {
         status: status || "new",
         assignedTo: assignedTo || null,
         dueDate,
+        createdBy: req.user.id,
       });
 
       const savedTask = await task.save();
-      const populatedTask = await Task.findById(savedTask._id).populate(
-        "assignedTo",
-        "name email"
-      );
+      const populatedTask = await Task.findById(savedTask._id)
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email");
 
       res.status(201).json(populatedTask);
     } catch (error) {
