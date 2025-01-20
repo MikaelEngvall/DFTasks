@@ -5,7 +5,7 @@ function UserForm({ user, onSubmit, onCancel }) {
     name: "",
     email: "",
     password: "",
-    role: "user",
+    role: "USER",
   });
 
   useEffect(() => {
@@ -14,7 +14,7 @@ function UserForm({ user, onSubmit, onCancel }) {
         name: user.name || "",
         email: user.email || "",
         password: "", // Leave empty for editing
-        role: user.role || "user",
+        role: user.role || "USER",
       });
     }
   }, [user]);
@@ -24,6 +24,7 @@ function UserForm({ user, onSubmit, onCancel }) {
     // Only include password if it's not empty
     const submitData = {
       ...formData,
+      role: formData.role.toUpperCase(),
       ...(formData.password ? {} : { password: undefined }),
     };
     onSubmit(submitData);
@@ -98,8 +99,8 @@ function UserForm({ user, onSubmit, onCancel }) {
           value={formData.role}
           onChange={(e) => setFormData({ ...formData, role: e.target.value })}
         >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          <option value="USER">User</option>
+          <option value="ADMIN">Admin</option>
         </select>
       </div>
 

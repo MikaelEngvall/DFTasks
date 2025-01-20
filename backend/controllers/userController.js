@@ -94,21 +94,25 @@ const userController = {
       // Update fields
       if (name) user.name = name;
       if (email) user.email = email;
-      if (role) user.role = role;
+      if (role) user.role = role.toUpperCase();
       if (password) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
       }
 
-      await user.save();
+      const updatedUser = await user.save();
 
-      const userResponse = user.toObject();
+      // Ta bort lösenord från svaret
+      const userResponse = updatedUser.toObject();
       delete userResponse.password;
 
       res.json(userResponse);
     } catch (error) {
       console.error("Error updating user:", error);
-      res.status(500).json({ message: "Error updating user" });
+      res.status(500).json({
+        message: "Error updating user",
+        error: error.message,
+      });
     }
   },
 
