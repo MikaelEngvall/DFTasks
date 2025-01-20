@@ -202,10 +202,12 @@ function TaskManagement() {
               {tasks.map((task) => (
                 <tr
                   key={task._id}
-                  className="hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
-                  onClick={() => openTaskDetails(task)}
+                  className="hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() => openTaskDetails(task)}
+                  >
                     <div className="flex items-center">
                       <span className="text-sm font-medium text-df-primary dark:text-white">
                         {task.title}
@@ -215,12 +217,18 @@ function TaskManagement() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td
+                    className="px-6 py-4 cursor-pointer"
+                    onClick={() => openTaskDetails(task)}
+                  >
                     <div className="text-sm text-df-primary/80 dark:text-gray-300 max-w-xs truncate">
                       {task.description}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() => openTaskDetails(task)}
+                  >
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         task.status === "completed"
@@ -233,12 +241,18 @@ function TaskManagement() {
                       {task.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() => openTaskDetails(task)}
+                  >
                     <div className="text-sm text-df-primary/80 dark:text-gray-300">
-                      {task.assignedTo?.name || "Ej tilldelad"}
+                      {task.assignedTo?.name || "Unassigned"}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() => openTaskDetails(task)}
+                  >
                     <div className="text-sm text-df-primary/80 dark:text-gray-300">
                       {new Date(task.dueDate).toLocaleDateString()}
                     </div>
@@ -246,17 +260,23 @@ function TaskManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex space-x-3">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation(); // Förhindra att detaljvyn öppnas
                           setSelectedTask(task);
                           setShowModal(true);
                         }}
                         className="text-df-secondary hover:text-df-primary dark:text-df-accent dark:hover:text-white transition-colors duration-150"
+                        title="Edit task"
                       >
                         <FaEdit className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(task._id)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Förhindra att detaljvyn öppnas
+                          handleDelete(task._id);
+                        }}
                         className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors duration-150"
+                        title="Delete task"
                       >
                         <FaTrash className="h-5 w-5" />
                       </button>
