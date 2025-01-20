@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axiosInstance from "../utils/axios";
 import { useTheme } from "../context/ThemeContext";
-import ThemeToggle from "./ThemeToggle";
 
 function Login() {
   const navigate = useNavigate();
@@ -23,11 +22,10 @@ function Login() {
       localStorage.setItem("token", response.data.token);
       const decoded = jwtDecode(response.data.token);
 
-      // Dirigera användaren baserat på roll
       if (decoded.role === "ADMIN") {
-        navigate("/admin");
+        navigate("/dftasks/week-view");
       } else {
-        navigate("/dashboard");
+        navigate("/dftasks/week-view");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -37,9 +35,6 @@ function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-df-light dark:bg-dark py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
       <div className="max-w-md w-full space-y-8">
         <div className="flex flex-col items-center">
           <img

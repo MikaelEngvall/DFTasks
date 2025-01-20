@@ -10,40 +10,56 @@ import AdminDashboard from "./components/AdminDashboard";
 import UserDashboard from "./components/UserDashboard";
 import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import WeekView from "./components/WeekView";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <ThemeProvider>
-      <Suspense fallback="Loading...">
-        <Router basename="/dftasks">
+      <Router>
+        <Navbar />
+        <Suspense fallback="Loading...">
           <Routes>
-            {/* Omdirigera root till login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-
-            {/* Auth routes */}
-            <Route path="/login" element={<Login />} />
+            <Route path="/dftasks/login" element={<Login />} />
             <Route
-              path="/admin"
+              path="/dftasks/week-view"
               element={
-                <ProtectedRoute requiredRole="ADMIN">
+                <ProtectedRoute>
+                  <WeekView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dftasks/admin"
+              element={
+                <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/dashboard"
+              path="/dftasks/dashboard"
               element={
-                <ProtectedRoute requiredRole="USER">
+                <ProtectedRoute>
                   <UserDashboard />
                 </ProtectedRoute>
               }
             />
-
-            {/* Fånga alla andra routes och omdirigera till login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route
+              path="/dftasks"
+              element={<Navigate to="/dftasks/login" replace />}
+            />
+            <Route
+              path="/"
+              element={<Navigate to="/dftasks/login" replace />}
+            />
+            <Route
+              path="*"
+              element={<Navigate to="/dftasks/login" replace />}
+            />
           </Routes>
-        </Router>
-      </Suspense>
+        </Suspense>
+      </Router>
     </ThemeProvider>
   );
 }

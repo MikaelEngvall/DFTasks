@@ -100,95 +100,97 @@ function UserDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-df-light dark:bg-dark transition-colors duration-200">
+    <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 className="text-2xl font-semibold text-df-primary dark:text-white mb-6">
-          Mina uppgifter
-        </h1>
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h1 className="text-2xl font-semibold text-df-primary dark:text-white mb-6">
+            Mina uppgifter
+          </h1>
 
-        <div className="space-y-6">
-          {tasks.map((task) => (
-            <div
-              key={task._id}
-              className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-df-primary/10 dark:border-gray-700"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                    {task.title}
-                  </h2>
-                  <div className="flex items-center space-x-4">
-                    {getStatusIcon(task.status)}
-                    <select
-                      value={task.status}
-                      onChange={(e) =>
-                        handleStatusChange(task._id, e.target.value)
-                      }
-                      className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="in progress">In Progress</option>
-                      <option value="completed">Done</option>
-                      <option value="cannot fix">Cannot Fix</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-df-primary/80 dark:text-gray-300">
-                    {task.description}
-                  </p>
-                </div>
-
-                <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm text-df-primary/70 dark:text-gray-400">
-                    <span>
-                      Förfaller: {new Date(task.dueDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
-                    Kommentarer
-                  </h3>
-                  <div className="space-y-4 mb-4">
-                    {task.comments?.map((comment, index) => (
-                      <div
-                        key={index}
-                        className="bg-df-primary/5 dark:bg-gray-700 rounded-lg p-4"
+          <div className="space-y-6">
+            {tasks.map((task) => (
+              <div
+                key={task._id}
+                className="bg-white dark:bg-gray-700 shadow-lg rounded-lg overflow-hidden border border-df-primary/10 dark:border-gray-600"
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+                      {task.title}
+                    </h2>
+                    <div className="flex items-center space-x-4">
+                      {getStatusIcon(task.status)}
+                      <select
+                        value={task.status}
+                        onChange={(e) =>
+                          handleStatusChange(task._id, e.target.value)
+                        }
+                        className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
-                        <p className="text-df-primary dark:text-gray-100">
-                          {comment.content}
-                        </p>
-                        <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
-                          {comment.createdBy?.name} -{" "}
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
+                        <option value="in progress">In Progress</option>
+                        <option value="completed">Done</option>
+                        <option value="cannot fix">Cannot Fix</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="mt-4">
-                    <textarea
-                      rows="3"
-                      className="block w-full rounded-md border-df-primary/20 dark:border-gray-600 shadow-sm focus:border-df-secondary focus:ring focus:ring-df-secondary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
-                      placeholder="Lägg till en kommentar..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                    ></textarea>
-                    <button
-                      onClick={() => handleAddComment(task._id)}
-                      className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
-                    >
-                      Lägg till kommentar
-                    </button>
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-df-primary/80 dark:text-gray-300">
+                      {task.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between text-sm text-df-primary/70 dark:text-gray-400">
+                      <span>
+                        Förfaller: {new Date(task.dueDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
+                      Kommentarer
+                    </h3>
+                    <div className="space-y-4 mb-4">
+                      {task.comments?.map((comment, index) => (
+                        <div
+                          key={index}
+                          className="bg-df-primary/5 dark:bg-gray-600 rounded-lg p-4"
+                        >
+                          <p className="text-df-primary dark:text-gray-100">
+                            {comment.content}
+                          </p>
+                          <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
+                            {comment.createdBy?.name} -{" "}
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4">
+                      <textarea
+                        rows="3"
+                        className="block w-full rounded-md border-df-primary/20 dark:border-gray-600 shadow-sm focus:border-df-secondary focus:ring focus:ring-df-secondary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                        placeholder="Lägg till en kommentar..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                      ></textarea>
+                      <button
+                        onClick={() => handleAddComment(task._id)}
+                        className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
+                      >
+                        Lägg till kommentar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
