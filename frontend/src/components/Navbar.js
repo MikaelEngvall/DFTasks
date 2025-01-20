@@ -16,7 +16,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-df-primary dark:bg-gray-800 shadow-lg">
+    <nav className="bg-white dark:bg-gray-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
@@ -26,14 +26,17 @@ function Navbar() {
                 (darkMode ? "/dark_logo.png" : "/light_logo.png")
               }
               alt="Duggals Fastigheter"
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
+            <span className="ml-3 text-df-primary dark:text-white text-lg font-semibold">
+              DFTasks
+            </span>
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center px-3 py-2 text-sm sm:text-base text-white hover:text-df-accent"
+              className="flex items-center px-3 py-2 text-sm sm:text-base text-df-primary dark:text-white hover:text-df-accent"
             >
               <FaSignOutAlt className="mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Logga ut</span>

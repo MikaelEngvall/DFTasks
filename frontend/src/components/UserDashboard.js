@@ -84,7 +84,7 @@ function UserDashboard() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-light dark:bg-dark">
+      <div className="min-h-screen bg-df-light dark:bg-dark">
         <Navbar />
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary dark:border-df-accent"></div>
@@ -93,11 +93,11 @@ function UserDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-light dark:bg-dark transition-colors duration-200">
+    <div className="min-h-screen bg-df-light dark:bg-dark transition-colors duration-200">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+        <h1 className="text-2xl font-semibold text-df-primary dark:text-white mb-6">
           Mina uppgifter
         </h1>
 
@@ -105,11 +105,11 @@ function UserDashboard() {
           {tasks.map((task) => (
             <div
               key={task._id}
-              className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden"
+              className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-df-primary/10 dark:border-gray-700"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-xl font-semibold text-df-primary dark:text-white">
                     {task.title}
                   </h2>
                   <div className="flex items-center space-x-4">
@@ -119,7 +119,7 @@ function UserDashboard() {
                       onChange={(e) =>
                         handleStatusChange(task._id, e.target.value)
                       }
-                      className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="block w-32 pl-3 pr-10 py-2 text-base border-df-primary/20 dark:border-gray-600 focus:outline-none focus:ring-df-secondary focus:border-df-secondary sm:text-sm rounded-md bg-white dark:bg-gray-700 text-df-primary dark:text-white"
                     >
                       <option value="new">Ny</option>
                       <option value="in progress">Pågående</option>
@@ -129,13 +129,13 @@ function UserDashboard() {
                 </div>
 
                 <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-df-primary/80 dark:text-gray-300">
                     {task.description}
                   </p>
                 </div>
 
                 <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between text-sm text-df-primary/70 dark:text-gray-400">
                     <span>
                       Förfaller: {new Date(task.dueDate).toLocaleDateString()}
                     </span>
@@ -143,19 +143,19 @@ function UserDashboard() {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
                     Kommentarer
                   </h3>
                   <div className="space-y-4 mb-4">
                     {task.comments?.map((comment, index) => (
                       <div
                         key={index}
-                        className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4"
+                        className="bg-df-primary/5 dark:bg-gray-700 rounded-lg p-4"
                       >
-                        <p className="text-gray-900 dark:text-gray-100">
+                        <p className="text-df-primary dark:text-gray-100">
                           {comment.content}
                         </p>
-                        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
                           {comment.createdBy?.name} -{" "}
                           {new Date(comment.createdAt).toLocaleString()}
                         </div>
@@ -166,7 +166,7 @@ function UserDashboard() {
                   <div className="mt-4">
                     <textarea
                       rows="3"
-                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-secondary focus:ring focus:ring-df-secondary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="block w-full rounded-md border-df-primary/20 dark:border-gray-600 shadow-sm focus:border-df-secondary focus:ring focus:ring-df-secondary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
                       placeholder="Lägg till en kommentar..."
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
