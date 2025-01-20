@@ -6,51 +6,31 @@ const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "Please enter task title"],
+      required: true,
       trim: true,
     },
-    instructions: {
+    description: {
       type: String,
-      required: [true, "Please enter task instructions"],
+      trim: true,
     },
-    assignees: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-    ],
-    createdBy: {
+    status: {
+      type: String,
+      enum: ["new", "in progress", "completed"],
+      default: "new",
+    },
+    assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
     },
     dueDate: {
       type: Date,
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["new", "started", "done", "unable"],
-      default: "new",
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    comments: [
-      {
-        text: {
-          type: String,
-          required: true,
-        },
-        author: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
   },
   {
     timestamps: true,

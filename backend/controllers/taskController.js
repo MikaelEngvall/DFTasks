@@ -1,28 +1,111 @@
 const Task = require("../models/Task");
 
 const taskController = {
-  // Skapa ny uppgift (endast admin)
+  // Hämta alla uppgifter
+  getTasks: async (req, res) => {
+    try {
+      const tasks = await Task.find()
+        .populate("assignedTo", "name email")
+        .sort({ createdAt: -1 });
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error in getTasks:", error);
+      res.status(500).json({ message: "Error fetching tasks" });
+    }
+  },
+
+  // Skapa ny uppgift
   createTask: async (req, res) => {
     try {
-      if (req.user.role !== "admin") {
+      const { title, description, status, assignedTo, dueDate } = req.body;
+
+      // Validera indata
+      if (!title || !dueDate) {
         return res
-          .status(403)
-          .json({ message: "Endast administratörer kan skapa uppgifter" });
+          .status(400)
+          .json({ message: "Title and due date are required" });
       }
 
-      const { title, instructions, assignees, dueDate } = req.body;
-      const newTask = new Task({
+      const task = new Task({
         title,
-        instructions,
-        assignees,
+        description,
+        status: status || "new",
+        assignedTo: assignedTo || null,
         dueDate,
-        createdBy: req.user.id,
       });
 
-      await newTask.save();
-      res.status(201).json(newTask);
+      const savedTask = await task.save();
+      const populatedTask = await Task.findById(savedTask._id).populate(
+        "assignedTo",
+        "name email"
+      );
+
+      res.status(201).json(populatedTask);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error in createTask:", error);
+      res.status(500).json({
+        message: "Error creating task",
+        error: error.message,
+      });
+    }
+  },
+
+  // Uppdatera uppgift
+  updateTask: async (req, res) => {
+    try {
+      const { title, description, status, assignedTo, dueDate } = req.body;
+      const taskId = req.params.id;
+
+      const updatedTask = await Task.findByIdAndUpdate(
+        taskId,
+        {
+          title,
+          description,
+          status,
+          assignedTo: assignedTo || null,
+          dueDate,
+        },
+        { new: true }
+      ).populate("assignedTo", "name email");
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error in updateTask:", error);
+      res.status(500).json({ message: "Error updating task" });
+    }
+  },
+
+  // Ta bort uppgift
+  deleteTask: async (req, res) => {
+    try {
+      const taskId = req.params.id;
+      const deletedTask = await Task.findByIdAndDelete(taskId);
+
+      if (!deletedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json({ message: "Task deleted successfully" });
+    } catch (error) {
+      console.error("Error in deleteTask:", error);
+      res.status(500).json({ message: "Error deleting task" });
+    }
+  },
+
+  // Hämta uppgifter tilldelade till en specifik användare
+  getAssignedTasks: async (req, res) => {
+    try {
+      const tasks = await Task.find({ assignedTo: req.user.id })
+        .populate("assignedTo", "name email")
+        .sort({ createdAt: -1 });
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error in getAssignedTasks:", error);
+      res.status(500).json({ message: "Error fetching assigned tasks" });
     }
   },
 
@@ -73,40 +156,6 @@ const taskController = {
       res.json(task);
     } catch (error) {
       res.status(500).json({ message: error.message });
-    }
-  },
-
-  // Hämta alla uppgifter (admin ser alla, anställda ser bara sina)
-  getTasks: async (req, res) => {
-    try {
-      let tasks;
-      if (req.user.role === "admin") {
-        tasks = await Task.find()
-          .populate("assignees", "name email")
-          .populate("createdBy", "name")
-          .populate("comments.author", "name");
-      } else {
-        tasks = await Task.find({ assignees: req.user.id })
-          .populate("assignees", "name email")
-          .populate("createdBy", "name")
-          .populate("comments.author", "name");
-      }
-      res.json(tasks);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  },
-
-  getAssignedTasks: async (req, res) => {
-    try {
-      const tasks = await Task.find({ assignedTo: req.user.id }).populate(
-        "assignedTo",
-        "name email"
-      );
-      res.json(tasks);
-    } catch (error) {
-      console.error("Error fetching assigned tasks:", error);
-      res.status(500).json({ message: "Error fetching tasks" });
     }
   },
 };
