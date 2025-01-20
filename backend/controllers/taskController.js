@@ -6,6 +6,8 @@ const taskController = {
     try {
       const tasks = await Task.find()
         .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email")
         .sort({ createdAt: -1 });
       res.json(tasks);
     } catch (error) {
@@ -38,7 +40,8 @@ const taskController = {
       const savedTask = await task.save();
       const populatedTask = await Task.findById(savedTask._id)
         .populate("assignedTo", "name email")
-        .populate("createdBy", "name email");
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
 
       res.status(201).json(populatedTask);
     } catch (error) {
@@ -66,7 +69,10 @@ const taskController = {
           dueDate,
         },
         { new: true }
-      ).populate("assignedTo", "name email");
+      )
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
 
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
@@ -119,7 +125,10 @@ const taskController = {
         taskId,
         { status },
         { new: true }
-      ).populate("assignedTo comments.createdBy", "name email");
+      )
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
 
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
@@ -149,7 +158,10 @@ const taskController = {
           },
         },
         { new: true }
-      ).populate("assignedTo comments.createdBy", "name email");
+      )
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
 
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
