@@ -2,10 +2,9 @@
 
 const express = require("express");
 const router = express.Router();
-const { signup, login } = require("../controllers/authControllers");
+const userController = require("../controllers/userController");
 
-// Routes beginning with /api/auth
-router.post("/signup", signup);
-router.post("/login", login);
+// Endast login tillåts, ingen signup
+router.post("/login", userController.login);
 
 module.exports = router;

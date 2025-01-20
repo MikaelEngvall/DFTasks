@@ -1,40 +1,39 @@
-// app.js
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path");
 require("dotenv").config();
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 // Routes
-const authRoutes = require("./backend/routes/authRoutes");
-const taskRoutes = require("./backend/routes/taskRoutes");
-const profileRoutes = require("./backend/routes/profileRoutes");
-const userRoutes = require("./backend/routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
+const taskRoutes = require("./routes/taskRoutes");
+const profileRoutes = require("./routes/profileRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/users", userRoutes);
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../frontend/build")));
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"))
-  );
-}
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Något gick fel!" });
+});
 
 // Connect to MongoDB
-const mongoUrl = process.env.MONGODB_URL;
 mongoose
-  .connect(mongoUrl, {
+  .connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -44,7 +43,6 @@ mongoose
     process.exit(1);
   });
 
-// Start the server
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Backend is running on port ${port}`);
