@@ -1,8 +1,17 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
+        df: {
+          primary: "#1B365D", // Mörkblå från loggan
+          secondary: "#4A90E2", // Ljusare blå accent
+          light: "#F5F7FA", // Ljus bakgrund
+          dark: "#0A1F3D", // Mörkare variant av primary
+          accent: "#E2B33F", // Guldaktig accent från loggan
+        },
         primary: "#24ab8f",
         "primary-dark": "#268d77",
       },
@@ -15,6 +24,10 @@ module.exports = {
           "50%": { transform: "rotate(180deg) scale(1.5)" },
           "100%": { transform: "rotate(360deg) scale(1)" },
         },
+      },
+      backgroundColor: {
+        light: "#F5F7FA",
+        dark: "#1a1a1a",
       },
     },
   },
