@@ -96,6 +96,19 @@ const taskController = {
       res.status(500).json({ message: error.message });
     }
   },
+
+  getAssignedTasks: async (req, res) => {
+    try {
+      const tasks = await Task.find({ assignedTo: req.user.id }).populate(
+        "assignedTo",
+        "name email"
+      );
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching assigned tasks:", error);
+      res.status(500).json({ message: "Error fetching tasks" });
+    }
+  },
 };
 
 module.exports = taskController;

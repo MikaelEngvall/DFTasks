@@ -6,23 +6,28 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Please enter your name"],
+      required: true,
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "Please enter your email"],
-      trim: true,
+      required: true,
       unique: true,
+      trim: true,
+      lowercase: true,
     },
     password: {
       type: String,
-      required: [true, "Please enter your password"],
+      required: true,
     },
     role: {
       type: String,
-      enum: ["admin", "employee"],
-      default: "employee",
+      required: true,
+      enum: {
+        values: ["USER", "ADMIN"],
+        message: "{VALUE} is not a valid role",
+      },
+      default: "USER",
     },
     joiningTime: {
       type: Date,
