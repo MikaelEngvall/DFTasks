@@ -109,53 +109,56 @@ const taskController = {
     }
   },
 
-  // Uppdatera uppgiftsstatus (anställda kan uppdatera sina egna uppgifter)
+  // Uppdatera uppgiftsstatus
   updateTaskStatus: async (req, res) => {
     try {
       const { status } = req.body;
-      const task = await Task.findById(req.params.id);
+      const taskId = req.params.id;
 
-      if (!task) {
-        return res.status(404).json({ message: "Uppgift hittades inte" });
+      const updatedTask = await Task.findByIdAndUpdate(
+        taskId,
+        { status },
+        { new: true }
+      ).populate("assignedTo comments.createdBy", "name email");
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
       }
 
-      // Kontrollera om användaren är tilldelad uppgiften eller är admin
-      if (req.user.role !== "admin" && !task.assignees.includes(req.user.id)) {
-        return res.status(403).json({ message: "Åtkomst nekad" });
-      }
-
-      task.status = status;
-      await task.save();
-      res.json(task);
+      res.json(updatedTask);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error updating task status:", error);
+      res.status(500).json({ message: "Error updating task status" });
     }
   },
 
   // Lägg till kommentar
   addComment: async (req, res) => {
     try {
-      const { text } = req.body;
-      const task = await Task.findById(req.params.id);
+      const { content } = req.body;
+      const taskId = req.params.id;
 
-      if (!task) {
-        return res.status(404).json({ message: "Uppgift hittades inte" });
+      const updatedTask = await Task.findByIdAndUpdate(
+        taskId,
+        {
+          $push: {
+            comments: {
+              content,
+              createdBy: req.user.id,
+            },
+          },
+        },
+        { new: true }
+      ).populate("assignedTo comments.createdBy", "name email");
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
       }
 
-      // Kontrollera om användaren är tilldelad uppgiften eller är admin
-      if (req.user.role !== "admin" && !task.assignees.includes(req.user.id)) {
-        return res.status(403).json({ message: "Åtkomst nekad" });
-      }
-
-      task.comments.push({
-        text,
-        author: req.user.id,
-      });
-
-      await task.save();
-      res.json(task);
+      res.json(updatedTask);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error("Error adding comment:", error);
+      res.status(500).json({ message: "Error adding comment" });
     }
   },
 };

@@ -17,4 +17,8 @@ router.get("/", taskController.getTasks);
 // Hämta uppgifter tilldelade till inloggad användare
 router.get("/assigned", taskController.getAssignedTasks);
 
+// Nya routes
+router.put("/:id/status", taskController.updateTaskStatus);
+router.post("/:id/comments", taskController.addComment);
+
 module.exports = router;

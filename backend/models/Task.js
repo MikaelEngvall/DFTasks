@@ -2,6 +2,23 @@
 
 const mongoose = require("mongoose");
 
+const commentSchema = new mongoose.Schema(
+  {
+    content: {
+      type: String,
+      required: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const taskSchema = new mongoose.Schema(
   {
     title: {
@@ -31,6 +48,7 @@ const taskSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    comments: [commentSchema],
   },
   {
     timestamps: true,
