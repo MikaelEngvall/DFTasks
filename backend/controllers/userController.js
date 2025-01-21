@@ -179,33 +179,28 @@ const userController = {
     try {
       const { email, password } = req.body;
 
-      // Validera indata
       if (!email || !password) {
         return res
           .status(400)
           .json({ message: "Email and password are required" });
       }
 
-      // Hitta användaren
       const user = await User.findOne({ email });
       if (!user) {
+        console.log("User not found");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Verifiera lösenord
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
+        console.log("Password does not match");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Skapa token med ACCESS_TOKEN_SECRET istället för JWT_SECRET
+      console.log("Password matches");
+
       const token = jwt.sign(
-        {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        { id: user._id, name: user.name, email: user.email, role: user.role },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "1d" }
       );
