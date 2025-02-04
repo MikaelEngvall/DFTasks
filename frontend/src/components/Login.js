@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // Correct the import
 import axiosInstance from "../utils/axios";
 import { useTheme } from "../context/ThemeContext";
 
@@ -29,7 +29,7 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Invalid credentials");
+      setError("Ogiltiga inloggningsuppgifter");
     }
   };
 
@@ -49,7 +49,7 @@ function Login() {
             DFTasks
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Property Management
+            Fastighetsförvaltning
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
@@ -59,7 +59,7 @@ function Login() {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email-address" className="sr-only">
-                Email address
+                E-postadress
               </label>
               <input
                 id="email-address"
@@ -67,14 +67,14 @@ function Login() {
                 type="email"
                 required
                 className="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-df-secondary focus:border-df-secondary focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="E-postadress"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Password
+                Lösenord
               </label>
               <input
                 id="password"
@@ -82,7 +82,7 @@ function Login() {
                 type="password"
                 required
                 className="appearance-none rounded-b-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-df-secondary focus:border-df-secondary focus:z-10 sm:text-sm"
-                placeholder="Password"
+                placeholder="Lösenord"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -94,7 +94,7 @@ function Login() {
               type="submit"
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-df-primary hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-secondary dark:ring-offset-gray-800"
             >
-              Sign in
+              Logga in
             </button>
           </div>
         </form>

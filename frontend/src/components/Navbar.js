@@ -3,16 +3,22 @@ import { useNavigate, Link } from "react-router-dom";
 import { FaSignOutAlt } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import ThemeToggle from "./ThemeToggle";
+import { jwtDecode } from "jwt-decode";
 
 function Navbar() {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
-  const isLoggedIn = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+  const isLoggedIn = !!token;
+  let userRole = null;
+
+  if (token) {
+    const decoded = jwtDecode(token);
+    userRole = decoded.role;
+  }
 
   const handleLogout = () => {
-    // Ta bort token från localStorage
     localStorage.removeItem("token");
-    // Navigera till login-sidan
     navigate("/dftasks/login");
   };
 
@@ -39,13 +45,23 @@ function Navbar() {
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             {isLoggedIn && (
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-3 py-2 text-sm sm:text-base text-df-primary dark:text-white hover:text-df-accent"
-              >
-                <FaSignOutAlt className="mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Sign out</span>
-              </button>
+              <>
+                {userRole === "ADMIN" && (
+                  <Link
+                    to="/dftasks/admin"
+                    className="text-df-primary dark:text-white hover:text-df-accent"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-3 py-2 text-sm sm:text-base text-df-primary dark:text-white hover:text-df-accent"
+                >
+                  <FaSignOutAlt className="mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Logga ut</span>
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -22,7 +22,7 @@ function AdminDashboard() {
                     : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
                 } whitespace-nowrap pb-4 px-1 border-b-2 font-medium`}
               >
-                Tasks
+                Uppgifter
               </button>
               <button
                 onClick={() => setActiveTab("users")}
@@ -32,7 +32,7 @@ function AdminDashboard() {
                     : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
                 } whitespace-nowrap pb-4 px-1 border-b-2 font-medium`}
               >
-                Users
+                Användare
               </button>
             </nav>
           </div>

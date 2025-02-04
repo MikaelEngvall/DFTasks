@@ -35,10 +35,12 @@ const taskSchema = new mongoose.Schema(
       enum: ["pending", "in progress", "completed", "cannot fix"],
       default: "pending",
     },
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    assignedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     dueDate: {
       type: Date,
       required: true,

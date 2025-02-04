@@ -5,7 +5,7 @@ const taskController = {
   getTasks: async (req, res) => {
     try {
       const tasks = await Task.find()
-        .populate("assignedTo", "name email")
+        .populate("assignedUsers") // Ensure this line is correct
         .populate("createdBy", "name email")
         .populate("comments.createdBy", "name email")
         .sort({ createdAt: -1 });
@@ -19,7 +19,10 @@ const taskController = {
   // Skapa ny uppgift
   createTask: async (req, res) => {
     try {
-      const { title, description, status, assignedTo, dueDate } = req.body;
+      const { title, description, status, assignedUsers, dueDate } = req.body;
+
+      // Log the received data
+      console.log("Received data:", req.body);
 
       // Validera indata
       if (!title || !dueDate) {
@@ -32,15 +35,15 @@ const taskController = {
         title,
         description,
         status: status || "new",
-        assignedTo: assignedTo || null,
+        assignedUsers: assignedUsers || [], // Ensure this line is correct
         dueDate,
         createdBy: req.user.id,
       });
 
       const savedTask = await task.save();
       const populatedTask = await Task.findById(savedTask._id)
-        .populate("assignedTo", "name email")
-        .populate("createdBy", "name email")
+        .populate("assignedUsers", "name email") // Ensure this line is correct
+        ..populate("createdBy", "name email")
         .populate("comments.createdBy", "name email");
 
       res.status(201).json(populatedTask);
@@ -56,7 +59,7 @@ const taskController = {
   // Uppdatera uppgift
   updateTask: async (req, res) => {
     try {
-      const { title, description, status, assignedTo, dueDate } = req.body;
+      const { title, description, status, assignedUsers, dueDate } = req.body;
       const taskId = req.params.id;
 
       const updatedTask = await Task.findByIdAndUpdate(
@@ -65,12 +68,12 @@ const taskController = {
           title,
           description,
           status,
-          assignedTo: assignedTo || null,
+          assignedUsers: assignedUsers || [], // Ensure this line is correct
           dueDate,
         },
         { new: true }
       )
-        .populate("assignedTo", "name email")
+        .populate("assignedUsers", "name email") // Ensure this line is correct
         .populate("createdBy", "name email")
         .populate("comments.createdBy", "name email");
 
@@ -105,8 +108,8 @@ const taskController = {
   // Hämta uppgifter tilldelade till en specifik användare
   getAssignedTasks: async (req, res) => {
     try {
-      const tasks = await Task.find({ assignedTo: req.user.id })
-        .populate("assignedTo", "name email")
+      const tasks = await Task.find({ assignedUsers: req.user.id }) // Ensure this line is correct
+        .populate("assignedUsers", "name email") // Ensure this line is correct
         .sort({ createdAt: -1 });
       res.json(tasks);
     } catch (error) {
@@ -126,7 +129,7 @@ const taskController = {
         { status },
         { new: true }
       )
-        .populate("assignedTo", "name email")
+        .populate("assignedUsers", "name email") // Ensure this line is correct
         .populate("createdBy", "name email")
         .populate("comments.createdBy", "name email");
 
@@ -159,7 +162,7 @@ const taskController = {
         },
         { new: true }
       )
-        .populate("assignedTo", "name email")
+        .populate("assignedUsers", "name email") // Ensure this line is correct
         .populate("createdBy", "name email")
         .populate("comments.createdBy", "name email");
 

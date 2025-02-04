@@ -7,7 +7,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
     title: task?.title || "",
     description: task?.description || "",
     status: task?.status || "pending",
-    assignedTo: task?.assignedTo?._id || "",
+    assignedUsers: task?.assignedUsers || [], // Ensure this line is correct
     dueDate: task?.dueDate
       ? new Date(task.dueDate).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
@@ -47,7 +47,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
         description: formData.description,
         status: formData.status,
         dueDate: formData.dueDate,
-        assignedTo: formData.assignedTo || null,
+        assignedUsers: formData.assignedUsers || [], // Ensure this line is correct
       };
 
       await onSubmit(taskData);
@@ -69,7 +69,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Title *
+          Titel *
         </label>
         <input
           type="text"
@@ -83,7 +83,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Description *
+          Beskrivning *
         </label>
         <textarea
           name="description"
@@ -105,24 +105,33 @@ function TaskForm({ task, onSubmit, onCancel }) {
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         >
-          <option value="pending">Pending</option>
-          <option value="in progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cannot fix">Cannot Fix</option>
+          <option value="pending">Väntande</option>
+          <option value="in progress">Pågående</option>
+          <option value="completed">Avslutad</option>
+          <option value="cannot fix">Kan inte åtgärdas</option>
         </select>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Assign To
+          Tilldela till
         </label>
         <select
-          name="assignedTo"
-          value={formData.assignedTo}
-          onChange={handleChange}
+          name="assignedUsers" // Ensure this line is correct
+          value={formData.assignedUsers} // Ensure this line is correct
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              assignedUsers: Array.from(
+                e.target.selectedOptions,
+                (option) => option.value
+              ),
+            }))
+          }
+          multiple
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         >
-          <option value="">Select User</option>
+          <option value="">Välj användare</option>
           {users &&
             users.map((user) => (
               <option key={user._id} value={user._id}>
@@ -134,7 +143,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Due Date *
+          Förfallodatum *
         </label>
         <input
           type="date"
@@ -152,13 +161,13 @@ function TaskForm({ task, onSubmit, onCancel }) {
           onClick={onCancel}
           className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
         >
-          Cancel
+          Avbryt
         </button>
         <button
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
         >
-          {task ? "Update" : "Create"}
+          {task ? "Uppdatera" : "Skapa"}
         </button>
       </div>
     </form>
