@@ -11,26 +11,36 @@ router.use(auth);
 
 // Routes beginning with /api/tasks
 router.post("/", async (req, res) => {
-  const { title, description, assignedUsers } = req.body; // Ensure this line is correct
+  const { title, description, assignedUser, dueDate, status } = req.body; // Change to single user
+  console.log("Received data for creating task:", req.body); // Add logging
   try {
-    const newTask = new Task({ title, description, assignedUsers }); // Ensure this line is correct
+    const newTask = new Task({
+      title,
+      description,
+      assignedUser, // Change to single user
+      dueDate,
+      status,
+    });
     await newTask.save();
     res.status(201).json(newTask);
   } catch (error) {
+    console.error("Error creating task:", error); // Add logging
     res.status(400).json({ error: error.message });
   }
 });
 
 router.put("/:id", async (req, res) => {
-  const { title, description, assignedUsers } = req.body; // Ensure this line is correct
+  const { title, description, assignedUser, dueDate, status } = req.body; // Change to single user
+  console.log("Received data for updating task:", req.body); // Add logging
   try {
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
-      { title, description, assignedUsers }, // Ensure this line is correct
+      { title, description, assignedUser, dueDate, status }, // Change to single user
       { new: true }
     );
     res.status(200).json(updatedTask);
   } catch (error) {
+    console.error("Error updating task:", error); // Add logging
     res.status(400).json({ error: error.message });
   }
 });

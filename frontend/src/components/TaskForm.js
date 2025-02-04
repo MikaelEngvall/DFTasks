@@ -7,7 +7,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
     title: task?.title || "",
     description: task?.description || "",
     status: task?.status || "pending",
-    assignedUsers: task?.assignedUsers || [], // Ensure this line is correct
+    assignedUser: task?.assignedUser || "", // Change to single user
     dueDate: task?.dueDate
       ? new Date(task.dueDate).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
@@ -47,7 +47,7 @@ function TaskForm({ task, onSubmit, onCancel }) {
         description: formData.description,
         status: formData.status,
         dueDate: formData.dueDate,
-        assignedUsers: formData.assignedUsers || [], // Ensure this line is correct
+        assignedUser: formData.assignedUser || "", // Ensure this line is correct
       };
 
       await onSubmit(taskData);
@@ -117,18 +117,9 @@ function TaskForm({ task, onSubmit, onCancel }) {
           Tilldela till
         </label>
         <select
-          name="assignedUsers" // Ensure this line is correct
-          value={formData.assignedUsers} // Ensure this line is correct
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              assignedUsers: Array.from(
-                e.target.selectedOptions,
-                (option) => option.value
-              ),
-            }))
-          }
-          multiple
+          name="assignedUser" // Change to single user
+          value={formData.assignedUser} // Change to single user
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         >
           <option value="">Välj användare</option>
