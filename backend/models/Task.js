@@ -4,14 +4,18 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
   {
-    content: {
+    text: {
       type: String,
       required: true,
     },
-    createdBy: {
+    author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
@@ -35,7 +39,7 @@ const taskSchema = new mongoose.Schema(
       enum: ["pending", "in progress", "completed", "cannot fix"],
       default: "pending",
     },
-    assignedUser: {
+    assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true, // Ensure this field is required

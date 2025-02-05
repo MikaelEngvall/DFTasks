@@ -7,10 +7,11 @@ function TaskForm({ task, onSubmit, onCancel }) {
     title: task?.title || "",
     description: task?.description || "",
     status: task?.status || "pending",
-    assignedUser: task?.assignedUser || "", // Change to single user
+    assignedTo: task?.assignedTo?._id || "",
     dueDate: task?.dueDate
       ? new Date(task.dueDate).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
+    comment: "",
   });
   const [error, setError] = useState("");
 
@@ -47,7 +48,8 @@ function TaskForm({ task, onSubmit, onCancel }) {
         description: formData.description,
         status: formData.status,
         dueDate: formData.dueDate,
-        assignedUser: formData.assignedUser || "", // Ensure this line is correct
+        assignedTo: formData.assignedTo || null,
+        comment: formData.comment,
       };
 
       await onSubmit(taskData);
@@ -117,8 +119,8 @@ function TaskForm({ task, onSubmit, onCancel }) {
           Tilldela till
         </label>
         <select
-          name="assignedUser" // Change to single user
-          value={formData.assignedUser} // Change to single user
+          name="assignedTo"
+          value={formData.assignedTo}
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         >
@@ -142,6 +144,19 @@ function TaskForm({ task, onSubmit, onCancel }) {
           value={formData.dueDate}
           onChange={handleChange}
           required
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Comment
+        </label>
+        <textarea
+          name="comment"
+          value={formData.comment}
+          onChange={handleChange}
+          rows="3"
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         />
       </div>

@@ -70,6 +70,9 @@ function WeekView() {
   const startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
 
+  console.log("Tasks:", tasks);
+  console.log("Loading:", loading);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">

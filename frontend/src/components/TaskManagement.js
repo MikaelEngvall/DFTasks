@@ -177,6 +177,10 @@ function TaskManagement() {
     );
   }
 
+  if (!Array.isArray(tasks)) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="relative">
       <div className="flex justify-between items-center mb-6">
