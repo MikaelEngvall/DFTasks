@@ -29,10 +29,15 @@ function WeekView() {
     const fetchTasks = async () => {
       try {
         const response = await axiosInstance.get("/api/tasks");
-        setTasks(response.data.tasks || []);
+        console.log("API Response:", response.data);
+        if (!Array.isArray(response.data.tasks)) {
+          console.error("Tasks is not an array:", response.data.tasks);
+          setTasks([]);
+        } else {
+          setTasks(response.data.tasks || []);
+        }
       } catch (error) {
         console.error("Error fetching tasks:", error);
-        setTasks([]);
       } finally {
         setLoading(false);
       }
@@ -69,9 +74,6 @@ function WeekView() {
 
   const startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
-
-  console.log("Fetched tasks:", tasks);
-  console.log("Loading:", loading);
 
   if (loading) {
     return (

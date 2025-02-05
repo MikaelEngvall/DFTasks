@@ -36,3 +36,25 @@
     transform: rotate(360deg);
   }
 }
+
+.month-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+
+.empty {
+  background-color: #f0f0f0;
+}
