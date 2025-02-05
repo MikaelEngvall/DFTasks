@@ -4,8 +4,7 @@ router.get("/", auth, async (req, res) => {
       "assignedTo",
       "name"
     );
-    console.log("Fetched tasks:", tasks); // Logga de hämtade uppgifterna
-    res.json(tasks);
+    res.json({ tasks, status: true, msg: "Tasks found successfully.." }); // Se till att returnera i rätt format
   } catch (error) {
     console.error("Error fetching tasks:", error);
     res.status(500).json({ message: "Error fetching tasks" });
