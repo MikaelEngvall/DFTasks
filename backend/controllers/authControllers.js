@@ -46,17 +46,13 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found");
       return res.status(400).json({ msg: "This email is not registered" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Password does not match");
       return res.status(400).json({ msg: "Password incorrect" });
     }
-
-    console.log("Password matches");
 
     const token = createAccessToken({ id: user._id });
 
