@@ -12,6 +12,8 @@ function TaskManagement() {
   const [error, setError] = useState(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showTaskDetails, setShowTaskDetails] = useState(false);
+  const [newComment, setNewComment] = useState("");
   const { darkMode } = useTheme();
 
   useEffect(() => {
@@ -45,11 +47,13 @@ function TaskManagement() {
     }
   };
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (taskId, e) => {
+    e?.stopPropagation(); // Förhindra att detaljvyn öppnas
     if (window.confirm("Är du säker på att du vill radera denna uppgift?")) {
       try {
         await axiosInstance.delete(`/api/tasks/${taskId}`);
         setTasks(tasks.filter((task) => task._id !== taskId));
+        setShowTaskDetails(false);
       } catch (error) {
         console.error("Error deleting task:", error);
         alert("Det gick inte att radera uppgiften");
@@ -57,9 +61,15 @@ function TaskManagement() {
     }
   };
 
-  const handleEdit = (task) => {
+  const handleEdit = (task, e) => {
+    e?.stopPropagation(); // Förhindra att detaljvyn öppnas
     setSelectedTask(task);
     setShowTaskForm(true);
+  };
+
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setShowTaskDetails(true);
   };
 
   const handleTaskSubmit = async (taskData) => {
@@ -96,6 +106,30 @@ function TaskManagement() {
         return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const response = await axiosInstance.post(
+        `/api/tasks/${selectedTask._id}/comments`,
+        {
+          content: newComment,
+        }
+      );
+
+      setTasks(
+        tasks.map((task) =>
+          task._id === selectedTask._id ? response.data.task : task
+        )
+      );
+      setSelectedTask(response.data.task);
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      alert("Det gick inte att lägga till kommentaren");
     }
   };
 
@@ -159,11 +193,15 @@ function TaskManagement() {
             {tasks.map((task) => (
               <tr
                 key={task._id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                onClick={() => handleTaskClick(task)}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-df-primary dark:text-white">
+                  <div className="flex items-center text-sm font-medium text-df-primary dark:text-white">
                     {task.title}
+                    {task.comments?.length > 0 && (
+                      <FaComments className="ml-2 text-df-primary/60 dark:text-gray-400" />
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -192,13 +230,13 @@ function TaskManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
-                    onClick={() => handleEdit(task)}
+                    onClick={(e) => handleEdit(task, e)}
                     className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
                   >
                     <FaEdit className="inline-block" />
                   </button>
                   <button
-                    onClick={() => handleDelete(task._id)}
+                    onClick={(e) => handleDelete(task._id, e)}
                     className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
                   >
                     <FaTrash className="inline-block" />
@@ -222,6 +260,133 @@ function TaskManagement() {
                 setSelectedTask(null);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {showTaskDetails && selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
+                  {selectedTask.title}
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => handleEdit(selectedTask, e)}
+                    className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                  >
+                    <FaEdit className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={(e) => handleDelete(selectedTask._id, e)}
+                    className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                  >
+                    <FaTrash className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setShowTaskDetails(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-4"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-df-primary dark:text-white mb-2">
+                      Beskrivning
+                    </h3>
+                    <p className="text-df-primary/80 dark:text-gray-300 whitespace-pre-wrap">
+                      {selectedTask.description}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                        Status
+                      </h4>
+                      <span
+                        className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+                          selectedTask.status
+                        )}`}
+                      >
+                        {selectedTask.status}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                        Tilldelad till
+                      </h4>
+                      <p className="mt-1 text-df-primary dark:text-white">
+                        {selectedTask.assignedTo?.name || "Ej tilldelad"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                        Deadline
+                      </h4>
+                      <p className="mt-1 text-df-primary dark:text-white">
+                        {format(new Date(selectedTask.dueDate), "yyyy-MM-dd")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 pt-6 md:pt-0 md:pl-6">
+                  <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
+                    Kommentarer
+                  </h3>
+                  <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto">
+                    {selectedTask.comments?.map((comment, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
+                      >
+                        <p className="text-df-primary dark:text-gray-100 whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+                        <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
+                          {comment.createdBy?.name} -{" "}
+                          {format(
+                            new Date(comment.createdAt),
+                            "yyyy-MM-dd HH:mm"
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {(!selectedTask.comments ||
+                      selectedTask.comments.length === 0) && (
+                      <p className="text-df-primary/60 dark:text-gray-400 italic">
+                        Inga kommentarer än
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4">
+                    <textarea
+                      rows="3"
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                      placeholder="Skriv en kommentar..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                    ></textarea>
+                    <button
+                      onClick={handleAddComment}
+                      className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                    >
+                      Lägg till kommentar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
