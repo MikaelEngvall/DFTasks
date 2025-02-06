@@ -252,7 +252,9 @@ exports.addComment = async (req, res) => {
     });
 
     await task.save();
-    const updatedTask = await task.populate("assignedTo", "name");
+    const updatedTask = await Task.findById(task._id)
+      .populate("assignedTo", "name")
+      .populate("comments.createdBy", "name");
 
     res.status(200).json({
       task: updatedTask,

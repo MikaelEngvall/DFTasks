@@ -535,7 +535,7 @@ function TaskManagement({ userRole, userId }) {
                           {comment.content}
                         </p>
                         <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
-                          {comment.createdBy?.name} -{" "}
+                          {comment.createdBy?.name || t("unassigned")} -{" "}
                           {formatDate(comment.createdAt, "yyyy-MM-dd HH:mm")}
                         </div>
                       </div>
