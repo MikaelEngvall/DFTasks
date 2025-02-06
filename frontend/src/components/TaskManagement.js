@@ -101,20 +101,40 @@ function TaskManagement() {
           `/api/tasks/${selectedTask._id}`,
           taskData
         );
-        setTasks(
-          tasks.map((task) =>
-            task._id === selectedTask._id ? response.data.task : task
-          )
-        );
+        console.log("Update response:", response.data);
+        if (response.data && response.data.task) {
+          const translatedTask = await translateContent(
+            response.data.task,
+            i18n.language
+          );
+          setTasks(
+            tasks.map((task) =>
+              task._id === selectedTask._id ? translatedTask : task
+            )
+          );
+        } else {
+          console.error("Invalid response format:", response.data);
+          throw new Error("Invalid response format");
+        }
       } else {
         const response = await axiosInstance.post("/api/tasks", taskData);
-        setTasks([...tasks, response.data.task]);
+        console.log("Create response:", response.data);
+        if (response.data && response.data.task) {
+          const translatedTask = await translateContent(
+            response.data.task,
+            i18n.language
+          );
+          setTasks([...tasks, translatedTask]);
+        } else {
+          console.error("Invalid response format:", response.data);
+          throw new Error("Invalid response format");
+        }
       }
       setShowTaskForm(false);
       setSelectedTask(null);
     } catch (error) {
       console.error("Error saving task:", error);
-      alert("Det gick inte att spara uppgiften");
+      alert(t("errorSavingTask"));
     }
   };
 
