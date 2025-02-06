@@ -10,7 +10,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import UserDashboard from "./components/UserDashboard";
 import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
-import WeekView from "./components/WeekView";
+import MonthView from "./components/MonthView";
 import Navbar from "./components/Navbar";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -27,7 +27,7 @@ function App() {
                 path="/dftasks/week-view"
                 element={
                   <ProtectedRoute>
-                    <WeekView />
+                    <MonthView />
                   </ProtectedRoute>
                 }
               />
