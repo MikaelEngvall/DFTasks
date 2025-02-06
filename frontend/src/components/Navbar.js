@@ -44,6 +44,7 @@ function Navbar() {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label={darkMode ? t("lightMode") : t("darkMode")}
             >
               {darkMode ? (
                 <FaSun className="h-5 w-5" />
