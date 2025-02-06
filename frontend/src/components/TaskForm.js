@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { translateContent } from "../utils/translateContent";
+import { format, isValid, parseISO } from "date-fns";
 
 function TaskForm({ task, users, onSubmit, onCancel }) {
   const { t, i18n } = useTranslation();
@@ -9,7 +10,7 @@ function TaskForm({ task, users, onSubmit, onCancel }) {
     description: "",
     status: "pending",
     assignedTo: "",
-    dueDate: new Date().toISOString().split("T")[0],
+    dueDate: format(new Date(), "yyyy-MM-dd"),
   });
   const [error, setError] = useState("");
 
@@ -23,8 +24,10 @@ function TaskForm({ task, users, onSubmit, onCancel }) {
           status: translatedTask.status || "pending",
           assignedTo: translatedTask.assignedTo?._id || "",
           dueDate: translatedTask.dueDate
-            ? new Date(translatedTask.dueDate).toISOString().split("T")[0]
-            : new Date().toISOString().split("T")[0],
+            ? isValid(new Date(translatedTask.dueDate))
+              ? format(new Date(translatedTask.dueDate), "yyyy-MM-dd")
+              : format(new Date(), "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd"),
         });
       };
       translateTask();

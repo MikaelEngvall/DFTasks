@@ -20,8 +20,11 @@ function TaskManagement() {
   const { t, i18n } = useTranslation();
 
   const getUserName = (assignedToId) => {
+    console.log("Looking for user with ID:", assignedToId);
+    console.log("Available users:", users);
     if (!assignedToId) return t("unassigned");
     const user = users.find((user) => user._id === assignedToId);
+    console.log("Found user:", user);
     return user ? user.name : t("unassigned");
   };
 
@@ -58,6 +61,8 @@ function TaskManagement() {
   const fetchUsers = async () => {
     try {
       const response = await axiosInstance.get("/api/users");
+      console.log("Users from API:", response.data);
+      console.log("Users array:", response.data.users);
       setUsers(response.data.users || []);
     } catch (error) {
       console.error("Error fetching users:", error);
