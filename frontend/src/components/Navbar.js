@@ -1,21 +1,24 @@
-import React from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { FaSignOutAlt } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import ThemeToggle from "./ThemeToggle";
+import { FaSun, FaMoon } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
+import LanguageSelector from "./LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 function Navbar() {
+  const [user, setUser] = useState(null);
+  const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
-  const token = localStorage.getItem("token");
-  const isLoggedIn = !!token;
-  let userRole = null;
+  const { t } = useTranslation();
 
-  if (token) {
-    const decoded = jwtDecode(token);
-    userRole = decoded.role;
-  }
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUser(decoded);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -23,43 +26,53 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-lg fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <Link
-            to={isLoggedIn ? "/dftasks/week-view" : "/dftasks/login"}
-            className="flex items-center"
-          >
-            <img
-              src={
-                process.env.PUBLIC_URL +
-                (darkMode ? "/dark_logo.png" : "/light_logo.png")
-              }
-              alt="Duggals Fastigheter"
-              className="h-12 w-auto"
-            />
-            <span className="ml-3 text-df-primary dark:text-white text-lg font-semibold">
+    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link
+              to="/dftasks"
+              className="text-xl font-bold text-df-primary dark:text-white"
+            >
               DFTasks
-            </span>
-          </Link>
+            </Link>
+          </div>
+
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            {isLoggedIn && (
+            <LanguageSelector />
+
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {darkMode ? (
+                <FaSun className="h-5 w-5" />
+              ) : (
+                <FaMoon className="h-5 w-5" />
+              )}
+            </button>
+
+            {user && (
               <>
-                {userRole === "ADMIN" && (
+                {user.role === "ADMIN" && (
                   <Link
                     to="/dftasks/admin"
-                    className="text-df-primary dark:text-white hover:text-df-accent"
+                    className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
                   >
-                    Admin Dashboard
+                    {t("adminDashboard")}
                   </Link>
                 )}
+                <Link
+                  to="/dftasks/dashboard"
+                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                >
+                  {t("dashboard")}
+                </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center px-3 py-2 text-sm sm:text-base text-df-primary dark:text-white hover:text-df-accent"
+                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
                 >
-                  <FaSignOutAlt className="mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Logga ut</span>
+                  {t("logout")}
                 </button>
               </>
             )}
