@@ -4,6 +4,8 @@ import { FaEdit, FaTrash, FaPlus, FaComments } from "react-icons/fa";
 import TaskForm from "./TaskForm";
 import { useTheme } from "../context/ThemeContext";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { translateContent } from "../utils/translateContent";
 
 function TaskManagement() {
   const [tasks, setTasks] = useState([]);
@@ -15,17 +17,35 @@ function TaskManagement() {
   const [showTaskDetails, setShowTaskDetails] = useState(false);
   const [newComment, setNewComment] = useState("");
   const { darkMode } = useTheme();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     fetchTasks();
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const translateTasks = async () => {
+      if (tasks.length > 0) {
+        const translatedTasks = await Promise.all(
+          tasks.map((task) => translateContent(task, i18n.language))
+        );
+        setTasks(translatedTasks);
+      }
+    };
+    translateTasks();
+  }, [i18n.language, tasks]);
+
   const fetchTasks = async () => {
     try {
       const response = await axiosInstance.get("/api/tasks");
       if (Array.isArray(response.data.tasks)) {
-        setTasks(response.data.tasks);
+        const translatedTasks = await Promise.all(
+          response.data.tasks.map((task) =>
+            translateContent(task, i18n.language)
+          )
+        );
+        setTasks(translatedTasks);
       } else {
         console.error("Tasks is not an array:", response.data.tasks);
         setTasks([]);
@@ -33,7 +53,7 @@ function TaskManagement() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      setError("Det gick inte att hämta uppgifterna");
+      setError(t("errorFetchingTasks"));
       setLoading(false);
     }
   };
@@ -145,7 +165,7 @@ function TaskManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-          Uppgifter
+          {t("tasks")}
         </h2>
         <button
           onClick={() => {
@@ -155,7 +175,7 @@ function TaskManagement() {
           className="flex items-center px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 transition-colors duration-150"
         >
           <FaPlus className="mr-2" />
-          Ny uppgift
+          {t("newTask")}
         </button>
       </div>
 
@@ -170,22 +190,22 @@ function TaskManagement() {
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Titel
+                {t("title")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Beskrivning
+                {t("description")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Status
+                {t("status")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Tilldelad till
+                {t("assignedTo")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Deadline
+                {t("deadline")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Åtgärder
+                {t("actions")}
               </th>
             </tr>
           </thead>
@@ -215,12 +235,12 @@ function TaskManagement() {
                       task.status
                     )}`}
                   >
-                    {task.status}
+                    {t(task.status.toLowerCase().replace(" ", ""))}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {task.assignedTo?.name || "Ej tilldelad"}
+                    {task.assignedTo?.name || t("unassigned")}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -232,12 +252,14 @@ function TaskManagement() {
                   <button
                     onClick={(e) => handleEdit(task, e)}
                     className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
+                    title={t("edit")}
                   >
                     <FaEdit className="inline-block" />
                   </button>
                   <button
                     onClick={(e) => handleDelete(task._id, e)}
                     className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                    title={t("delete")}
                   >
                     <FaTrash className="inline-block" />
                   </button>
@@ -315,7 +337,7 @@ function TaskManagement() {
                           selectedTask.status
                         )}`}
                       >
-                        {selectedTask.status}
+                        {t(selectedTask.status.toLowerCase().replace(" ", ""))}
                       </span>
                     </div>
 
@@ -324,7 +346,7 @@ function TaskManagement() {
                         Tilldelad till
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
-                        {selectedTask.assignedTo?.name || "Ej tilldelad"}
+                        {selectedTask.assignedTo?.name || t("unassigned")}
                       </p>
                     </div>
 

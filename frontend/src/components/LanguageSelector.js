@@ -1,5 +1,5 @@
 import React from "react";
-import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 const flags = {
   sv: "🇸🇪",
@@ -8,25 +8,30 @@ const flags = {
   uk: "🇺🇦",
 };
 
-function LanguageSelector() {
-  const { currentLanguage, changeLanguage } = useLanguage();
+const LanguageSelector = () => {
+  const { i18n } = useTranslation();
+
+  const handleLanguageChange = (lang) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem("language", lang);
+  };
 
   return (
     <div className="flex items-center space-x-2">
       {Object.entries(flags).map(([lang, flag]) => (
         <button
           key={lang}
-          onClick={() => changeLanguage(lang)}
+          onClick={() => handleLanguageChange(lang)}
           className={`text-2xl transition-transform duration-150 ${
-            currentLanguage === lang ? "transform scale-125" : "hover:scale-110"
+            i18n.language === lang ? "transform scale-125" : "hover:scale-110"
           }`}
-          title={lang.toUpperCase()}
+          aria-label={`Byt språk till ${lang.toUpperCase()}`}
         >
           {flag}
         </button>
       ))}
     </div>
   );
-}
+};
 
 export default LanguageSelector;

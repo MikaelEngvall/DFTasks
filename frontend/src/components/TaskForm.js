@@ -1,65 +1,43 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../utils/axios";
+import { useTranslation } from "react-i18next";
+import { translateContent } from "../utils/translateContent";
 
-function TaskForm({ task, onSubmit, onCancel }) {
-  const [users, setUsers] = useState([]);
+function TaskForm({ task, users, onSubmit, onCancel }) {
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState({
-    title: task?.title || "",
-    description: task?.description || "",
-    status: task?.status || "pending",
-    assignedTo: task?.assignedTo?._id || "",
-    dueDate: task?.dueDate
-      ? new Date(task.dueDate).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
-    comment: "",
+    title: "",
+    description: "",
+    status: "pending",
+    assignedTo: "",
+    dueDate: new Date().toISOString().split("T")[0],
   });
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axiosInstance.get("/api/users");
-        setUsers(response.data || []);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setUsers([]);
-        setError("Kunde inte hämta användare");
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      console.log("Form data being submitted:", formData); // Debug log
-
-      const taskData = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        dueDate: formData.dueDate,
-        assignedTo: formData.assignedTo || null,
-        comment: formData.comment,
+    if (task) {
+      const translateTask = async () => {
+        const translatedTask = await translateContent(task, i18n.language);
+        setFormData({
+          title: translatedTask.title || "",
+          description: translatedTask.description || "",
+          status: translatedTask.status || "pending",
+          assignedTo: translatedTask.assignedTo?._id || "",
+          dueDate: translatedTask.dueDate
+            ? new Date(translatedTask.dueDate).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+        });
       };
-
-      await onSubmit(taskData);
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      translateTask();
     }
+  }, [task, i18n.language]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div
           className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
@@ -70,110 +48,97 @@ function TaskForm({ task, onSubmit, onCancel }) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Titel *
+        <label className="block text-sm font-medium text-df-primary dark:text-white">
+          {t("title")}
         </label>
         <input
           type="text"
-          name="title"
           value={formData.title}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Beskrivning *
+        <label className="block text-sm font-medium text-df-primary dark:text-white">
+          {t("description")}
         </label>
         <textarea
-          name="description"
           value={formData.description}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          rows="4"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
           required
-          rows="3"
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Status
+        <label className="block text-sm font-medium text-df-primary dark:text-white">
+          {t("status")}
         </label>
         <select
-          name="status"
           value={formData.status}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
+          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
         >
-          <option value="pending">Väntande</option>
-          <option value="in progress">Pågående</option>
-          <option value="completed">Avslutad</option>
-          <option value="cannot fix">Kan inte åtgärdas</option>
+          <option value="pending">{t("pending")}</option>
+          <option value="in progress">{t("inProgress")}</option>
+          <option value="completed">{t("completed")}</option>
+          <option value="cannot fix">{t("cannotFix")}</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Tilldela till
+        <label className="block text-sm font-medium text-df-primary dark:text-white">
+          {t("assignedTo")}
         </label>
         <select
-          name="assignedTo"
           value={formData.assignedTo}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
+          onChange={(e) =>
+            setFormData({ ...formData, assignedTo: e.target.value })
+          }
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
         >
-          <option value="">Välj användare</option>
-          {users &&
-            users.map((user) => (
-              <option key={user._id} value={user._id}>
-                {user.name}
-              </option>
-            ))}
+          <option value="">{t("unassigned")}</option>
+          {users.map((user) => (
+            <option key={user._id} value={user._id}>
+              {user.name}
+            </option>
+          ))}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Förfallodatum *
+        <label className="block text-sm font-medium text-df-primary dark:text-white">
+          {t("deadline")}
         </label>
         <input
           type="date"
-          name="dueDate"
           value={formData.dueDate}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData({ ...formData, dueDate: e.target.value })
+          }
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Comment
-        </label>
-        <textarea
-          name="comment"
-          value={formData.comment}
-          onChange={handleChange}
-          rows="3"
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 dark:bg-gray-700 dark:text-white"
-        />
-      </div>
-
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end space-x-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
         >
-          Avbryt
+          {t("cancel")}
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+          className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
         >
-          {task ? "Uppdatera" : "Skapa"}
+          {t("save")}
         </button>
       </div>
     </form>

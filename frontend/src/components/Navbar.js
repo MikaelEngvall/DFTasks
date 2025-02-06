@@ -6,7 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 
-function Navbar() {
+const Navbar = () => {
   const [user, setUser] = useState(null);
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -55,14 +55,6 @@ function Navbar() {
 
             {user && (
               <>
-                {user.role === "ADMIN" && (
-                  <Link
-                    to="/dftasks/admin"
-                    className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
-                  >
-                    {t("adminDashboard")}
-                  </Link>
-                )}
                 <Link
                   to="/dftasks/dashboard"
                   className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
@@ -82,6 +74,6 @@ function Navbar() {
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;
