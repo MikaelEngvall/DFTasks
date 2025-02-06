@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
+import { translateContent } from "../utils/translateContent";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
@@ -65,7 +66,24 @@ function MonthView() {
           console.error("Tasks is not an array:", response.data.tasks);
           setTasks([]);
         } else {
-          setTasks(response.data.tasks || []);
+          const translatedTasks = await Promise.all(
+            response.data.tasks.map(async (task) => {
+              const translatedTitle = await translateContent(
+                task.title,
+                i18n.language
+              );
+              const translatedDesc = await translateContent(
+                task.description,
+                i18n.language
+              );
+              return {
+                ...task,
+                title: translatedTitle,
+                description: translatedDesc,
+              };
+            })
+          );
+          setTasks(translatedTasks || []);
         }
       } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -75,7 +93,7 @@ function MonthView() {
     };
 
     fetchTasks();
-  }, []);
+  }, [i18n.language]);
 
   const handleTaskClick = (task) => {
     if (currentUser.role === "ADMIN") {

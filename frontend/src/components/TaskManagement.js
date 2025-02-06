@@ -53,7 +53,7 @@ function TaskManagement({ userRole, userId }) {
           };
         });
 
-        // Översätt bara title och description
+        // Översätt både title och description för varje uppgift
         const translatedTasks = await Promise.all(
           tasks.map(async (task) => {
             const translatedTitle = await translateContent(

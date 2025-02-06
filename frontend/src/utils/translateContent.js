@@ -6,26 +6,63 @@ const translateText = async (text, targetLang) => {
 
   // Om texten redan finns i översättningarna, använd den
   const translated = i18n.t(text, { lng: targetLang });
-
-  // Om översättningen är samma som originaltexten, returnera originalet
-  if (translated === text) {
-    return text;
+  if (translated !== text) {
+    return translated;
   }
 
-  return translated;
+  // Om ingen översättning finns, använd Google Translate API
+  try {
+    const apiKey = process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY;
+    if (!apiKey) {
+      console.warn("No Google Translate API key found");
+      return text;
+    }
+
+    const response = await fetch(
+      `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: text,
+          target: targetLang,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    if (data.data && data.data.translations && data.data.translations[0]) {
+      return data.data.translations[0].translatedText;
+    }
+  } catch (error) {
+    console.error("Translation error:", error);
+  }
+
+  return text;
 };
 
 export const translateContent = async (content, targetLang) => {
-  // Om content är en sträng, översätt direkt
   if (typeof content === "string") {
     return await translateText(content, targetLang);
   }
 
-  // Om content inte är ett objekt eller är null, returnera som det är
   if (!content || typeof content !== "object") {
     return content;
   }
 
-  // Om det är ett objekt, returnera det oförändrat
-  return content;
+  // Om det är ett objekt med title och description, översätt båda
+  const translatedContent = { ...content };
+  if (content.title) {
+    translatedContent.title = await translateText(content.title, targetLang);
+  }
+  if (content.description) {
+    translatedContent.description = await translateText(
+      content.description,
+      targetLang
+    );
+  }
+
+  return translatedContent;
 };
