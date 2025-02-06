@@ -20,11 +20,9 @@ function TaskManagement() {
   const { t, i18n } = useTranslation();
 
   const getUserName = (assignedToId) => {
-    console.log("Looking for user with ID:", assignedToId);
-    console.log("Available users:", users);
     if (!assignedToId) return t("unassigned");
+    console.log("Looking for user with ID:", assignedToId, "in users:", users);
     const user = users.find((user) => user._id === assignedToId);
-    console.log("Found user:", user);
     return user ? user.name : t("unassigned");
   };
 
@@ -36,18 +34,20 @@ function TaskManagement() {
   const fetchTasks = async () => {
     try {
       const response = await axiosInstance.get("/api/tasks");
+      console.log("Fetch tasks response:", response.data);
       if (Array.isArray(response.data.tasks)) {
-        console.log("Tasks from API:", response.data.tasks);
+        const tasks = response.data.tasks.map((task) => ({
+          ...task,
+          dueDate:
+            task.dueDate && task.dueDate !== "00.00.000Z" ? task.dueDate : null,
+          assignedTo: task.assignedTo || null,
+        }));
         const translatedTasks = await Promise.all(
-          response.data.tasks.map((task) => {
-            console.log("Task assignedTo:", task.assignedTo);
-            return translateContent(task, i18n.language);
-          })
+          tasks.map((task) => translateContent(task, i18n.language))
         );
-        console.log("Translated tasks:", translatedTasks);
         setTasks(translatedTasks);
       } else {
-        console.error("Tasks is not an array:", response.data.tasks);
+        console.error("Invalid tasks response format:", response.data);
         setTasks([]);
       }
       setLoading(false);
@@ -61,24 +61,32 @@ function TaskManagement() {
   const fetchUsers = async () => {
     try {
       const response = await axiosInstance.get("/api/users");
-      console.log("Users from API:", response.data);
-      console.log("Users array:", response.data.users);
-      setUsers(response.data.users || []);
+      console.log("Raw users response:", response.data);
+      if (Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else if (Array.isArray(response.data.users)) {
+        setUsers(response.data.users);
+      } else {
+        console.error("Invalid users response format:", response.data);
+        setUsers([]);
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
+      setUsers([]);
     }
   };
 
   const handleDelete = async (taskId, e) => {
-    e?.stopPropagation(); // Förhindra att detaljvyn öppnas
-    if (window.confirm("Är du säker på att du vill radera denna uppgift?")) {
+    e?.stopPropagation();
+    if (window.confirm(t("deleteConfirm"))) {
       try {
-        await axiosInstance.delete(`/api/tasks/${taskId}`);
+        const response = await axiosInstance.delete(`/api/tasks/${taskId}`);
+        console.log("Delete task response:", response.data);
         setTasks(tasks.filter((task) => task._id !== taskId));
         setShowTaskDetails(false);
       } catch (error) {
         console.error("Error deleting task:", error);
-        alert("Det gick inte att radera uppgiften");
+        alert(t("errorDeletingTask"));
       }
     }
   };
@@ -96,15 +104,18 @@ function TaskManagement() {
 
   const handleTaskSubmit = async (taskData) => {
     try {
+      console.log("Sending task data to API:", taskData);
+
       if (selectedTask) {
+        // UPDATE
         const response = await axiosInstance.put(
           `/api/tasks/${selectedTask._id}`,
           taskData
         );
-        console.log("Update response:", response.data);
-        if (response.data && response.data.task) {
+        console.log("Update task response:", response.data);
+        if (response.data) {
           const translatedTask = await translateContent(
-            response.data.task,
+            response.data,
             i18n.language
           );
           setTasks(
@@ -112,26 +123,27 @@ function TaskManagement() {
               task._id === selectedTask._id ? translatedTask : task
             )
           );
+          setShowTaskForm(false);
+          setSelectedTask(null);
         } else {
-          console.error("Invalid response format:", response.data);
           throw new Error("Invalid response format");
         }
       } else {
+        // CREATE
         const response = await axiosInstance.post("/api/tasks", taskData);
-        console.log("Create response:", response.data);
-        if (response.data && response.data.task) {
+        console.log("Create task response:", response.data);
+        if (response.data) {
           const translatedTask = await translateContent(
-            response.data.task,
+            response.data,
             i18n.language
           );
           setTasks([...tasks, translatedTask]);
+          setShowTaskForm(false);
+          setSelectedTask(null);
         } else {
-          console.error("Invalid response format:", response.data);
           throw new Error("Invalid response format");
         }
       }
-      setShowTaskForm(false);
-      setSelectedTask(null);
     } catch (error) {
       console.error("Error saving task:", error);
       alert(t("errorSavingTask"));
@@ -153,32 +165,47 @@ function TaskManagement() {
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     try {
       const response = await axiosInstance.post(
         `/api/tasks/${selectedTask._id}/comments`,
-        {
-          content: newComment,
-        }
+        { content: newComment }
       );
-
-      setTasks(
-        tasks.map((task) =>
-          task._id === selectedTask._id ? response.data.task : task
-        )
-      );
-      setSelectedTask(response.data.task);
-      setNewComment("");
+      console.log("Add comment response:", response.data);
+      if (response.data && response.data.task) {
+        const translatedTask = await translateContent(
+          response.data.task,
+          i18n.language
+        );
+        setTasks(
+          tasks.map((task) =>
+            task._id === selectedTask._id ? translatedTask : task
+          )
+        );
+        setSelectedTask(translatedTask);
+        setNewComment("");
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert("Det gick inte att lägga till kommentaren");
+      alert(t("errorAddingComment"));
     }
   };
 
   const formatDate = (dateString, formatStr = "yyyy-MM-dd") => {
-    if (!dateString) return t("noDate");
-    const date = new Date(dateString);
-    return isValid(date) ? format(date, formatStr) : t("noDate");
+    if (!dateString || dateString === "00.00.000Z") return t("noDate");
+    try {
+      const date = new Date(dateString);
+      console.log("Formatting date:", dateString);
+      if (!isValid(date)) {
+        console.log("Invalid date:", dateString);
+        return t("noDate");
+      }
+      return format(date, formatStr);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return t("noDate");
+    }
   };
 
   if (loading) {

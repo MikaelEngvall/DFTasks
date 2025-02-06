@@ -13,7 +13,7 @@ const resources = {
       edit: "Redigera",
       close: "Stäng",
 
-      // Login
+      // Login och användarhantering
       email: "E-postadress",
       password: "Lösenord",
       login: "Logga in",
@@ -51,6 +51,13 @@ const resources = {
       errorSavingTask: "Det gick inte att spara uppgiften",
       errorDeletingTask: "Det gick inte att radera uppgiften",
       errorAddingComment: "Det gick inte att lägga till kommentaren",
+      errorFetchingUsers: "Det gick inte att hämta användarna",
+      errorCreatingUser: "Det gick inte att skapa användaren",
+      errorUpdatingUser: "Det gick inte att uppdatera användaren",
+      errorDeletingUser: "Det gick inte att radera användaren",
+
+      // Bekräftelser
+      deleteUserConfirm: "Är du säker på att du vill radera denna användare?",
 
       // Navigation
       adminDashboard: "Admin Dashboard",
@@ -58,6 +65,16 @@ const resources = {
       calendar: "Kalender",
       logout: "Logga ut",
       welcome: "Välkommen",
+
+      // Användarhantering
+      users: "Användare",
+      newUser: "Ny användare",
+      editUser: "Redigera användare",
+      name: "Namn",
+      email: "E-post",
+      password: "Lösenord",
+      role: "Roll",
+      keepCurrentPassword: "Lämna tomt för att behålla nuvarande lösenord",
     },
   },
   en: {
@@ -71,7 +88,7 @@ const resources = {
       edit: "Edit",
       close: "Close",
 
-      // Login
+      // Login och användarhantering
       email: "Email",
       password: "Password",
       login: "Log in",
@@ -109,6 +126,13 @@ const resources = {
       errorSavingTask: "Failed to save task",
       errorDeletingTask: "Failed to delete task",
       errorAddingComment: "Failed to add comment",
+      errorFetchingUsers: "Failed to fetch users",
+      errorCreatingUser: "Failed to create user",
+      errorUpdatingUser: "Failed to update user",
+      errorDeletingUser: "Failed to delete user",
+
+      // Bekräftelser
+      deleteUserConfirm: "Are you sure you want to delete this user?",
 
       // Navigation
       adminDashboard: "Admin Dashboard",
@@ -116,6 +140,16 @@ const resources = {
       calendar: "Calendar",
       logout: "Log out",
       welcome: "Welcome",
+
+      // Användarhantering
+      users: "Users",
+      newUser: "New User",
+      editUser: "Edit User",
+      name: "Name",
+      email: "Email",
+      password: "Password",
+      role: "Role",
+      keepCurrentPassword: "Leave empty to keep current password",
     },
   },
   pl: {
@@ -129,7 +163,7 @@ const resources = {
       edit: "Edytuj",
       close: "Zamknij",
 
-      // Login
+      // Login och användarhantering
       email: "E-mail",
       password: "Hasło",
       login: "Zaloguj się",
@@ -167,6 +201,13 @@ const resources = {
       errorSavingTask: "Nie udało się zapisać zadania",
       errorDeletingTask: "Nie udało się usunąć zadania",
       errorAddingComment: "Nie udało się dodać komentarza",
+      errorFetchingUsers: "Nie udało się pobrać użytkowników",
+      errorCreatingUser: "Nie udało się utworzyć użytkownika",
+      errorUpdatingUser: "Nie udało się zaktualizować użytkownika",
+      errorDeletingUser: "Nie udało się usunąć użytkownika",
+
+      // Bekräftelser
+      deleteUserConfirm: "Czy na pewno chcesz usunąć tego użytkownika?",
 
       // Navigation
       adminDashboard: "Panel administratora",
@@ -174,6 +215,16 @@ const resources = {
       calendar: "Kalendarz",
       logout: "Wyloguj",
       welcome: "Witamy",
+
+      // Användarhantering
+      users: "Użytkownicy",
+      newUser: "Nowy użytkownik",
+      editUser: "Edytuj użytkownika",
+      name: "Nazwa",
+      email: "E-mail",
+      password: "Hasło",
+      role: "Rola",
+      keepCurrentPassword: "Pozostaw puste, aby zachować aktualne hasło",
     },
   },
   uk: {
@@ -187,7 +238,7 @@ const resources = {
       edit: "Редагувати",
       close: "Закрити",
 
-      // Login
+      // Login och användarhantering
       email: "Електронна пошта",
       password: "Пароль",
       login: "Увійти",
@@ -225,6 +276,13 @@ const resources = {
       errorSavingTask: "Не вдалося зберегти завдання",
       errorDeletingTask: "Не вдалося видалити завдання",
       errorAddingComment: "Не вдалося додати коментар",
+      errorFetchingUsers: "Не вдалося отримати користувачів",
+      errorCreatingUser: "Не вдалося створити користувача",
+      errorUpdatingUser: "Не вдалося оновити користувача",
+      errorDeletingUser: "Не вдалося видалити користувача",
+
+      // Bekräftelser
+      deleteUserConfirm: "Ви впевнені, що хочете видалити цього користувача?",
 
       // Navigation
       adminDashboard: "Панель адміністратора",
@@ -232,6 +290,16 @@ const resources = {
       calendar: "Календар",
       logout: "Вийти",
       welcome: "Ласкаво просимо",
+
+      // Användarhantering
+      users: "Користувачі",
+      newUser: "Новий користувач",
+      editUser: "Редагувати користувача",
+      name: "Ім'я",
+      email: "Електронна пошта",
+      password: "Пароль",
+      role: "Роль",
+      keepCurrentPassword: "Порожнім, щоб зберегти поточний пароль",
     },
   },
 };

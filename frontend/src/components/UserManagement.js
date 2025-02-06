@@ -1,41 +1,40 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axios";
-import { FaEdit, FaTrash, FaUserPlus } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import UserForm from "./UserForm";
-import { useTheme } from "../context/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const { darkMode } = useTheme();
+  const { t } = useTranslation();
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axiosInstance.get("/api/users");
+      console.log("Fetch users response:", response.data);
+      setUsers(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get("/api/users");
-      setUsers(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setError("Failed to load users");
-      setLoading(false);
-    }
-  };
-
   const handleCreate = async (userData) => {
     try {
       const response = await axiosInstance.post("/api/users", userData);
+      console.log("Create user response:", response.data);
       setUsers([...users, response.data]);
       setShowModal(false);
     } catch (error) {
       console.error("Error creating user:", error);
-      setError("Failed to create user");
     }
   };
 
@@ -45,6 +44,7 @@ function UserManagement() {
         `/api/users/${selectedUser._id}`,
         userData
       );
+      console.log("Update user response:", response.data);
       setUsers(
         users.map((user) =>
           user._id === selectedUser._id ? response.data : user
@@ -54,30 +54,19 @@ function UserManagement() {
       setSelectedUser(null);
     } catch (error) {
       console.error("Error updating user:", error);
-      setError("Failed to update user");
     }
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm(t("deleteUserConfirm"))) {
       try {
-        await axiosInstance.delete(`/api/users/${userId}`);
+        const response = await axiosInstance.delete(`/api/users/${userId}`);
+        console.log("Delete user response:", response.data);
         setUsers(users.filter((user) => user._id !== userId));
       } catch (error) {
         console.error("Error deleting user:", error);
-        setError("Failed to delete user");
       }
     }
-  };
-
-  const openEditModal = (user) => {
-    setSelectedUser(user);
-    setShowModal(true);
-  };
-
-  const openCreateModal = () => {
-    setSelectedUser(null);
-    setShowModal(true);
   };
 
   if (loading) {
@@ -92,13 +81,13 @@ function UserManagement() {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
-          User Management
+          {t("users")}
         </h1>
         <button
           onClick={() => setShowModal(true)}
           className="bg-df-primary text-white px-4 py-2 rounded-md hover:bg-df-dark transition-colors duration-150"
         >
-          Add User
+          {t("newUser")}
         </button>
       </div>
 
@@ -108,16 +97,16 @@ function UserManagement() {
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Name
+                  {t("name")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Email
+                  {t("email")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Role
+                  {t("role")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
+                  {t("actions")}
                 </th>
               </tr>
             </thead>

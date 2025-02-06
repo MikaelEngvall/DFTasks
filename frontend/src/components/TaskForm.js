@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { translateContent } from "../utils/translateContent";
-import { format, isValid, parseISO } from "date-fns";
+import { format, isValid } from "date-fns";
 
 function TaskForm({ task, users, onSubmit, onCancel }) {
   const { t, i18n } = useTranslation();
@@ -36,7 +36,12 @@ function TaskForm({ task, users, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const taskData = {
+      ...formData,
+      assignedTo: formData.assignedTo || null,
+    };
+    console.log("Submitting task data:", taskData);
+    onSubmit(taskData);
   };
 
   return (
@@ -101,7 +106,7 @@ function TaskForm({ task, users, onSubmit, onCancel }) {
         <select
           value={formData.assignedTo}
           onChange={(e) =>
-            setFormData({ ...formData, assignedTo: e.target.value })
+            setFormData({ ...formData, assignedTo: e.target.value || null })
           }
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50"
         >
