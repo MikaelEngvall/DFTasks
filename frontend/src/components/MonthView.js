@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axios";
 import { format } from "date-fns";
 import { jwtDecode } from "jwt-decode";
+import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
@@ -13,6 +15,38 @@ function MonthView() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const weekDays = {
+    en: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ],
+    sv: ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"],
+    pl: [
+      "Poniedziałek",
+      "Wtorek",
+      "Środa",
+      "Czwartek",
+      "Piątek",
+      "Sobota",
+      "Niedziela",
+    ],
+    uk: [
+      "Понеділок",
+      "Вівторок",
+      "Середа",
+      "Четвер",
+      "П'ятниця",
+      "Субота",
+      "Неділя",
+    ],
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -96,19 +130,19 @@ function MonthView() {
       }
     } catch (error) {
       console.error("Error updating task:", error);
-      alert("Det gick inte att uppdatera uppgiften. Försök igen senare.");
+      alert(t("errorSavingTask"));
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (window.confirm("Är du säker på att du vill radera denna uppgift?")) {
+    if (window.confirm(t("deleteConfirm"))) {
       try {
         await axiosInstance.delete(`/api/tasks/${taskId}`);
         setTasks(tasks.filter((task) => task._id !== taskId));
         setSelectedTask(null);
       } catch (error) {
         console.error("Error deleting task:", error);
-        alert("Det gick inte att radera uppgiften. Försök igen senare.");
+        alert(t("errorDeletingTask"));
       }
     }
   };
@@ -134,15 +168,7 @@ function MonthView() {
             {format(currentMonth, "MMMM yyyy")}
           </h2>
           <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
-            {[
-              "Måndag",
-              "Tisdag",
-              "Onsdag",
-              "Torsdag",
-              "Fredag",
-              "Lördag",
-              "Söndag",
-            ].map((day) => (
+            {weekDays[i18n.language].map((day) => (
               <div key={day} className="bg-white dark:bg-gray-800 p-2">
                 <h3 className="text-sm font-semibold text-df-primary dark:text-white">
                   {day}
@@ -195,10 +221,10 @@ function MonthView() {
                               task.status
                             )}`}
                           >
-                            {task.status}
+                            {t(task.status.replace(" ", ""))}
                           </span>
                           <span className="text-xs text-df-primary/70 dark:text-gray-400">
-                            {task.assignedTo?.name || "Unassigned"}
+                            {task.assignedTo?.name || t("unassigned")}
                           </span>
                         </div>
                       </div>
@@ -216,7 +242,7 @@ function MonthView() {
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
             <div className="flex justify-between items-start">
               <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                {isEditing ? "Redigera uppgift" : selectedTask.title}
+                {isEditing ? t("editTask") : selectedTask.title}
               </h2>
               <button
                 onClick={() => {
@@ -233,7 +259,7 @@ function MonthView() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                      Titel
+                      {t("title")}
                     </label>
                     <input
                       type="text"
@@ -246,7 +272,7 @@ function MonthView() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                      Beskrivning
+                      {t("description")}
                     </label>
                     <textarea
                       value={editedTask.description}
@@ -262,7 +288,7 @@ function MonthView() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                      Status
+                      {t("status")}
                     </label>
                     <select
                       value={editedTask.status}
@@ -271,10 +297,10 @@ function MonthView() {
                       }
                       className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                      <option value="pending">Väntande</option>
-                      <option value="in progress">Pågående</option>
-                      <option value="completed">Slutförd</option>
-                      <option value="cannot fix">Kan ej åtgärdas</option>
+                      <option value="pending">{t("pending")}</option>
+                      <option value="in progress">{t("inProgress")}</option>
+                      <option value="completed">{t("completed")}</option>
+                      <option value="cannot fix">{t("cannotFix")}</option>
                     </select>
                   </div>
                   <div className="flex justify-end space-x-3 mt-4">
@@ -282,13 +308,13 @@ function MonthView() {
                       onClick={() => setIsEditing(false)}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                     >
-                      Avbryt
+                      {t("cancel")}
                     </button>
                     <button
                       onClick={handleEditTask}
                       className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
                     >
-                      Spara
+                      {t("save")}
                     </button>
                   </div>
                 </div>
@@ -303,15 +329,16 @@ function MonthView() {
                         selectedTask.status
                       )}`}
                     >
-                      {selectedTask.status}
+                      {t(selectedTask.status.replace(" ", ""))}
                     </span>
                     <span className="text-sm text-df-primary/70 dark:text-gray-400">
-                      Tilldelad till:{" "}
-                      {selectedTask.assignedTo?.name || "Ej tilldelad"}
+                      {t("assignedTo")}:{" "}
+                      {selectedTask.assignedTo?.name || t("unassigned")}
                     </span>
                   </div>
                   <div className="text-sm text-df-primary/70 dark:text-gray-400">
-                    Deadline: {format(new Date(selectedTask.dueDate), "PPP")}
+                    {t("deadline")}:{" "}
+                    {format(new Date(selectedTask.dueDate), "PPP")}
                   </div>
                   {currentUser?.role === "ADMIN" && (
                     <div className="flex justify-end space-x-3 mt-4">
@@ -319,13 +346,13 @@ function MonthView() {
                         onClick={() => startEditing(selectedTask)}
                         className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
                       >
-                        Redigera
+                        {t("edit")}
                       </button>
                       <button
                         onClick={() => handleDeleteTask(selectedTask._id)}
                         className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
                       >
-                        Radera
+                        {t("delete")}
                       </button>
                     </div>
                   )}
