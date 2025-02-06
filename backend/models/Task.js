@@ -4,11 +4,11 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
   {
-    text: {
+    content: {
       type: String,
       required: true,
     },
-    author: {
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -18,9 +18,7 @@ const commentSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const taskSchema = new mongoose.Schema(
@@ -36,7 +34,16 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "in progress", "completed", "cannot fix"],
+      enum: [
+        "pending",
+        "Pending",
+        "in progress",
+        "In Progress",
+        "completed",
+        "Completed",
+        "cannot fix",
+        "Cannot Fix",
+      ],
       default: "pending",
     },
     assignedTo: {

@@ -61,9 +61,7 @@ function MonthView() {
     const fetchTasks = async () => {
       try {
         const response = await axiosInstance.get("/api/tasks");
-        console.log("API Response:", response.data);
         if (!Array.isArray(response.data.tasks)) {
-          console.error("Tasks is not an array:", response.data.tasks);
           setTasks([]);
         } else {
           const translatedTasks = await Promise.all(
@@ -86,7 +84,7 @@ function MonthView() {
           setTasks(translatedTasks || []);
         }
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        setTasks([]);
       } finally {
         setLoading(false);
       }

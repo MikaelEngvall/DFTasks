@@ -14,7 +14,6 @@ const translateText = async (text, targetLang) => {
   try {
     const apiKey = process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY;
     if (!apiKey) {
-      console.warn("No Google Translate API key found");
       return text;
     }
 
@@ -37,7 +36,7 @@ const translateText = async (text, targetLang) => {
       return data.data.translations[0].translatedText;
     }
   } catch (error) {
-    console.error("Translation error:", error);
+    return text;
   }
 
   return text;

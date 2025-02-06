@@ -39,10 +39,8 @@ function TaskManagement({ userRole, userId }) {
       const endpoint =
         userRole === "ADMIN" ? "/api/tasks" : "/api/tasks/assigned";
       const response = await axiosInstance.get(endpoint);
-      console.log("Fetch tasks response:", response.data);
       if (Array.isArray(response.data.tasks)) {
         const tasks = response.data.tasks.map((task) => {
-          console.log("Processing task:", task);
           return {
             ...task,
             dueDate:
@@ -53,7 +51,6 @@ function TaskManagement({ userRole, userId }) {
           };
         });
 
-        // Översätt både title och description för varje uppgift
         const translatedTasks = await Promise.all(
           tasks.map(async (task) => {
             const translatedTitle = await translateContent(
@@ -72,15 +69,12 @@ function TaskManagement({ userRole, userId }) {
           })
         );
 
-        console.log("Final translated tasks:", translatedTasks);
         setTasks(translatedTasks);
       } else {
-        console.error("Invalid tasks response format:", response.data);
         setTasks([]);
       }
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
       setError(t("errorFetchingTasks"));
       setLoading(false);
     }
@@ -89,17 +83,14 @@ function TaskManagement({ userRole, userId }) {
   const fetchUsers = async () => {
     try {
       const response = await axiosInstance.get("/api/users");
-      console.log("Raw users response:", response.data);
       if (Array.isArray(response.data)) {
         setUsers(response.data);
       } else if (Array.isArray(response.data.users)) {
         setUsers(response.data.users);
       } else {
-        console.error("Invalid users response format:", response.data);
         setUsers([]);
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
       setUsers([]);
     }
   };
@@ -108,12 +99,10 @@ function TaskManagement({ userRole, userId }) {
     e?.stopPropagation();
     if (window.confirm(t("deleteConfirm"))) {
       try {
-        const response = await axiosInstance.delete(`/api/tasks/${taskId}`);
-        console.log("Delete task response:", response.data);
+        await axiosInstance.delete(`/api/tasks/${taskId}`);
         setTasks(tasks.filter((task) => task._id !== taskId));
         setShowTaskDetails(false);
       } catch (error) {
-        console.error("Error deleting task:", error);
         alert(t("errorDeletingTask"));
       }
     }
@@ -142,7 +131,6 @@ function TaskManagement({ userRole, userId }) {
           status: newStatus,
         }
       );
-      console.log("Update status response:", response.data);
 
       if (response.data && response.data.task) {
         const translatedTask = await translateContent(
@@ -152,14 +140,12 @@ function TaskManagement({ userRole, userId }) {
         setTasks(tasks.map((t) => (t._id === task._id ? translatedTask : t)));
       }
     } catch (error) {
-      console.error("Error updating task status:", error);
       alert(t("errorUpdatingStatus"));
     }
   };
 
   const handleTaskSubmit = async (taskData) => {
     try {
-      // Validera att alla required fält är ifyllda
       if (!taskData.title?.trim()) {
         alert(t("titleRequired"));
         return;
@@ -177,14 +163,11 @@ function TaskManagement({ userRole, userId }) {
         return;
       }
 
-      console.log("Sending task data to API:", taskData);
       if (selectedTask) {
-        // UPDATE
         const response = await axiosInstance.put(
           `/api/tasks/${selectedTask._id}`,
           taskData
         );
-        console.log("Update task response:", response.data);
         if (response.data && response.data.task) {
           const translatedTask = {
             ...response.data.task,
@@ -208,8 +191,6 @@ function TaskManagement({ userRole, userId }) {
           throw new Error("Invalid response format");
         }
       } else {
-        // CREATE
-        // Konvertera dueDate till korrekt format
         const dueDateObj = new Date(taskData.dueDate);
 
         const taskDataToSend = {
@@ -220,9 +201,7 @@ function TaskManagement({ userRole, userId }) {
           dueDate: dueDateObj.toISOString(),
         };
 
-        console.log("Creating task with data:", taskDataToSend);
         const response = await axiosInstance.post("/api/tasks", taskDataToSend);
-        console.log("Create task response:", response.data);
         if (response.data && response.data.task) {
           const translatedTask = {
             ...response.data.task,
@@ -243,7 +222,6 @@ function TaskManagement({ userRole, userId }) {
         }
       }
     } catch (error) {
-      console.error("Error saving task:", error);
       alert(t("errorSavingTask"));
     }
   };
@@ -276,7 +254,6 @@ function TaskManagement({ userRole, userId }) {
         `/api/tasks/${selectedTask._id}/comments`,
         { content: newComment }
       );
-      console.log("Add comment response:", response.data);
       if (response.data && response.data.task) {
         const translatedTask = await translateContent(
           response.data.task,
@@ -293,7 +270,6 @@ function TaskManagement({ userRole, userId }) {
         throw new Error("Invalid response format");
       }
     } catch (error) {
-      console.error("Error adding comment:", error);
       alert(t("errorAddingComment"));
     }
   };
@@ -302,14 +278,11 @@ function TaskManagement({ userRole, userId }) {
     if (!dateString || dateString === "00.00.000Z") return t("noDate");
     try {
       const date = new Date(dateString);
-      console.log("Formatting date:", dateString);
       if (!isValid(date)) {
-        console.log("Invalid date:", dateString);
         return t("noDate");
       }
       return format(date, formatStr);
     } catch (error) {
-      console.error("Error formatting date:", error);
       return t("noDate");
     }
   };
@@ -321,7 +294,6 @@ function TaskManagement({ userRole, userId }) {
     try {
       return t(status.toLowerCase().replace(" ", ""));
     } catch (error) {
-      console.error("Error formatting status:", error);
       return t("pending");
     }
   };
