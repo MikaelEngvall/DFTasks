@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axios";
 import { FaEdit, FaTrash, FaPlus, FaComments } from "react-icons/fa";
 import TaskForm from "./TaskForm";
 import { useTheme } from "../context/ThemeContext";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { translateContent } from "../utils/translateContent";
 
@@ -22,19 +22,7 @@ function TaskManagement() {
   useEffect(() => {
     fetchTasks();
     fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const translateTasks = async () => {
-      if (tasks.length > 0) {
-        const translatedTasks = await Promise.all(
-          tasks.map((task) => translateContent(task, i18n.language))
-        );
-        setTasks(translatedTasks);
-      }
-    };
-    translateTasks();
-  }, [i18n.language, tasks]);
+  }, [i18n.language]);
 
   const fetchTasks = async () => {
     try {
@@ -153,6 +141,12 @@ function TaskManagement() {
     }
   };
 
+  const formatDate = (dateString, formatStr = "yyyy-MM-dd") => {
+    if (!dateString) return t("noDate");
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, formatStr) : t("noDate");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -245,9 +239,7 @@ function TaskManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {task.dueDate
-                      ? format(new Date(task.dueDate), "yyyy-MM-dd")
-                      : t("noDate")}
+                    {formatDate(task.dueDate)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -357,9 +349,7 @@ function TaskManagement() {
                         Deadline
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
-                        {selectedTask.dueDate
-                          ? format(new Date(selectedTask.dueDate), "yyyy-MM-dd")
-                          : t("noDate")}
+                        {formatDate(selectedTask.dueDate)}
                       </p>
                     </div>
                   </div>
@@ -380,12 +370,7 @@ function TaskManagement() {
                         </p>
                         <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
                           {comment.createdBy?.name} -{" "}
-                          {comment.createdAt
-                            ? format(
-                                new Date(comment.createdAt),
-                                "yyyy-MM-dd HH:mm"
-                              )
-                            : t("noDate")}
+                          {formatDate(comment.createdAt, "yyyy-MM-dd HH:mm")}
                         </div>
                       </div>
                     ))}
