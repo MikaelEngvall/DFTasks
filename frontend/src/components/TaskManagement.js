@@ -185,11 +185,18 @@ function TaskManagement({ userRole, userId }) {
           taskData
         );
         console.log("Update task response:", response.data);
-        if (response.data) {
-          const translatedTask = await translateContent(
-            response.data,
-            i18n.language
-          );
+        if (response.data && response.data.task) {
+          const translatedTask = {
+            ...response.data.task,
+            title: await translateContent(
+              response.data.task.title,
+              i18n.language
+            ),
+            description: await translateContent(
+              response.data.task.description,
+              i18n.language
+            ),
+          };
           setTasks(
             tasks.map((task) =>
               task._id === selectedTask._id ? translatedTask : task
@@ -216,11 +223,18 @@ function TaskManagement({ userRole, userId }) {
         console.log("Creating task with data:", taskDataToSend);
         const response = await axiosInstance.post("/api/tasks", taskDataToSend);
         console.log("Create task response:", response.data);
-        if (response.data) {
-          const translatedTask = await translateContent(
-            response.data,
-            i18n.language
-          );
+        if (response.data && response.data.task) {
+          const translatedTask = {
+            ...response.data.task,
+            title: await translateContent(
+              response.data.task.title,
+              i18n.language
+            ),
+            description: await translateContent(
+              response.data.task.description,
+              i18n.language
+            ),
+          };
           setTasks([...tasks, translatedTask]);
           setShowTaskForm(false);
           setSelectedTask(null);
@@ -297,6 +311,18 @@ function TaskManagement({ userRole, userId }) {
     } catch (error) {
       console.error("Error formatting date:", error);
       return t("noDate");
+    }
+  };
+
+  const renderStatus = (status) => {
+    if (!status || typeof status !== "string") {
+      return t("pending");
+    }
+    try {
+      return t(status.toLowerCase().replace(" ", ""));
+    } catch (error) {
+      console.error("Error formatting status:", error);
+      return t("pending");
     }
   };
 
@@ -384,7 +410,7 @@ function TaskManagement({ userRole, userId }) {
                       task.status
                     )}`}
                   >
-                    {t(task.status.toLowerCase().replace(" ", ""))}
+                    {renderStatus(task.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -499,7 +525,7 @@ function TaskManagement({ userRole, userId }) {
                           selectedTask.status
                         )}`}
                       >
-                        {t(selectedTask.status.toLowerCase().replace(" ", ""))}
+                        {renderStatus(selectedTask.status)}
                       </span>
                     </div>
 
