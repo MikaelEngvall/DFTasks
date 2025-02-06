@@ -28,11 +28,14 @@ function TaskManagement() {
     try {
       const response = await axiosInstance.get("/api/tasks");
       if (Array.isArray(response.data.tasks)) {
+        console.log("Tasks from API:", response.data.tasks);
         const translatedTasks = await Promise.all(
-          response.data.tasks.map((task) =>
-            translateContent(task, i18n.language)
-          )
+          response.data.tasks.map((task) => {
+            console.log("Task assignedTo:", task.assignedTo);
+            return translateContent(task, i18n.language);
+          })
         );
+        console.log("Translated tasks:", translatedTasks);
         setTasks(translatedTasks);
       } else {
         console.error("Tasks is not an array:", response.data.tasks);
@@ -234,7 +237,7 @@ function TaskManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {task.assignedTo?.name || t("unassigned")}
+                    {task.assignedTo ? task.assignedTo.name : t("unassigned")}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -340,7 +343,9 @@ function TaskManagement() {
                         Tilldelad till
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
-                        {selectedTask.assignedTo?.name || t("unassigned")}
+                        {selectedTask.assignedTo
+                          ? selectedTask.assignedTo.name
+                          : t("unassigned")}
                       </p>
                     </div>
 
