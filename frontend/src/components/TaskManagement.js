@@ -19,6 +19,12 @@ function TaskManagement() {
   const { darkMode } = useTheme();
   const { t, i18n } = useTranslation();
 
+  const getUserName = (assignedToId) => {
+    if (!assignedToId) return t("unassigned");
+    const user = users.find((user) => user._id === assignedToId);
+    return user ? user.name : t("unassigned");
+  };
+
   useEffect(() => {
     fetchTasks();
     fetchUsers();
@@ -237,7 +243,7 @@ function TaskManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {task.assignedTo ? task.assignedTo.name : t("unassigned")}
+                    {getUserName(task.assignedTo)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -343,9 +349,7 @@ function TaskManagement() {
                         Tilldelad till
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
-                        {selectedTask.assignedTo
-                          ? selectedTask.assignedTo.name
-                          : t("unassigned")}
+                        {getUserName(selectedTask.assignedTo)}
                       </p>
                     </div>
 
