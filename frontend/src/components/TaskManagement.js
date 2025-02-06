@@ -6,8 +6,9 @@ import { useTheme } from "../context/ThemeContext";
 import { format, isValid } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { translateContent } from "../utils/translateContent";
+import { jwtDecode } from "jwt-decode";
 
-function TaskManagement() {
+function TaskManagement({ userRole, userId }) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,10 @@ function TaskManagement() {
 
   const fetchTasks = async () => {
     try {
-      const response = await axiosInstance.get("/api/tasks");
+      // Hämta olika uppgifter beroende på roll
+      const endpoint =
+        userRole === "ADMIN" ? "/api/tasks" : "/api/tasks/assigned";
+      const response = await axiosInstance.get(endpoint);
       console.log("Fetch tasks response:", response.data);
       if (Array.isArray(response.data.tasks)) {
         const tasks = response.data.tasks.map((task) => ({
@@ -102,10 +106,36 @@ function TaskManagement() {
     setShowTaskDetails(true);
   };
 
+  const handleStatusUpdate = async (task, e) => {
+    e?.stopPropagation();
+    try {
+      const newStatus = prompt(t("selectNewStatus"), task.status);
+      if (!newStatus) return;
+
+      const response = await axiosInstance.put(
+        `/api/tasks/${task._id}/status`,
+        {
+          status: newStatus,
+        }
+      );
+      console.log("Update status response:", response.data);
+
+      if (response.data && response.data.task) {
+        const translatedTask = await translateContent(
+          response.data.task,
+          i18n.language
+        );
+        setTasks(tasks.map((t) => (t._id === task._id ? translatedTask : t)));
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      alert(t("errorUpdatingStatus"));
+    }
+  };
+
   const handleTaskSubmit = async (taskData) => {
     try {
       console.log("Sending task data to API:", taskData);
-
       if (selectedTask) {
         // UPDATE
         const response = await axiosInstance.put(
@@ -130,7 +160,25 @@ function TaskManagement() {
         }
       } else {
         // CREATE
-        const response = await axiosInstance.post("/api/tasks", taskData);
+        const token = localStorage.getItem("token");
+        const decoded = jwtDecode(token);
+
+        // Konvertera dueDate till korrekt format
+        const dueDateObj = new Date(taskData.dueDate);
+
+        const taskDataWithCreator = {
+          ...taskData,
+          createdBy: decoded.id,
+          dueDate: dueDateObj.toISOString(),
+          status: taskData.status || "pending",
+          assignedTo: taskData.assignedTo || null,
+        };
+
+        console.log("Creating task with data:", taskDataWithCreator);
+        const response = await axiosInstance.post(
+          "/api/tasks",
+          taskDataWithCreator
+        );
         console.log("Create task response:", response.data);
         if (response.data) {
           const translatedTask = await translateContent(
@@ -222,16 +270,18 @@ function TaskManagement() {
         <h2 className="text-xl font-semibold text-df-primary dark:text-white">
           {t("tasks")}
         </h2>
-        <button
-          onClick={() => {
-            setSelectedTask(null);
-            setShowTaskForm(true);
-          }}
-          className="flex items-center px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 transition-colors duration-150"
-        >
-          <FaPlus className="mr-2" />
-          {t("newTask")}
-        </button>
+        {userRole === "ADMIN" && (
+          <button
+            onClick={() => {
+              setSelectedTask(null);
+              setShowTaskForm(true);
+            }}
+            className="flex items-center px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+          >
+            <FaPlus className="mr-2" />
+            {t("newTask")}
+          </button>
+        )}
       </div>
 
       {error && (
@@ -304,20 +354,33 @@ function TaskManagement() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={(e) => handleEdit(task, e)}
-                    className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
-                    title={t("edit")}
-                  >
-                    <FaEdit className="inline-block" />
-                  </button>
-                  <button
-                    onClick={(e) => handleDelete(task._id, e)}
-                    className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
-                    title={t("delete")}
-                  >
-                    <FaTrash className="inline-block" />
-                  </button>
+                  {userRole === "ADMIN" && (
+                    <>
+                      <button
+                        onClick={(e) => handleEdit(task, e)}
+                        className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
+                        title={t("edit")}
+                      >
+                        <FaEdit className="inline-block" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(task._id, e)}
+                        className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                        title={t("delete")}
+                      >
+                        <FaTrash className="inline-block" />
+                      </button>
+                    </>
+                  )}
+                  {userRole !== "ADMIN" && task.assignedTo?._id === userId && (
+                    <button
+                      onClick={(e) => handleStatusUpdate(task, e)}
+                      className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                      title={t("updateStatus")}
+                    >
+                      {t("updateStatus")}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
