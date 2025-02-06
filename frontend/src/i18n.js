@@ -35,6 +35,7 @@ const resources = {
       writeComment: "Skriv en kommentar...",
       noComments: "Inga kommentarer än",
       comments: "Kommentarer",
+      noDate: "Inget datum",
 
       // Status
       pending: "Väntande",
@@ -92,6 +93,7 @@ const resources = {
       writeComment: "Write a comment...",
       noComments: "No comments yet",
       comments: "Comments",
+      noDate: "No date",
 
       // Status
       pending: "Pending",
@@ -149,6 +151,7 @@ const resources = {
       writeComment: "Napisz komentarz...",
       noComments: "Brak komentarzy",
       comments: "Komentarze",
+      noDate: "Brak daty",
 
       // Status
       pending: "Oczekujące",
@@ -206,6 +209,7 @@ const resources = {
       writeComment: "Напишіть коментар...",
       noComments: "Коментарів ще немає",
       comments: "Коментарі",
+      noDate: "Немає дати",
 
       // Статус
       pending: "Очікує",

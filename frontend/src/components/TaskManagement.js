@@ -245,7 +245,9 @@ function TaskManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {format(new Date(task.dueDate), "yyyy-MM-dd")}
+                    {task.dueDate
+                      ? format(new Date(task.dueDate), "yyyy-MM-dd")
+                      : t("noDate")}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -355,7 +357,9 @@ function TaskManagement() {
                         Deadline
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
-                        {format(new Date(selectedTask.dueDate), "yyyy-MM-dd")}
+                        {selectedTask.dueDate
+                          ? format(new Date(selectedTask.dueDate), "yyyy-MM-dd")
+                          : t("noDate")}
                       </p>
                     </div>
                   </div>
@@ -376,10 +380,12 @@ function TaskManagement() {
                         </p>
                         <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
                           {comment.createdBy?.name} -{" "}
-                          {format(
-                            new Date(comment.createdAt),
-                            "yyyy-MM-dd HH:mm"
-                          )}
+                          {comment.createdAt
+                            ? format(
+                                new Date(comment.createdAt),
+                                "yyyy-MM-dd HH:mm"
+                              )
+                            : t("noDate")}
                         </div>
                       </div>
                     ))}
