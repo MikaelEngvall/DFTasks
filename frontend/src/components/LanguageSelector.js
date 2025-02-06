@@ -1,11 +1,12 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import ReactCountryFlag from "react-country-flag";
 
-const flags = {
-  sv: "🇸🇪",
-  en: "🇬🇧",
-  pl: "🇵🇱",
-  uk: "🇺🇦",
+const countryFlags = {
+  en: "GB",
+  pl: "PL",
+  sv: "SE",
+  uk: "UA",
 };
 
 const LanguageSelector = () => {
@@ -18,16 +19,24 @@ const LanguageSelector = () => {
 
   return (
     <div className="flex items-center space-x-2">
-      {Object.entries(flags).map(([lang, flag]) => (
+      {Object.entries(countryFlags).map(([lang, country]) => (
         <button
           key={lang}
           onClick={() => handleLanguageChange(lang)}
-          className={`text-2xl transition-transform duration-150 ${
+          className={`transition-transform duration-150 ${
             i18n.language === lang ? "transform scale-125" : "hover:scale-110"
           }`}
           aria-label={`Byt språk till ${lang.toUpperCase()}`}
         >
-          {flag}
+          <ReactCountryFlag
+            countryCode={country}
+            svg
+            style={{
+              width: "2em",
+              height: "2em",
+            }}
+            title={country}
+          />
         </button>
       ))}
     </div>

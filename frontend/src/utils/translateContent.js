@@ -1,26 +1,18 @@
-import axios from "axios";
+import i18n from "i18next";
 
-const GOOGLE_TRANSLATE_API_KEY = process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY;
-
-// Använd Google Cloud Translation API eller liknande för att översätta text
+// Använd i18next för översättning istället för Google Translate
 const translateText = async (text, targetLang) => {
   if (!text) return text;
 
-  try {
-    const response = await axios.post(
-      `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_API_KEY}`,
-      {
-        q: text,
-        target: targetLang,
-        format: "text",
-      }
-    );
+  // Om texten redan finns i översättningarna, använd den
+  const translated = i18n.t(text, { lng: targetLang });
 
-    return response.data.data.translations[0].translatedText;
-  } catch (error) {
-    console.error("Translation error:", error);
-    return text; // Returnera originaltexten vid fel
+  // Om översättningen är samma som originaltexten, returnera originalet
+  if (translated === text) {
+    return text;
   }
+
+  return translated;
 };
 
 export const translateContent = async (content, targetLang) => {
@@ -31,7 +23,7 @@ export const translateContent = async (content, targetLang) => {
     return await translateText(content, targetLang);
   }
 
-  // Om innehållet är ett objekt (t.ex. en uppgift)
+  // Om innehållet är ett objekt
   if (typeof content === "object") {
     const translatedContent = { ...content };
 

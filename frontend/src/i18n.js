@@ -13,6 +13,14 @@ const resources = {
       edit: "Redigera",
       close: "Stäng",
 
+      // Login
+      email: "E-postadress",
+      password: "Lösenord",
+      login: "Logga in",
+      propertyManagement: "Fastighetsförvaltning",
+      enterEmail: "Ange e-postadress",
+      enterPassword: "Ange lösenord",
+
       // Uppgifter
       tasks: "Uppgifter",
       newTask: "Ny uppgift",
@@ -46,8 +54,8 @@ const resources = {
       // Navigation
       adminDashboard: "Admin Dashboard",
       dashboard: "Dashboard",
+      calendar: "Kalender",
       logout: "Logga ut",
-      login: "Logga in",
       welcome: "Välkommen",
     },
   },
@@ -61,6 +69,14 @@ const resources = {
       delete: "Delete",
       edit: "Edit",
       close: "Close",
+
+      // Login
+      email: "Email",
+      password: "Password",
+      login: "Log in",
+      propertyManagement: "Property Management",
+      enterEmail: "Enter email",
+      enterPassword: "Enter password",
 
       // Tasks
       tasks: "Tasks",
@@ -95,8 +111,8 @@ const resources = {
       // Navigation
       adminDashboard: "Admin Dashboard",
       dashboard: "Dashboard",
+      calendar: "Calendar",
       logout: "Log out",
-      login: "Log in",
       welcome: "Welcome",
     },
   },
@@ -110,6 +126,14 @@ const resources = {
       delete: "Usuń",
       edit: "Edytuj",
       close: "Zamknij",
+
+      // Login
+      email: "E-mail",
+      password: "Hasło",
+      login: "Zaloguj się",
+      propertyManagement: "Zarządzanie Nieruchomościami",
+      enterEmail: "Wprowadź e-mail",
+      enterPassword: "Wprowadź hasło",
 
       // Zadania
       tasks: "Zadania",
@@ -144,8 +168,8 @@ const resources = {
       // Navigation
       adminDashboard: "Panel administratora",
       dashboard: "Panel",
+      calendar: "Kalendarz",
       logout: "Wyloguj",
-      login: "Zaloguj",
       welcome: "Witamy",
     },
   },
@@ -159,6 +183,14 @@ const resources = {
       delete: "Видалити",
       edit: "Редагувати",
       close: "Закрити",
+
+      // Login
+      email: "Електронна пошта",
+      password: "Пароль",
+      login: "Увійти",
+      propertyManagement: "Управління Нерухомістю",
+      enterEmail: "Введіть електронну пошту",
+      enterPassword: "Введіть пароль",
 
       // Завдання
       tasks: "Завдання",
@@ -193,8 +225,8 @@ const resources = {
       // Navigation
       adminDashboard: "Панель адміністратора",
       dashboard: "Панель",
+      calendar: "Календар",
       logout: "Вийти",
-      login: "Увійти",
       welcome: "Ласкаво просимо",
     },
   },

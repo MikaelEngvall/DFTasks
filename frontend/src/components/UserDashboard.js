@@ -4,15 +4,6 @@ import { jwtDecode } from "jwt-decode";
 import TaskManagement from "./TaskManagement";
 import UserManagement from "./UserManagement";
 import { useTranslation } from "react-i18next";
-import Navbar from "./Navbar";
-import { useTheme } from "../context/ThemeContext";
-import {
-  FaCheckCircle,
-  FaClock,
-  FaExclamationCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-import { format } from "date-fns";
 
 function UserDashboard() {
   const [user, setUser] = useState(null);
@@ -44,7 +35,6 @@ function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
-      <Navbar />
       <div className="max-w-7xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="mb-6">

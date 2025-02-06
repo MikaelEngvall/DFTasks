@@ -1,27 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 import { FaSun, FaMoon } from "react-icons/fa";
-import { jwtDecode } from "jwt-decode";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      setUser(decoded);
-    }
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    logout();
     navigate("/dftasks/login");
   };
 
@@ -31,7 +23,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link
-              to="/dftasks"
+              to={user ? "/dftasks/month-view" : "/dftasks"}
               className="text-xl font-bold text-df-primary dark:text-white"
             >
               DFTasks
@@ -55,6 +47,12 @@ const Navbar = () => {
 
             {user && (
               <>
+                <Link
+                  to="/dftasks/month-view"
+                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                >
+                  {t("calendar")}
+                </Link>
                 <Link
                   to="/dftasks/dashboard"
                   className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
