@@ -20,11 +20,13 @@ function TaskManagement({ userRole, userId }) {
   const { darkMode } = useTheme();
   const { t, i18n } = useTranslation();
 
-  const getUserName = (assignedToId) => {
-    if (!assignedToId) return t("unassigned");
-    console.log("Looking for user with ID:", assignedToId, "in users:", users);
-    const user = users.find((user) => user._id === assignedToId);
-    return user ? user.name : t("unassigned");
+  const getUserName = (assignedTo) => {
+    if (!assignedTo) return t("unassigned");
+    if (typeof assignedTo === "string") {
+      const user = users.find((user) => user._id === assignedTo);
+      return user ? user.name : t("unassigned");
+    }
+    return assignedTo.name || t("unassigned");
   };
 
   useEffect(() => {
@@ -34,21 +36,43 @@ function TaskManagement({ userRole, userId }) {
 
   const fetchTasks = async () => {
     try {
-      // Hämta olika uppgifter beroende på roll
       const endpoint =
         userRole === "ADMIN" ? "/api/tasks" : "/api/tasks/assigned";
       const response = await axiosInstance.get(endpoint);
       console.log("Fetch tasks response:", response.data);
       if (Array.isArray(response.data.tasks)) {
-        const tasks = response.data.tasks.map((task) => ({
-          ...task,
-          dueDate:
-            task.dueDate && task.dueDate !== "00.00.000Z" ? task.dueDate : null,
-          assignedTo: task.assignedTo || null,
-        }));
+        const tasks = response.data.tasks.map((task) => {
+          console.log("Processing task:", task);
+          return {
+            ...task,
+            dueDate:
+              task.dueDate && task.dueDate !== "00.00.000Z"
+                ? task.dueDate
+                : null,
+            assignedTo: task.assignedTo || null,
+          };
+        });
+
+        // Översätt bara title och description
         const translatedTasks = await Promise.all(
-          tasks.map((task) => translateContent(task, i18n.language))
+          tasks.map(async (task) => {
+            const translatedTitle = await translateContent(
+              task.title,
+              i18n.language
+            );
+            const translatedDesc = await translateContent(
+              task.description,
+              i18n.language
+            );
+            return {
+              ...task,
+              title: translatedTitle,
+              description: translatedDesc,
+            };
+          })
         );
+
+        console.log("Final translated tasks:", translatedTasks);
         setTasks(translatedTasks);
       } else {
         console.error("Invalid tasks response format:", response.data);
@@ -135,6 +159,24 @@ function TaskManagement({ userRole, userId }) {
 
   const handleTaskSubmit = async (taskData) => {
     try {
+      // Validera att alla required fält är ifyllda
+      if (!taskData.title?.trim()) {
+        alert(t("titleRequired"));
+        return;
+      }
+      if (!taskData.description?.trim()) {
+        alert(t("descriptionRequired"));
+        return;
+      }
+      if (!taskData.dueDate) {
+        alert(t("dueDateRequired"));
+        return;
+      }
+      if (!taskData.status) {
+        alert(t("statusRequired"));
+        return;
+      }
+
       console.log("Sending task data to API:", taskData);
       if (selectedTask) {
         // UPDATE
@@ -160,25 +202,19 @@ function TaskManagement({ userRole, userId }) {
         }
       } else {
         // CREATE
-        const token = localStorage.getItem("token");
-        const decoded = jwtDecode(token);
-
         // Konvertera dueDate till korrekt format
         const dueDateObj = new Date(taskData.dueDate);
 
-        const taskDataWithCreator = {
-          ...taskData,
-          createdBy: decoded.id,
-          dueDate: dueDateObj.toISOString(),
-          status: taskData.status || "pending",
+        const taskDataToSend = {
+          title: taskData.title.trim(),
+          description: taskData.description.trim(),
+          status: taskData.status,
           assignedTo: taskData.assignedTo || null,
+          dueDate: dueDateObj.toISOString(),
         };
 
-        console.log("Creating task with data:", taskDataWithCreator);
-        const response = await axiosInstance.post(
-          "/api/tasks",
-          taskDataWithCreator
-        );
+        console.log("Creating task with data:", taskDataToSend);
+        const response = await axiosInstance.post("/api/tasks", taskDataToSend);
         console.log("Create task response:", response.data);
         if (response.data) {
           const translatedTask = await translateContent(
@@ -199,13 +235,21 @@ function TaskManagement({ userRole, userId }) {
   };
 
   const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
+    if (!status || typeof status !== "string") {
+      return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"; // default style
+    }
+
+    const statusLower = status.toLowerCase();
+
+    switch (statusLower) {
       case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
       case "in progress":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
       case "cannot fix":
         return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
+      case "pending":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
     }

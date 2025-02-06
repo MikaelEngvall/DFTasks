@@ -1,5 +1,10 @@
 const Task = require("../models/Task");
-const { validateObjectId } = require("../utils/validation");
+const mongoose = require("mongoose");
+
+// Enkel validering av MongoDB ObjectId
+const validateObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
 
 exports.getTasks = async (req, res) => {
   try {
@@ -93,13 +98,11 @@ exports.postTask = async (req, res) => {
     });
 
     const populatedTask = await task.populate("assignedTo", "name");
-    res
-      .status(201)
-      .json({
-        task: populatedTask,
-        status: true,
-        msg: "Task created successfully..",
-      });
+    res.status(201).json({
+      task: populatedTask,
+      status: true,
+      msg: "Task created successfully..",
+    });
   } catch (err) {
     console.error(err);
     return res
@@ -203,13 +206,11 @@ exports.updateTaskStatus = async (req, res) => {
     await task.save();
     const updatedTask = await task.populate("assignedTo", "name");
 
-    res
-      .status(200)
-      .json({
-        task: updatedTask,
-        status: true,
-        msg: "Task status updated successfully..",
-      });
+    res.status(200).json({
+      task: updatedTask,
+      status: true,
+      msg: "Task status updated successfully..",
+    });
   } catch (err) {
     console.error(err);
     return res
@@ -253,13 +254,11 @@ exports.addComment = async (req, res) => {
     await task.save();
     const updatedTask = await task.populate("assignedTo", "name");
 
-    res
-      .status(200)
-      .json({
-        task: updatedTask,
-        status: true,
-        msg: "Comment added successfully..",
-      });
+    res.status(200).json({
+      task: updatedTask,
+      status: true,
+      msg: "Comment added successfully..",
+    });
   } catch (err) {
     console.error(err);
     return res

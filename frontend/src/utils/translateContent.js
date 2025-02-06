@@ -1,8 +1,8 @@
 import i18n from "i18next";
 
-// Använd i18next för översättning istället för Google Translate
+// Använd i18next för översättning
 const translateText = async (text, targetLang) => {
-  if (!text) return text;
+  if (!text || typeof text !== "string") return text;
 
   // Om texten redan finns i översättningarna, använd den
   const translated = i18n.t(text, { lng: targetLang });
@@ -16,55 +16,16 @@ const translateText = async (text, targetLang) => {
 };
 
 export const translateContent = async (content, targetLang) => {
-  if (!content) return content;
-
-  // Om innehållet är en sträng
+  // Om content är en sträng, översätt direkt
   if (typeof content === "string") {
     return await translateText(content, targetLang);
   }
 
-  // Om innehållet är ett objekt
-  if (typeof content === "object") {
-    const translatedContent = { ...content };
-
-    // Fält som inte ska översättas
-    const excludeFields = [
-      "_id",
-      "id",
-      "name",
-      "email",
-      "createdAt",
-      "updatedAt",
-      "assignedTo",
-      "createdBy",
-    ];
-
-    for (const key in translatedContent) {
-      if (!excludeFields.includes(key)) {
-        if (typeof translatedContent[key] === "string") {
-          translatedContent[key] = await translateText(
-            translatedContent[key],
-            targetLang
-          );
-        }
-      }
-    }
-
-    // Hantera kommentarer separat
-    if (
-      translatedContent.comments &&
-      Array.isArray(translatedContent.comments)
-    ) {
-      translatedContent.comments = await Promise.all(
-        translatedContent.comments.map(async (comment) => ({
-          ...comment,
-          content: await translateText(comment.content, targetLang),
-        }))
-      );
-    }
-
-    return translatedContent;
+  // Om content inte är ett objekt eller är null, returnera som det är
+  if (!content || typeof content !== "object") {
+    return content;
   }
 
+  // Om det är ett objekt, returnera det oförändrat
   return content;
 };

@@ -75,6 +75,13 @@ const resources = {
       password: "Lösenord",
       role: "Roll",
       keepCurrentPassword: "Lämna tomt för att behålla nuvarande lösenord",
+
+      // Validering
+      titleRequired: "Titel är obligatorisk",
+      descriptionRequired: "Beskrivning är obligatorisk",
+      dueDateRequired: "Deadline är obligatorisk",
+      statusRequired: "Status är obligatorisk",
+      assignedToRequired: "Tilldelad användare är obligatorisk",
     },
   },
   en: {
@@ -150,6 +157,13 @@ const resources = {
       password: "Password",
       role: "Role",
       keepCurrentPassword: "Leave empty to keep current password",
+
+      // Validation
+      titleRequired: "Title is required",
+      descriptionRequired: "Description is required",
+      dueDateRequired: "Due date is required",
+      statusRequired: "Status is required",
+      assignedToRequired: "Assigned user is required",
     },
   },
   pl: {
@@ -225,6 +239,13 @@ const resources = {
       password: "Hasło",
       role: "Rola",
       keepCurrentPassword: "Pozostaw puste, aby zachować aktualne hasło",
+
+      // Walidacja
+      titleRequired: "Tytuł jest wymagany",
+      descriptionRequired: "Opis jest wymagany",
+      dueDateRequired: "Termin jest wymagany",
+      statusRequired: "Status jest wymagany",
+      assignedToRequired: "Przypisany użytkownik jest wymagany",
     },
   },
   uk: {
@@ -300,6 +321,13 @@ const resources = {
       password: "Пароль",
       role: "Роль",
       keepCurrentPassword: "Порожнім, щоб зберегти поточний пароль",
+
+      // Валідація
+      titleRequired: "Заголовок обов'язковий",
+      descriptionRequired: "Опис обов'язковий",
+      dueDateRequired: "Термін обов'язковий",
+      statusRequired: "Статус обов'язковий",
+      assignedToRequired: "Призначений користувач обов'язковий",
     },
   },
 };

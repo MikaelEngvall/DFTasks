@@ -1,5 +1,7 @@
 // validations/index.js
 
+const mongoose = require("mongoose");
+
 // Function to validate email format using a regular expression
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,3 +65,11 @@ const validateManyFields = (group, fields) => {
 };
 
 export default validateManyFields;
+
+const validateObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
+module.exports = {
+  validateObjectId,
+};
