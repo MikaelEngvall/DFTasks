@@ -19,6 +19,7 @@ function TaskManagement({ userRole, userId }) {
   const [newComment, setNewComment] = useState("");
   const { darkMode } = useTheme();
   const { t, i18n } = useTranslation();
+  const [editedStatus, setEditedStatus] = useState(null);
 
   const getUserName = (assignedTo) => {
     if (!assignedTo) return t("unassigned");
@@ -119,16 +120,12 @@ function TaskManagement({ userRole, userId }) {
     setShowTaskDetails(true);
   };
 
-  const handleStatusUpdate = async (task, e) => {
-    e?.stopPropagation();
+  const handleStatusUpdate = async (task) => {
     try {
-      const newStatus = prompt(t("selectNewStatus"), task.status);
-      if (!newStatus) return;
-
       const response = await axiosInstance.put(
         `/api/tasks/${task._id}/status`,
         {
-          status: newStatus,
+          status: editedStatus,
         }
       );
 
@@ -138,6 +135,8 @@ function TaskManagement({ userRole, userId }) {
           i18n.language
         );
         setTasks(tasks.map((t) => (t._id === task._id ? translatedTask : t)));
+        setSelectedTask(translatedTask);
+        setEditedStatus(null);
       }
     } catch (error) {
       alert(t("errorUpdatingStatus"));
@@ -414,15 +413,6 @@ function TaskManagement({ userRole, userId }) {
                       </button>
                     </>
                   )}
-                  {userRole !== "ADMIN" && task.assignedTo?._id === userId && (
-                    <button
-                      onClick={(e) => handleStatusUpdate(task, e)}
-                      className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                      title={t("updateStatus")}
-                    >
-                      {t("updateStatus")}
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}
@@ -490,19 +480,6 @@ function TaskManagement({ userRole, userId }) {
                   <div className="flex flex-wrap gap-4">
                     <div>
                       <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
-                        Status
-                      </h4>
-                      <span
-                        className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                          selectedTask.status
-                        )}`}
-                      >
-                        {renderStatus(selectedTask.status)}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
                         Tilldelad till
                       </h4>
                       <p className="mt-1 text-df-primary dark:text-white">
@@ -563,6 +540,45 @@ function TaskManagement({ userRole, userId }) {
                       Lägg till kommentar
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                    Status
+                  </h4>
+                  {userRole === "ADMIN" ||
+                  selectedTask.assignedTo?._id === userId ? (
+                    <div className="space-y-2">
+                      <select
+                        value={editedStatus || selectedTask.status}
+                        onChange={(e) => setEditedStatus(e.target.value)}
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                      >
+                        <option value="pending">{t("pending")}</option>
+                        <option value="in progress">{t("inProgress")}</option>
+                        <option value="completed">{t("completed")}</option>
+                        <option value="cannot fix">{t("cannotFix")}</option>
+                      </select>
+                      {editedStatus && editedStatus !== selectedTask.status && (
+                        <button
+                          onClick={() => handleStatusUpdate(selectedTask)}
+                          className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+                        >
+                          {t("save")}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span
+                      className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+                        selectedTask.status
+                      )}`}
+                    >
+                      {renderStatus(selectedTask.status)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
