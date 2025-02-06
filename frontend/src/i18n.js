@@ -53,7 +53,7 @@ const resources = {
 
       // Navigation
       adminDashboard: "Admin Dashboard",
-      dashboard: "Dashboard",
+      dashboard: "Kontrollpanel",
       calendar: "Kalender",
       logout: "Logga ut",
       welcome: "Välkommen",
@@ -234,7 +234,7 @@ const resources = {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: "sv",
+  lng: "en",
   interpolation: {
     escapeValue: false,
   },
