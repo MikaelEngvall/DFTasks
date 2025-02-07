@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { translateContent } from "../utils/translateContent";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
@@ -17,6 +18,7 @@ function MonthView() {
   const [editedTask, setEditedTask] = useState(null);
   const [showTaskDetails, setShowTaskDetails] = useState(false);
   const [editedStatus, setEditedStatus] = useState(null);
+  const [newComment, setNewComment] = useState("");
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -205,6 +207,40 @@ function MonthView() {
     }
   };
 
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      const response = await axiosInstance.post(
+        `/api/tasks/${selectedTask._id}/comments`,
+        { content: newComment }
+      );
+      if (response.data && response.data.task) {
+        const translatedTask = await translateContent(
+          response.data.task,
+          i18n.language
+        );
+        setTasks(
+          tasks.map((task) =>
+            task._id === selectedTask._id ? translatedTask : task
+          )
+        );
+        setSelectedTask(translatedTask);
+        setNewComment("");
+      }
+    } catch (error) {
+      alert(t("errorAddingComment"));
+    }
+  };
+
+  const handleEdit = (task) => {
+    navigate("/dftasks/dashboard", {
+      state: {
+        selectedTaskId: task._id,
+        view: "tasks",
+      },
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -292,86 +328,156 @@ function MonthView() {
 
       {showTaskDetails && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full p-6">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-xl font-semibold text-df-primary dark:text-white">
                 {selectedTask.title}
               </h2>
-              <button
-                onClick={() => {
-                  setShowTaskDetails(false);
-                  setSelectedTask(null);
-                  setEditedStatus(null);
-                }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                ✕
-              </button>
+              <div className="flex items-center space-x-2">
+                {currentUser.role === "ADMIN" && (
+                  <>
+                    <button
+                      onClick={() => handleEdit(selectedTask)}
+                      className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                    >
+                      <FaEdit className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(selectedTask._id)}
+                      className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                    >
+                      <FaTrash className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    setShowTaskDetails(false);
+                    setSelectedTask(null);
+                    setEditedStatus(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-4"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
-                  {t("description")}
-                </h3>
-                <p className="mt-1 text-df-primary dark:text-white whitespace-pre-wrap">
-                  {selectedTask.description}
-                </p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                    {t("description")}
+                  </h3>
+                  <p className="mt-1 text-df-primary dark:text-white whitespace-pre-wrap">
+                    {selectedTask.description}
+                  </p>
+                </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
-                  {t("status")}
-                </h3>
-                {currentUser.role === "ADMIN" ||
-                selectedTask.assignedTo?._id === currentUser.id ? (
-                  <div className="space-y-2">
-                    <select
-                      value={editedStatus || selectedTask.status}
-                      onChange={(e) => setEditedStatus(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
-                    >
-                      <option value="pending">{t("pending")}</option>
-                      <option value="in progress">{t("inProgress")}</option>
-                      <option value="completed">{t("completed")}</option>
-                      <option value="cannot fix">{t("cannotFix")}</option>
-                    </select>
-                    {editedStatus && editedStatus !== selectedTask.status && (
-                      <button
-                        onClick={() => handleStatusUpdate(selectedTask)}
-                        className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+                <div>
+                  <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                    {t("status")}
+                  </h3>
+                  {currentUser.role === "ADMIN" ||
+                  selectedTask.assignedTo?._id === currentUser.id ? (
+                    <div className="space-y-2">
+                      <select
+                        value={editedStatus || selectedTask.status}
+                        onChange={(e) => setEditedStatus(e.target.value)}
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
                       >
-                        {t("save")}
-                      </button>
-                    )}
+                        <option value="pending">{t("pending")}</option>
+                        <option value="in progress">{t("inProgress")}</option>
+                        <option value="completed">{t("completed")}</option>
+                        <option value="cannot fix">{t("cannotFix")}</option>
+                      </select>
+                      {editedStatus && editedStatus !== selectedTask.status && (
+                        <button
+                          onClick={() => handleStatusUpdate(selectedTask)}
+                          className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+                        >
+                          {t("save")}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span
+                      className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+                        selectedTask.status
+                      )}`}
+                    >
+                      {renderStatus(selectedTask.status)}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                    {t("assignedTo")}
+                  </h3>
+                  <p className="mt-1 text-df-primary dark:text-white">
+                    {selectedTask.assignedTo?.name || t("unassigned")}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
+                    {t("deadline")}
+                  </h3>
+                  <p className="mt-1 text-df-primary dark:text-white">
+                    {format(new Date(selectedTask.dueDate), "PPP")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 pt-6 md:pt-0 md:pl-6">
+                <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
+                  {t("comments")}
+                </h3>
+                <div className="space-y-4 mb-4 max-h-[400px] overflow-y-auto">
+                  {selectedTask.comments?.map((comment, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
+                    >
+                      <p className="text-df-primary dark:text-gray-100 whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                      <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
+                        {comment.createdBy?.name || t("unassigned")} -{" "}
+                        {format(
+                          new Date(comment.createdAt),
+                          "yyyy-MM-dd HH:mm"
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {(!selectedTask.comments ||
+                    selectedTask.comments.length === 0) && (
+                    <p className="text-df-primary/60 dark:text-gray-400 italic">
+                      {t("noComments")}
+                    </p>
+                  )}
+                </div>
+
+                {(currentUser.role === "ADMIN" ||
+                  selectedTask.assignedTo?._id === currentUser.id) && (
+                  <div className="mt-4">
+                    <textarea
+                      rows="3"
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                      placeholder={t("writeComment")}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                    ></textarea>
+                    <button
+                      onClick={handleAddComment}
+                      className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                    >
+                      {t("addComment")}
+                    </button>
                   </div>
-                ) : (
-                  <span
-                    className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                      selectedTask.status
-                    )}`}
-                  >
-                    {renderStatus(selectedTask.status)}
-                  </span>
                 )}
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
-                  {t("assignedTo")}
-                </h3>
-                <p className="mt-1 text-df-primary dark:text-white">
-                  {selectedTask.assignedTo?.name || t("unassigned")}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-df-primary/70 dark:text-gray-400">
-                  {t("deadline")}
-                </h3>
-                <p className="mt-1 text-df-primary dark:text-white">
-                  {format(new Date(selectedTask.dueDate), "PPP")}
-                </p>
               </div>
             </div>
           </div>
