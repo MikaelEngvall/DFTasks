@@ -82,6 +82,10 @@ function MonthView() {
                 ...task,
                 title: translatedTitle,
                 description: translatedDesc,
+                comments: task.comments?.map((comment) => ({
+                  ...comment,
+                  createdBy: comment.createdBy || { name: t("unassigned") },
+                })),
               };
             })
           );

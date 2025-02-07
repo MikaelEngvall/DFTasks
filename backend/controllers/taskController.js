@@ -10,12 +10,13 @@ exports.getTasks = async (req, res) => {
   try {
     let tasks;
     if (req.user.role === "ADMIN") {
-      tasks = await Task.find().populate("assignedTo", "name");
+      tasks = await Task.find()
+        .populate("assignedTo", "name")
+        .populate("comments.createdBy", "name");
     } else {
-      tasks = await Task.find({ assignedTo: req.user._id }).populate(
-        "assignedTo",
-        "name"
-      );
+      tasks = await Task.find({ assignedTo: req.user._id })
+        .populate("assignedTo", "name")
+        .populate("comments.createdBy", "name");
     }
     res.status(200).json({
       tasks: tasks || [],
