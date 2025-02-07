@@ -14,7 +14,11 @@ const LanguageSelector = () => {
 
   const handleLanguageChange = (lang) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem("language", lang);
+    try {
+      localStorage.setItem("language", JSON.stringify(lang));
+    } catch (error) {
+      console.error("Error saving language preference:", error);
+    }
   };
 
   return (
