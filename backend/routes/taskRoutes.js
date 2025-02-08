@@ -36,7 +36,6 @@ router
   .get(getTask)
   .put(admin, updateTask)
   .delete(admin, deleteTask);
-router.route("/:id/toggle").put(admin, toggleTaskStatus);
 router
   .route("/:taskId/comments/:commentId/toggle")
   .put(admin, toggleCommentStatus);
