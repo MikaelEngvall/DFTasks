@@ -117,11 +117,8 @@ function TaskManagement({ userRole, userId }) {
     try {
       const translatedTask = await translateTask(task);
       setSelectedTask(translatedTask);
-      setShowTaskDetails(true);
     } catch (error) {
       console.error("Error translating task:", error);
-      setSelectedTask(task);
-      setShowTaskDetails(true);
     }
   };
 
