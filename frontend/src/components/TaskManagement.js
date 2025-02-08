@@ -53,44 +53,36 @@ function TaskManagement({ userRole, userId }) {
 
   const fetchTasks = async () => {
     try {
-      const endpoint =
-        userRole === "ADMIN"
-          ? showInactive
-            ? "/api/tasks/all"
-            : "/api/tasks"
-          : "/api/tasks/assigned";
+      setError(null);
+      const endpoint = showInactive ? "/tasks/all" : "/tasks";
       const response = await axiosInstance.get(endpoint);
-      if (Array.isArray(response.data.tasks)) {
-        const tasks = response.data.tasks.map((task) => ({
-          ...task,
-          dueDate:
-            task.dueDate && task.dueDate !== "00.00.000Z" ? task.dueDate : null,
-          assignedTo: task.assignedTo || null,
-        }));
 
-        const translatedTasks = await translateTasks(tasks);
-        setTasks(translatedTasks);
-      } else {
-        setTasks([]);
+      let taskData = [];
+      if (response.data && Array.isArray(response.data.tasks)) {
+        taskData = response.data.tasks;
+      } else if (response.data && Array.isArray(response.data)) {
+        taskData = response.data;
       }
+
+      const translatedTasks = await translateTasks(taskData);
+      setTasks(translatedTasks || []);
       setLoading(false);
     } catch (error) {
+      console.error("Error fetching tasks:", error);
       setError(t("errorFetchingTasks"));
+      setTasks([]);
       setLoading(false);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await axiosInstance.get("/api/users");
-      if (Array.isArray(response.data)) {
+      const response = await axiosInstance.get("/users");
+      if (response.data) {
         setUsers(response.data);
-      } else if (Array.isArray(response.data.users)) {
-        setUsers(response.data.users);
-      } else {
-        setUsers([]);
       }
     } catch (error) {
+      console.error("Error fetching users:", error);
       setUsers([]);
     }
   };
@@ -99,11 +91,10 @@ function TaskManagement({ userRole, userId }) {
     e?.stopPropagation();
     if (window.confirm(t("deleteConfirm"))) {
       try {
-        await axiosInstance.delete(`/api/tasks/${taskId}`);
-        await fetchTasks();
-        setShowTaskDetails(false);
+        await axiosInstance.delete(`/tasks/${taskId}`);
+        setTasks(tasks.filter((task) => task._id !== taskId));
       } catch (error) {
-        alert(t("errorDeactivatingTask"));
+        alert(t("errorDeletingTask"));
       }
     }
   };
@@ -125,80 +116,48 @@ function TaskManagement({ userRole, userId }) {
 
   const handleStatusUpdate = async (task) => {
     try {
-      const response = await axiosInstance.put(
-        `/api/tasks/${task._id}/status`,
-        {
-          status: editedStatus,
-        }
-      );
-
-      if (response.data && response.data.task) {
-        const translatedTask = await translateTask(response.data.task);
-        setTasks(tasks.map((t) => (t._id === task._id ? translatedTask : t)));
-        setSelectedTask(translatedTask);
+      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
+        status: editedStatus,
+      });
+      if (response.status === 200) {
+        setTasks(
+          tasks.map((t) =>
+            t._id === task._id ? { ...t, status: editedStatus } : t
+          )
+        );
         setEditedStatus(null);
+        setSelectedTask(response.data.task);
       }
     } catch (error) {
-      alert(t("errorUpdatingStatus"));
+      alert(t("errorSavingTask"));
     }
   };
 
   const handleTaskSubmit = async (taskData) => {
     try {
-      if (!taskData.title?.trim()) {
-        alert(t("titleRequired"));
-        return;
-      }
-      if (!taskData.description?.trim()) {
-        alert(t("descriptionRequired"));
-        return;
-      }
-      if (!taskData.dueDate) {
-        alert(t("dueDateRequired"));
-        return;
-      }
-      if (!taskData.status) {
-        alert(t("statusRequired"));
-        return;
-      }
-
+      let response;
       if (selectedTask) {
-        const response = await axiosInstance.put(
-          `/api/tasks/${selectedTask._id}`,
+        response = await axiosInstance.put(
+          `/tasks/${selectedTask._id}`,
           taskData
         );
-        if (response.data && response.data.task) {
-          const translatedTask = await translateTask(response.data.task);
+      } else {
+        response = await axiosInstance.post("/tasks", taskData);
+      }
+
+      if (response.data) {
+        const translatedTask = await translateTask(response.data.task);
+        if (selectedTask) {
           setTasks(
             tasks.map((task) =>
               task._id === selectedTask._id ? translatedTask : task
             )
           );
-          setShowTaskForm(false);
-          setSelectedTask(null);
         } else {
-          throw new Error("Invalid response format");
-        }
-      } else {
-        const dueDateObj = new Date(taskData.dueDate);
-
-        const taskDataToSend = {
-          title: taskData.title.trim(),
-          description: taskData.description.trim(),
-          status: taskData.status,
-          assignedTo: taskData.assignedTo || null,
-          dueDate: dueDateObj.toISOString(),
-        };
-
-        const response = await axiosInstance.post("/api/tasks", taskDataToSend);
-        if (response.data && response.data.task) {
-          const translatedTask = await translateTask(response.data.task);
           setTasks([...tasks, translatedTask]);
-          setShowTaskForm(false);
-          setSelectedTask(null);
-        } else {
-          throw new Error("Invalid response format");
         }
+        setShowTaskForm(false);
+        setSelectedTask(null);
       }
     } catch (error) {
       alert(t("errorSavingTask"));
@@ -230,7 +189,7 @@ function TaskManagement({ userRole, userId }) {
     if (!newComment.trim()) return;
     try {
       const response = await axiosInstance.post(
-        `/api/tasks/${selectedTask._id}/comments`,
+        `/tasks/${selectedTask._id}/comments`,
         { content: newComment }
       );
       if (response.data && response.data.task) {
@@ -275,7 +234,7 @@ function TaskManagement({ userRole, userId }) {
   const handleToggleTaskStatus = async (taskId, e) => {
     e?.stopPropagation();
     try {
-      await axiosInstance.put(`/api/tasks/${taskId}/toggle`);
+      await axiosInstance.put(`/tasks/${taskId}/toggle`);
       await fetchTasks();
     } catch (error) {
       alert(t("errorTogglingTaskStatus"));
@@ -284,9 +243,7 @@ function TaskManagement({ userRole, userId }) {
 
   const handleToggleCommentStatus = async (taskId, commentId) => {
     try {
-      await axiosInstance.put(
-        `/api/tasks/${taskId}/comments/${commentId}/toggle`
-      );
+      await axiosInstance.put(`/tasks/${taskId}/comments/${commentId}/toggle`);
       await fetchTasks();
       const updatedTask = tasks.find((t) => t._id === taskId);
       if (updatedTask) {

@@ -9,10 +9,14 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Access-Control-Allow-Origin",
+    ],
   })
 );
 
@@ -23,11 +27,11 @@ const profileRoutes = require("./routes/profileRoutes");
 const userRoutes = require("./routes/userRoutes");
 const translateRoutes = require("./routes/translateRoutes");
 
-app.use("/api/auth", authRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/translate", translateRoutes);
+app.use("/auth", authRoutes);
+app.use("/tasks", taskRoutes);
+app.use("/profile", profileRoutes);
+app.use("/users", userRoutes);
+app.use("/translate", translateRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

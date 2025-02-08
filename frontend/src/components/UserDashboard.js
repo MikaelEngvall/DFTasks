@@ -43,7 +43,7 @@ function UserDashboard() {
             </h1>
           </div>
 
-          {user.role === "ADMIN" && (
+          {(user.role === "ADMIN" || user.role === "SUPERADMIN") && (
             <div className="mb-6">
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="-mb-px flex space-x-8">
@@ -76,9 +76,10 @@ function UserDashboard() {
             {activeTab === "tasks" && (
               <TaskManagement userRole={user.role} userId={user.id} />
             )}
-            {activeTab === "users" && user.role === "ADMIN" && (
-              <UserManagement />
-            )}
+            {activeTab === "users" &&
+              (user.role === "ADMIN" || user.role === "SUPERADMIN") && (
+                <UserManagement />
+              )}
           </div>
         </div>
       </div>

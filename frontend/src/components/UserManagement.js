@@ -3,6 +3,7 @@ import axiosInstance from "../utils/axios";
 import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import UserModal from "./UserModal";
+import { jwtDecode } from "jwt-decode";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -11,6 +12,15 @@ function UserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const { t } = useTranslation();
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setCurrentUserRole(decoded.role);
+    }
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -19,7 +29,7 @@ function UserManagement() {
   const fetchUsers = async () => {
     try {
       setError(null);
-      const endpoint = showInactive ? "/api/users/all" : "/api/users";
+      const endpoint = showInactive ? "/users/all" : "/users";
       console.log("Fetching users from endpoint:", endpoint);
       const response = await axiosInstance.get(endpoint);
       console.log("API response:", response.data);
@@ -33,8 +43,19 @@ function UserManagement() {
         userData = response.data.data;
       }
 
-      console.log("Processed user data:", userData);
-      setUsers(userData);
+      // Modifiera visningen av användarroller baserat på inloggad användares roll
+      const processedUsers = userData.map((user) => ({
+        ...user,
+        displayRole:
+          currentUserRole === "SUPERADMIN"
+            ? user.role
+            : user.role === "SUPERADMIN"
+            ? "ADMIN"
+            : user.role,
+      }));
+
+      console.log("Processed user data:", processedUsers);
+      setUsers(processedUsers);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching users:", error.response || error);
@@ -47,7 +68,7 @@ function UserManagement() {
   const handleEdit = async (userData) => {
     try {
       const response = await axiosInstance.put(
-        `/api/users/${selectedUser._id}`,
+        `/users/${selectedUser._id}`,
         userData
       );
       if (response.data) {
@@ -65,7 +86,7 @@ function UserManagement() {
 
   const handleToggleStatus = async (userId) => {
     try {
-      await axiosInstance.put(`/api/users/${userId}/toggle`);
+      await axiosInstance.put(`/users/${userId}/toggle`);
       await fetchUsers();
       setSelectedUser(null);
     } catch (error) {
@@ -134,9 +155,15 @@ function UserManagement() {
             {users.map((user) => (
               <tr
                 key={user._id}
-                onClick={() => handleUserClick(user)}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
-                  !user.isActive ? "opacity-50" : ""
+                onClick={() =>
+                  currentUserRole === "SUPERADMIN" || user.role !== "SUPERADMIN"
+                    ? handleUserClick(user)
+                    : null
+                }
+                className={`${!user.isActive ? "opacity-50" : ""} ${
+                  currentUserRole === "SUPERADMIN" || user.role !== "SUPERADMIN"
+                    ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    : "cursor-default"
                 }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -152,12 +179,12 @@ function UserManagement() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === "ADMIN"
+                      user.displayRole === "ADMIN"
                         ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
                         : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                     }`}
                   >
-                    {user.role}
+                    {user.displayRole}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

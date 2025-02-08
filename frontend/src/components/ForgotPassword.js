@@ -17,7 +17,7 @@ function ForgotPassword() {
     setError("");
 
     try {
-      const response = await axiosInstance.post("/api/auth/forgot-password", {
+      const response = await axiosInstance.post("/auth/forgot-password", {
         email: email.toLowerCase().trim(),
       });
       setMessage(response.data.message || t("resetLinkSent"));

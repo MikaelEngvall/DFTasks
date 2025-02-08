@@ -2,14 +2,14 @@
 
 const mongoose = require("mongoose");
 
-// Function to validate email format using a regular expression
+// Funktion för att validera email-format med regex
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(String(email).toLowerCase());
 };
 
-// Function to validate individual form fields based on the form group
-export const validate = (group, name, value) => {
+// Funktion för att validera enskilda formulärfält baserat på formulärgrupp
+const validate = (group, name, value) => {
   if (!value) return "This field is required";
 
   switch (group) {
@@ -54,7 +54,7 @@ export const validate = (group, name, value) => {
   }
 };
 
-// Function to validate multiple fields and collect errors
+// Funktion för att validera flera fält och samla fel
 const validateManyFields = (group, fields) => {
   const errors = [];
   for (const [field, value] of Object.entries(fields)) {
@@ -64,12 +64,13 @@ const validateManyFields = (group, fields) => {
   return errors;
 };
 
-export default validateManyFields;
-
 const validateObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
 module.exports = {
+  isValidEmail,
+  validate,
+  validateManyFields,
   validateObjectId,
 };

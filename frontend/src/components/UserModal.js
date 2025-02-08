@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { jwtDecode } from "jwt-decode";
 
 function UserModal({ user, onClose, onEdit, onToggleStatus }) {
   const [editedName, setEditedName] = useState(user?.name || "");
   const [editedEmail, setEditedEmail] = useState(user?.email || "");
   const [editedRole, setEditedRole] = useState(user?.role || "USER");
   const [isEditing, setIsEditing] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setCurrentUserRole(decoded.role);
+    }
+  }, []);
 
   const handleSave = () => {
     onEdit({
@@ -15,6 +25,18 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
       role: editedRole,
     });
     setIsEditing(false);
+  };
+
+  const getDisplayRole = (role) => {
+    if (currentUserRole === "SUPERADMIN") {
+      return role;
+    }
+    return role === "SUPERADMIN" ? "ADMIN" : role;
+  };
+
+  const canEditUser = () => {
+    if (currentUserRole === "SUPERADMIN") return true;
+    return user.role !== "SUPERADMIN";
   };
 
   return (
@@ -90,7 +112,7 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                 <h4 className="text-sm font-medium text-df-primary dark:text-white">
                   {t("role")}
                 </h4>
-                {isEditing ? (
+                {isEditing && canEditUser() ? (
                   <select
                     value={editedRole}
                     onChange={(e) => setEditedRole(e.target.value)}
@@ -98,16 +120,19 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                   >
                     <option value="USER">USER</option>
                     <option value="ADMIN">ADMIN</option>
+                    {currentUserRole === "SUPERADMIN" && (
+                      <option value="SUPERADMIN">SUPERADMIN</option>
+                    )}
                   </select>
                 ) : (
                   <span
                     className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === "ADMIN"
+                      getDisplayRole(user.role) === "ADMIN"
                         ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
                         : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                     }`}
                   >
-                    {user.role}
+                    {getDisplayRole(user.role)}
                   </span>
                 )}
               </div>
@@ -126,12 +151,14 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                   >
                     {user.isActive ? t("active") : t("inactive")}
                   </span>
-                  <button
-                    onClick={() => onToggleStatus(user._id)}
-                    className="text-sm text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                  >
-                    {user.isActive ? t("deactivate") : t("activate")}
-                  </button>
+                  {canEditUser() && (
+                    <button
+                      onClick={() => onToggleStatus(user._id)}
+                      className="text-sm text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                    >
+                      {user.isActive ? t("deactivate") : t("activate")}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -152,12 +179,14 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
-                  >
-                    {t("edit")}
-                  </button>
+                  canEditUser() && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
+                    >
+                      {t("edit")}
+                    </button>
+                  )
                 )}
               </div>
             </div>

@@ -68,7 +68,7 @@ function MonthView() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await axiosInstance.get("/api/tasks");
+        const response = await axiosInstance.get("/tasks");
         if (!Array.isArray(response.data.tasks)) {
           setTasks([]);
         } else {
@@ -135,7 +135,7 @@ function MonthView() {
   const handleEditTask = async () => {
     try {
       const response = await axiosInstance.put(
-        `/api/tasks/${editedTask._id}`,
+        `/tasks/${editedTask._id}`,
         editedTask
       );
       if (response.status === 200) {
@@ -156,7 +156,7 @@ function MonthView() {
   const handleDeleteTask = async (taskId) => {
     if (window.confirm(t("deleteConfirm"))) {
       try {
-        await axiosInstance.delete(`/api/tasks/${taskId}`);
+        await axiosInstance.delete(`/tasks/${taskId}`);
         setTasks(tasks.filter((task) => task._id !== taskId));
         setSelectedTask(null);
       } catch (error) {
@@ -173,10 +173,9 @@ function MonthView() {
 
   const handleStatusUpdate = async (task) => {
     try {
-      const response = await axiosInstance.put(
-        `/api/tasks/${task._id}/status`,
-        { status: editedStatus }
-      );
+      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
+        status: editedStatus,
+      });
       if (response.status === 200) {
         setTasks(
           tasks.map((t) =>
@@ -209,7 +208,7 @@ function MonthView() {
     if (!newComment.trim()) return;
     try {
       const response = await axiosInstance.post(
-        `/api/tasks/${selectedTask._id}/comments`,
+        `/tasks/${selectedTask._id}/comments`,
         { content: newComment }
       );
       if (response.data && response.data.task) {

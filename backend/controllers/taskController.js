@@ -1,53 +1,49 @@
 const Task = require("../models/Task");
-const mongoose = require("mongoose");
+const { validateObjectId } = require("../utils/validation");
 
-// Enkel validering av MongoDB ObjectId
-const validateObjectId = (id) => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
-
-// Hämta aktiva uppgifter
+// Hämta alla uppgifter (för inloggad användare eller admin)
 const getTasks = async (req, res) => {
   try {
-    let query = { isActive: true };
-    if (req.user.role !== "ADMIN") {
-      query.assignedTo = req.user._id;
+    let tasks;
+    // Om användaren är admin eller superadmin, hämta alla aktiva uppgifter
+    if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
+      tasks = await Task.find({ isActive: true })
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
+    } else {
+      // För vanliga användare, hämta bara deras tilldelade uppgifter
+      tasks = await Task.find({
+        isActive: true,
+        assignedTo: req.user._id,
+      })
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name email")
+        .populate("comments.createdBy", "name email");
     }
-
-    const tasks = await Task.find(query)
-      .populate("assignedTo", "name")
-      .populate("comments.createdBy", "name");
-
-    res.status(200).json({
-      tasks: tasks || [],
-      status: true,
-      msg: "Tasks found successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+    res.json({ tasks });
+  } catch (error) {
+    console.error("Error in getTasks:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Hämta alla uppgifter (inklusive inaktiva) - endast för admin
+// Hämta alla uppgifter (inklusive inaktiva)
 const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find()
-      .populate("assignedTo", "name")
-      .populate("comments.createdBy", "name");
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
-    res.status(200).json({
-      tasks: tasks || [],
-      status: true,
-      msg: "All tasks found successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+    const tasks = await Task.find()
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
+    res.json({ tasks });
+  } catch (error) {
+    console.error("Error in getAllTasks:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -55,296 +51,227 @@ const getAllTasks = async (req, res) => {
 const getTask = async (req, res) => {
   try {
     if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
+      return res.status(400).json({ message: "Invalid task ID" });
     }
 
     const task = await Task.findById(req.params.id)
-      .populate("assignedTo", "name")
-      .populate("comments.createdBy", "name");
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
 
     if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
+    // Kontrollera behörighet
     if (
       req.user.role !== "ADMIN" &&
-      task.assignedTo.toString() !== req.user._id.toString()
+      req.user.role !== "SUPERADMIN" &&
+      task.assignedTo?._id.toString() !== req.user._id.toString()
     ) {
-      return res
-        .status(403)
-        .json({ status: false, msg: "Not authorized to view this task" });
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    res.status(200).json({
-      task,
-      status: true,
-      msg: "Task found successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+    res.json(task);
+  } catch (error) {
+    console.error("Error in getTask:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Skapa en ny uppgift
+// Skapa ny uppgift
 const createTask = async (req, res) => {
   try {
-    const { title, description, assignedTo, dueDate, status } = req.body;
-    if (!title || !description || !dueDate) {
-      return res
-        .status(400)
-        .json({ status: false, msg: "Required fields missing" });
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    const task = await Task.create({
-      title,
-      description,
-      assignedTo,
-      dueDate,
-      status: status || "pending",
+    const task = new Task({
+      ...req.body,
       createdBy: req.user._id,
-      isActive: true,
     });
 
-    const populatedTask = await task.populate("assignedTo", "name");
-    res.status(201).json({
-      task: populatedTask,
-      status: true,
-      msg: "Task created successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+    const savedTask = await task.save();
+    const populatedTask = await Task.findById(savedTask._id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
+
+    res.status(201).json({ task: populatedTask });
+  } catch (error) {
+    console.error("Error in createTask:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Uppdatera en uppgift
+// Uppdatera uppgift
 const updateTask = async (req, res) => {
   try {
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
-    }
-
-    const { title, description, assignedTo, dueDate, status } = req.body;
-    if (!title || !description || !dueDate) {
-      return res
-        .status(400)
-        .json({ status: false, msg: "Required fields missing" });
-    }
-
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { title, description, assignedTo, dueDate, status },
-      { new: true }
-    ).populate("assignedTo", "name");
-
-    if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
-    }
-
-    res.status(200).json({
-      task,
-      status: true,
-      msg: "Task updated successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
-  }
-};
-
-// Inaktivera en uppgift (istället för att ta bort den)
-const deleteTask = async (req, res) => {
-  try {
-    if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
-    }
-
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
-    }
-
-    res.status(200).json({
-      status: true,
-      msg: "Task deactivated successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
-  }
-};
-
-// Växla uppgiftens aktiva status
-const toggleTaskStatus = async (req, res) => {
-  try {
-    if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
+      return res.status(400).json({ message: "Invalid task ID" });
     }
 
     const task = await Task.findById(req.params.id);
     if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    )
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
+
+    res.json({ task: updatedTask });
+  } catch (error) {
+    console.error("Error in updateTask:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Radera (inaktivera) uppgift
+const deleteTask = async (req, res) => {
+  try {
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (!validateObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    task.isActive = false;
+    await task.save();
+
+    res.json({ message: "Task deactivated successfully" });
+  } catch (error) {
+    console.error("Error in deleteTask:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Växla uppgiftsstatus
+const toggleTaskStatus = async (req, res) => {
+  try {
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (!validateObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
     }
 
     task.isActive = !task.isActive;
     await task.save();
 
-    res.status(200).json({
+    res.json({
+      message: `Task ${
+        task.isActive ? "activated" : "deactivated"
+      } successfully`,
       task,
-      status: true,
-      msg: `Task ${task.isActive ? "activated" : "deactivated"} successfully..`,
     });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+  } catch (error) {
+    console.error("Error in toggleTaskStatus:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Växla kommentarens aktiva status
+// Växla kommentarstatus
 const toggleCommentStatus = async (req, res) => {
   try {
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const { taskId, commentId } = req.params;
 
     if (!validateObjectId(taskId) || !validateObjectId(commentId)) {
-      return res.status(400).json({ status: false, msg: "Invalid ID" });
+      return res.status(400).json({ message: "Invalid task or comment ID" });
     }
 
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
     const comment = task.comments.id(commentId);
     if (!comment) {
-      return res.status(404).json({ status: false, msg: "Comment not found" });
+      return res.status(404).json({ message: "Comment not found" });
     }
 
     comment.isActive = !comment.isActive;
     await task.save();
 
-    res.status(200).json({
-      task,
-      status: true,
-      msg: `Comment ${
+    res.json({
+      message: `Comment ${
         comment.isActive ? "activated" : "deactivated"
-      } successfully..`,
+      } successfully`,
+      task,
     });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+  } catch (error) {
+    console.error("Error in toggleCommentStatus:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Lägg till en kommentar
+// Lägg till kommentar
 const addComment = async (req, res) => {
   try {
     if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
+      return res.status(400).json({ message: "Invalid task ID" });
     }
 
     const task = await Task.findById(req.params.id);
     if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
+    // Kontrollera behörighet
     if (
       req.user.role !== "ADMIN" &&
-      task.assignedTo.toString() !== req.user._id.toString()
+      req.user.role !== "SUPERADMIN" &&
+      task.assignedTo?.toString() !== req.user._id.toString()
     ) {
-      return res
-        .status(403)
-        .json({ status: false, msg: "Not authorized to comment on this task" });
-    }
-
-    const { content } = req.body;
-    if (!content) {
-      return res
-        .status(400)
-        .json({ status: false, msg: "Comment content is required" });
+      return res.status(403).json({ message: "Access denied" });
     }
 
     task.comments.push({
-      content,
+      content: req.body.content,
       createdBy: req.user._id,
-      isActive: true,
     });
 
     await task.save();
-    const updatedTask = await task
-      .populate("assignedTo", "name")
-      .populate("comments.createdBy", "name");
 
-    res.status(200).json({
-      task: updatedTask,
-      status: true,
-      msg: "Comment added successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
-  }
-};
+    const updatedTask = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
 
-// Uppdatera uppgiftens status
-const updateTaskStatus = async (req, res) => {
-  try {
-    if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ status: false, msg: "Invalid task ID" });
-    }
-
-    const task = await Task.findById(req.params.id);
-    if (!task) {
-      return res.status(404).json({ status: false, msg: "Task not found" });
-    }
-
-    if (
-      req.user.role !== "ADMIN" &&
-      task.assignedTo.toString() !== req.user._id.toString()
-    ) {
-      return res
-        .status(403)
-        .json({ status: false, msg: "Not authorized to update this task" });
-    }
-
-    const { status } = req.body;
-    if (!status) {
-      return res.status(400).json({ status: false, msg: "Status is required" });
-    }
-
-    task.status = status;
-    await task.save();
-    const updatedTask = await task.populate("assignedTo", "name");
-
-    res.status(200).json({
-      task: updatedTask,
-      status: true,
-      msg: "Task status updated successfully..",
-    });
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ status: false, msg: "Internal Server Error" });
+    res.json({ task: updatedTask });
+  } catch (error) {
+    console.error("Error in addComment:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -358,5 +285,4 @@ module.exports = {
   toggleTaskStatus,
   toggleCommentStatus,
   addComment,
-  updateTaskStatus,
 };

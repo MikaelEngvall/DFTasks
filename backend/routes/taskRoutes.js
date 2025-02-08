@@ -13,13 +13,13 @@ const {
   toggleCommentStatus,
   addComment,
 } = require("../controllers/taskController");
-const { protect, admin } = require("../middleware/authMiddleware");
+const { protect, admin, superadmin } = require("../middleware/authMiddleware");
 const Task = require("../models/Task");
 
 // Skydda alla routes med auth middleware
 router.use(protect);
 
-// CRUD routes
+// CRUD routes - tillåt både admin och superadmin
 router.route("/").get(getTasks).post(admin, createTask);
 router.route("/all").get(admin, getAllTasks);
 router.route("/:id").get(getTask).put(admin, updateTask);
