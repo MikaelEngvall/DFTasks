@@ -363,15 +363,25 @@ const approvePendingTask = async (req, res) => {
       dueDate,
       createdBy: req.user._id,
       status: "pending",
+      // Lägg till reporterinformation från pendingTask
+      reporterName: pendingTask.reporterName,
+      reporterEmail: pendingTask.reporterEmail,
+      reporterPhone: pendingTask.reporterPhone,
+      address: pendingTask.address,
+      apartmentNumber: pendingTask.apartmentNumber,
     });
 
     await task.save();
 
-    // Uppdatera status på väntande uppgift
-    pendingTask.status = "approved";
-    await pendingTask.save();
+    // Ta bort den godkända uppgiften från pendingTasks
+    await PendingTask.findByIdAndDelete(taskId);
 
-    res.json({ message: "Task approved successfully", task });
+    // Hämta den sparade uppgiften med populerade fält
+    const populatedTask = await Task.findById(task._id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
+
+    res.json({ message: "Task approved successfully", task: populatedTask });
   } catch (error) {
     console.error("Error in approvePendingTask:", error);
     res.status(500).json({ message: "Server error" });
