@@ -75,6 +75,11 @@ const resources = {
       password: "Lösenord",
       role: "Roll",
       keepCurrentPassword: "Lämna tomt för att behålla nuvarande lösenord",
+      showInactive: "Visa inaktiva",
+      active: "Aktiv",
+      inactive: "Inaktiv",
+      activate: "Aktivera",
+      deactivate: "Inaktivera",
 
       // Validering
       titleRequired: "Titel är obligatorisk",
@@ -173,6 +178,11 @@ const resources = {
       password: "Password",
       role: "Role",
       keepCurrentPassword: "Leave empty to keep current password",
+      showInactive: "Show Inactive",
+      active: "Active",
+      inactive: "Inactive",
+      activate: "Activate",
+      deactivate: "Deactivate",
 
       // Validation
       titleRequired: "Title is required",
@@ -270,6 +280,11 @@ const resources = {
       password: "Hasło",
       role: "Rola",
       keepCurrentPassword: "Pozostaw puste, aby zachować aktualne hasło",
+      showInactive: "Pokaż nieaktywne",
+      active: "Aktywny",
+      inactive: "Nieaktywny",
+      activate: "Aktywuj",
+      deactivate: "Dezaktywuj",
 
       // Walidacja
       titleRequired: "Tytuł jest wymagany",
@@ -368,6 +383,11 @@ const resources = {
       password: "Пароль",
       role: "Роль",
       keepCurrentPassword: "Порожнім, щоб зберегти поточний пароль",
+      showInactive: "Показати неактивні",
+      active: "Активний",
+      inactive: "Неактивний",
+      activate: "Активувати",
+      deactivate: "Деактивувати",
 
       // Валідація
       titleRequired: "Заголовок обов'язковий",
