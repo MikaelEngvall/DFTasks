@@ -5,7 +5,7 @@ import TaskForm from "./TaskForm";
 import { useTheme } from "../context/ThemeContext";
 import { format, isValid } from "date-fns";
 import { useTranslation } from "react-i18next";
-import { translateContent } from "../utils/translateContent";
+import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import { jwtDecode } from "jwt-decode";
 
 function TaskManagement({ userRole, userId }) {
@@ -21,6 +21,9 @@ function TaskManagement({ userRole, userId }) {
   const { t, i18n } = useTranslation();
   const [editedStatus, setEditedStatus] = useState(null);
 
+  const { translateTask, translateTasks, translateComments, currentLanguage } =
+    useTaskTranslation();
+
   const getUserName = (assignedTo) => {
     if (!assignedTo) return t("unassigned");
     if (typeof assignedTo === "string") {
@@ -33,28 +36,18 @@ function TaskManagement({ userRole, userId }) {
   useEffect(() => {
     fetchTasks();
     fetchUsers();
-  }, [i18n.language]);
+  }, [currentLanguage]);
 
-  // Ny useEffect för att uppdatera den valda uppgiftens kommentarer när språket ändras
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
       if (selectedTask && selectedTask.comments?.length > 0) {
-        const translatedComments = await Promise.all(
-          selectedTask.comments.map(async (comment) => ({
-            ...comment,
-            content: await translateContent(comment.content, i18n.language),
-            createdBy: comment.createdBy || { name: t("unassigned") },
-          }))
-        );
-        setSelectedTask({
-          ...selectedTask,
-          comments: translatedComments,
-        });
+        const translatedTask = await translateTask(selectedTask);
+        setSelectedTask(translatedTask);
       }
     };
 
     updateSelectedTaskComments();
-  }, [i18n.language, selectedTask?._id, t]);
+  }, [currentLanguage, selectedTask?._id]);
 
   const fetchTasks = async () => {
     try {
@@ -73,35 +66,7 @@ function TaskManagement({ userRole, userId }) {
           };
         });
 
-        const translatedTasks = await Promise.all(
-          tasks.map(async (task) => {
-            const translatedTitle = await translateContent(
-              task.title,
-              i18n.language
-            );
-            const translatedDesc = await translateContent(
-              task.description,
-              i18n.language
-            );
-
-            // Översätt alla kommentarer
-            const translatedComments = await Promise.all(
-              (task.comments || []).map(async (comment) => ({
-                ...comment,
-                content: await translateContent(comment.content, i18n.language),
-                createdBy: comment.createdBy || { name: t("unassigned") },
-              }))
-            );
-
-            return {
-              ...task,
-              title: translatedTitle,
-              description: translatedDesc,
-              comments: translatedComments,
-            };
-          })
-        );
-
+        const translatedTasks = await translateTasks(tasks);
         setTasks(translatedTasks);
       } else {
         setTasks([]);
@@ -149,21 +114,11 @@ function TaskManagement({ userRole, userId }) {
 
   const handleTaskClick = async (task) => {
     try {
-      // Översätt kommentarer när uppgiften öppnas
-      if (task.comments?.length > 0) {
-        const translatedComments = await Promise.all(
-          task.comments.map(async (comment) => ({
-            ...comment,
-            content: await translateContent(comment.content, i18n.language),
-            createdBy: comment.createdBy || { name: t("unassigned") },
-          }))
-        );
-        task.comments = translatedComments;
-      }
-      setSelectedTask(task);
+      const translatedTask = await translateTask(task);
+      setSelectedTask(translatedTask);
       setShowTaskDetails(true);
     } catch (error) {
-      console.error("Error translating comments:", error);
+      console.error("Error translating task:", error);
       setSelectedTask(task);
       setShowTaskDetails(true);
     }
@@ -179,10 +134,7 @@ function TaskManagement({ userRole, userId }) {
       );
 
       if (response.data && response.data.task) {
-        const translatedTask = await translateContent(
-          response.data.task,
-          i18n.language
-        );
+        const translatedTask = await translateTask(response.data.task);
         setTasks(tasks.map((t) => (t._id === task._id ? translatedTask : t)));
         setSelectedTask(translatedTask);
         setEditedStatus(null);
@@ -217,17 +169,7 @@ function TaskManagement({ userRole, userId }) {
           taskData
         );
         if (response.data && response.data.task) {
-          const translatedTask = {
-            ...response.data.task,
-            title: await translateContent(
-              response.data.task.title,
-              i18n.language
-            ),
-            description: await translateContent(
-              response.data.task.description,
-              i18n.language
-            ),
-          };
+          const translatedTask = await translateTask(response.data.task);
           setTasks(
             tasks.map((task) =>
               task._id === selectedTask._id ? translatedTask : task
@@ -251,17 +193,7 @@ function TaskManagement({ userRole, userId }) {
 
         const response = await axiosInstance.post("/api/tasks", taskDataToSend);
         if (response.data && response.data.task) {
-          const translatedTask = {
-            ...response.data.task,
-            title: await translateContent(
-              response.data.task.title,
-              i18n.language
-            ),
-            description: await translateContent(
-              response.data.task.description,
-              i18n.language
-            ),
-          };
+          const translatedTask = await translateTask(response.data.task);
           setTasks([...tasks, translatedTask]);
           setShowTaskForm(false);
           setSelectedTask(null);
@@ -303,22 +235,13 @@ function TaskManagement({ userRole, userId }) {
         { content: newComment }
       );
       if (response.data && response.data.task) {
-        // Översätt den nya kommentaren och alla befintliga kommentarer
-        const translatedComments = await Promise.all(
-          response.data.task.comments.map(async (comment) => ({
-            ...comment,
-            content: await translateContent(comment.content, i18n.language),
-            createdBy: comment.createdBy || { name: t("unassigned") },
-          }))
-        );
-        response.data.task.comments = translatedComments;
-
+        const translatedTask = await translateTask(response.data.task);
         setTasks(
           tasks.map((task) =>
-            task._id === selectedTask._id ? response.data.task : task
+            task._id === selectedTask._id ? translatedTask : task
           )
         );
-        setSelectedTask(response.data.task);
+        setSelectedTask(translatedTask);
         setNewComment("");
       }
     } catch (error) {
