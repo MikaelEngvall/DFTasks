@@ -28,13 +28,12 @@ const Navbar = () => {
             >
               DFTasks
             </Link>
+            <div className="ml-4 scale-75 sm:scale-100">
+              <LanguageSelector />
+            </div>
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="scale-75 sm:scale-100">
-              <LanguageSelector />
-            </div>
-
             <button
               onClick={toggleTheme}
               className="p-1.5 sm:p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
