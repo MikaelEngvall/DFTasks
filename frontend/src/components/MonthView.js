@@ -321,25 +321,21 @@ function MonthView() {
       </div>
 
       {showTaskDetails && selectedTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100]">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[45]">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="flex justify-between items-start p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-[101]">
-              <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                {selectedTask.title}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowTaskDetails(false);
-                  setSelectedTask(null);
-                  setEditedStatus(null);
-                }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                ✕
-              </button>
-            </div>
-
             <div className="p-6">
+              <div className="flex justify-between items-start mb-6 sticky top-0 bg-white dark:bg-gray-800 z-[46] pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-semibold text-df-primary dark:text-white">
+                  {selectedTask.title}
+                </h2>
+                <button
+                  onClick={() => setShowTaskDetails(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
