@@ -26,6 +26,8 @@ function TaskManagement({ userRole, userId }) {
   const { translateTask, translateTasks, translateComments, currentLanguage } =
     useTaskTranslation();
 
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
+
   const getUserName = (assignedTo) => {
     if (!assignedTo) return t("unassigned");
     if (typeof assignedTo === "string") {
@@ -269,7 +271,7 @@ function TaskManagement({ userRole, userId }) {
           <h2 className="text-xl font-semibold text-df-primary dark:text-white">
             {t("tasks")}
           </h2>
-          {userRole === "ADMIN" && (
+          {isAdmin && (
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -283,7 +285,7 @@ function TaskManagement({ userRole, userId }) {
             </label>
           )}
         </div>
-        {userRole === "ADMIN" && (
+        {isAdmin && (
           <button
             onClick={() => {
               setSelectedTask(null);
@@ -369,7 +371,7 @@ function TaskManagement({ userRole, userId }) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {userRole === "ADMIN" && (
+                  {isAdmin && (
                     <>
                       <button
                         onClick={(e) => handleToggleTaskStatus(task._id, e)}
