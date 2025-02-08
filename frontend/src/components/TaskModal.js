@@ -21,6 +21,14 @@ function TaskModal({
     setEditedStatus(null);
   };
 
+  const canEditTask = () => {
+    return (
+      userRole === "ADMIN" ||
+      userRole === "SUPERADMIN" ||
+      task.assignedTo?._id === userId
+    );
+  };
+
   const handleAddComment = () => {
     if (!newComment.trim()) return;
     onAddComment(newComment);
@@ -73,7 +81,7 @@ function TaskModal({
                   <h4 className="text-sm font-medium text-df-primary dark:text-white">
                     {t("status")}
                   </h4>
-                  {userRole === "ADMIN" || task.assignedTo?._id === userId ? (
+                  {canEditTask() ? (
                     <div className="space-y-2">
                       <select
                         value={editedStatus || task.status}
@@ -154,23 +162,25 @@ function TaskModal({
                     </p>
                   )}
                 </div>
-                {(userRole === "ADMIN" || task.assignedTo?._id === userId) && (
-                  <div className="mt-4">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder={t("writeComment")}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-df-primary focus:border-df-primary dark:bg-gray-700 dark:text-white"
-                      rows="3"
-                    />
-                    <button
-                      onClick={handleAddComment}
-                      className="mt-2 w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
-                    >
-                      {t("addComment")}
-                    </button>
-                  </div>
-                )}
+                <div className="mt-4">
+                  {canEditTask() && (
+                    <div className="mt-4">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder={t("writeComment")}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-df-primary focus:border-df-primary dark:bg-gray-700 dark:text-white"
+                        rows="3"
+                      />
+                      <button
+                        onClick={handleAddComment}
+                        className="mt-2 w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                      >
+                        {t("addComment")}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

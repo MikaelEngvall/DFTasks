@@ -108,6 +108,14 @@ function MonthView() {
     }
   };
 
+  const canEditTask = (task) => {
+    return (
+      currentUser.role === "ADMIN" ||
+      currentUser.role === "SUPERADMIN" ||
+      task.assignedTo?._id === currentUser.id
+    );
+  };
+
   const getStatusClass = (status) => {
     switch (status) {
       case "completed":
@@ -289,7 +297,7 @@ function MonthView() {
                       <div
                         key={task._id}
                         className={`p-2 rounded-lg ${
-                          task.assignedTo?._id === currentUser?.id
+                          canEditTask(task)
                             ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
                             : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
                         } cursor-pointer transition-colors duration-150`}

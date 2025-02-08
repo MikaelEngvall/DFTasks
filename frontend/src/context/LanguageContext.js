@@ -15,6 +15,14 @@ const resources = {
       edit: "Redigera",
       close: "Stäng",
 
+      // Login och användarhantering
+      email: "E-postadress",
+      password: "Lösenord",
+      login: "Logga in",
+      propertyManagement: "Fastighetsförvaltning",
+      enterEmail: "Ange e-postadress",
+      enterPassword: "Ange lösenord",
+
       // Uppgifter
       tasks: "Uppgifter",
       newTask: "Ny uppgift",
@@ -55,7 +63,6 @@ const resources = {
       // Användarhantering
       users: "Användare",
       name: "Namn",
-      email: "E-post",
       role: "Roll",
       showInactive: "Visa inaktiva användare",
       active: "Aktiv",
@@ -65,48 +72,6 @@ const resources = {
       errorFetchingUsers: "Det gick inte att hämta användare",
       errorUpdatingUser: "Det gick inte att uppdatera användaren",
       errorTogglingUserStatus: "Det gick inte att ändra användarens status",
-
-      // User Management
-      users: "Users",
-      name: "Name",
-      email: "Email",
-      role: "Role",
-      showInactive: "Show Inactive Users",
-      active: "Active",
-      inactive: "Inactive",
-      activate: "Activate",
-      deactivate: "Deactivate",
-      errorFetchingUsers: "Failed to fetch users",
-      errorUpdatingUser: "Failed to update user",
-      errorTogglingUserStatus: "Failed to toggle user status",
-
-      // Zarządzanie użytkownikami
-      users: "Użytkownicy",
-      name: "Imię",
-      email: "Email",
-      role: "Rola",
-      showInactive: "Pokaż nieaktywnych użytkowników",
-      active: "Aktywny",
-      inactive: "Nieaktywny",
-      activate: "Aktywuj",
-      deactivate: "Dezaktywuj",
-      errorFetchingUsers: "Nie udało się pobrać użytkowników",
-      errorUpdatingUser: "Nie udało się zaktualizować użytkownika",
-      errorTogglingUserStatus: "Nie udało się przełączyć statusu użytkownika",
-
-      // Управління користувачами
-      users: "Користувачі",
-      name: "Ім'я",
-      email: "Email",
-      role: "Роль",
-      showInactive: "Показати неактивних користувачів",
-      active: "Активний",
-      inactive: "Неактивний",
-      activate: "Активувати",
-      deactivate: "Деактивувати",
-      errorFetchingUsers: "Не вдалося отримати користувачів",
-      errorUpdatingUser: "Не вдалося оновити користувача",
-      errorTogglingUserStatus: "Не вдалося змінити статус користувача",
     },
   },
   en: {
