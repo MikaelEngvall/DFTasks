@@ -14,11 +14,11 @@ const resources = {
       close: "Stäng",
 
       // Login och användarhantering
-      email: "E-postadress",
+      email: "E-post",
       password: "Lösenord",
       login: "Logga in",
       propertyManagement: "Fastighetsförvaltning",
-      enterEmail: "Ange e-postadress",
+      enterEmail: "Ange e-post",
       enterPassword: "Ange lösenord",
 
       // Uppgifter
@@ -71,8 +71,6 @@ const resources = {
       newUser: "Ny användare",
       editUser: "Redigera användare",
       name: "Namn",
-      email: "E-post",
-      password: "Lösenord",
       role: "Roll",
       keepCurrentPassword: "Lämna tomt för att behålla nuvarande lösenord",
       showInactive: "Visa inaktiva",
