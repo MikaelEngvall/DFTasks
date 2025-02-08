@@ -2,6 +2,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const {
+  startEmailListener,
+  testEmailProcessing,
+} = require("./utils/emailListener");
 
 const app = express();
 
@@ -27,11 +31,12 @@ const profileRoutes = require("./routes/profileRoutes");
 const userRoutes = require("./routes/userRoutes");
 const translateRoutes = require("./routes/translateRoutes");
 
-app.use("/auth", authRoutes);
-app.use("/tasks", taskRoutes);
-app.use("/profile", profileRoutes);
-app.use("/users", userRoutes);
-app.use("/translate", translateRoutes);
+// API routes with /api prefix
+app.use("/api/auth", authRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/translate", translateRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -39,13 +44,23 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Något gick fel!" });
 });
 
-// Connect to MongoDB
+// Connect to MongoDB and start email listener
 mongoose
   .connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("MongoDB connected..."))
+  .then(async () => {
+    console.log("MongoDB connected...");
+    startEmailListener();
+    console.log("Email listener started...");
+
+    // Kör testfunktionen efter 5 sekunder för att säkerställa att allt är uppstartat
+    setTimeout(async () => {
+      console.log("Running test email processing...");
+      await testEmailProcessing();
+    }, 5000);
+  })
   .catch((err) => {
     console.error("MongoDB connection error:", err);
     process.exit(1);

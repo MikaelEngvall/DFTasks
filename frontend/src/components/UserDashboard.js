@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import TaskManagement from "./TaskManagement";
 import UserManagement from "./UserManagement";
+import PendingTasksManagement from "./PendingTasksManagement";
 import { useTranslation } from "react-i18next";
 
 function UserDashboard() {
@@ -58,6 +59,16 @@ function UserDashboard() {
                     {t("tasks")}
                   </button>
                   <button
+                    onClick={() => setActiveTab("pending")}
+                    className={`${
+                      activeTab === "pending"
+                        ? "border-df-primary text-df-primary dark:border-df-accent dark:text-white"
+                        : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium transition-colors duration-150`}
+                  >
+                    {t("pendingTasks")}
+                  </button>
+                  <button
                     onClick={() => setActiveTab("users")}
                     className={`${
                       activeTab === "users"
@@ -74,12 +85,10 @@ function UserDashboard() {
 
           <div className="mt-6">
             {activeTab === "tasks" && (
-              <TaskManagement userRole={user.role} userId={user.id} />
+              <TaskManagement userRole={user.role} userId={user._id} />
             )}
-            {activeTab === "users" &&
-              (user.role === "ADMIN" || user.role === "SUPERADMIN") && (
-                <UserManagement />
-              )}
+            {activeTab === "pending" && <PendingTasksManagement />}
+            {activeTab === "users" && <UserManagement />}
           </div>
         </div>
       </div>

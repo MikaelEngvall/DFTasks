@@ -1,11 +1,9 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000",
-  withCredentials: false,
+  baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
   },
 });
 
@@ -16,6 +14,11 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log("Request config:", {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+    });
     return config;
   },
   (error) => {
@@ -28,7 +31,6 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token is invalid or expired
       localStorage.removeItem("token");
       window.location.href = "/dftasks/login";
     }

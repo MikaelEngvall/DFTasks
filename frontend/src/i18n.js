@@ -103,6 +103,19 @@ const resources = {
       resetPasswordError:
         "Det gick inte att återställa lösenordet. Försök igen senare.",
       invalidResetToken: "Ogiltig eller utgången återställningslänk",
+
+      // Felanmälningshantering
+      pendingTasks: "Väntande uppgifter",
+      reviewTask: "Granska uppgift",
+      reporterInfo: "Anmälarinformation",
+      phone: "Telefon",
+      taskDetails: "Uppgiftsinformation",
+      assignTo: "Tilldela till",
+      selectUser: "Välj användare",
+      approve: "Godkänn",
+      review: "Granska",
+      receivedAt: "Mottagen",
+      reporter: "Anmälare",
     },
   },
   en: {
@@ -205,6 +218,19 @@ const resources = {
         "Your password has been reset. You will be redirected to the login page.",
       resetPasswordError: "Failed to reset password. Please try again later.",
       invalidResetToken: "Invalid or expired reset link",
+
+      // Issue reporting management
+      pendingTasks: "Pending Tasks",
+      reviewTask: "Review Task",
+      reporterInfo: "Reporter Information",
+      phone: "Phone",
+      taskDetails: "Task Details",
+      assignTo: "Assign To",
+      selectUser: "Select User",
+      approve: "Approve",
+      review: "Review",
+      receivedAt: "Received At",
+      reporter: "Reporter",
     },
   },
   pl: {

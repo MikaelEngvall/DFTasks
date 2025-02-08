@@ -40,7 +40,7 @@ const LanguageSelector = () => {
             style={{
               width: "1.5em",
               height: "1.5em",
-              "@media (min-width: 640px)": {
+              "@media (minWidth: 640px)": {
                 width: "2em",
                 height: "2em",
               },

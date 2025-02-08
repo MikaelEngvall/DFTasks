@@ -12,6 +12,8 @@ const {
   toggleTaskStatus,
   toggleCommentStatus,
   addComment,
+  getPendingTasks,
+  approvePendingTask,
 } = require("../controllers/taskController");
 const { protect, admin, superadmin } = require("../middleware/authMiddleware");
 const Task = require("../models/Task");
@@ -22,7 +24,11 @@ router.use(protect);
 // CRUD routes - tillåt både admin och superadmin
 router.route("/").get(getTasks).post(admin, createTask);
 router.route("/all").get(admin, getAllTasks);
-router.route("/:id").get(getTask).put(admin, updateTask);
+router
+  .route("/:id")
+  .get(getTask)
+  .put(admin, updateTask)
+  .delete(admin, deleteTask);
 router.route("/:id/status").put(admin, toggleTaskStatus);
 router.route("/:id/toggle").put(admin, toggleTaskStatus);
 router
@@ -30,7 +36,8 @@ router
   .put(admin, toggleCommentStatus);
 router.route("/:id/comments").post(addComment);
 
-// Uppdatera delete route för att använda den nya inaktiveringsfunktionen
-router.route("/:id").delete(admin, deleteTask);
+// Pending task routes
+router.route("/pending").get(admin, getPendingTasks);
+router.route("/pending/:taskId/approve").post(admin, approvePendingTask);
 
 module.exports = router;
