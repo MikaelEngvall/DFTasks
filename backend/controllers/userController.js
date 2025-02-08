@@ -6,7 +6,7 @@ const userController = {
   // Get all users
   getUsers: async (req, res) => {
     try {
-      const users = await User.find().select("-password"); // Exkludera lösenord
+      const users = await User.find({ isActive: true }).select("-password");
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -119,14 +119,18 @@ const userController = {
   // Delete user
   deleteUser: async (req, res) => {
     try {
-      const user = await User.findByIdAndDelete(req.params.id);
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        { isActive: false },
+        { new: true }
+      );
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      res.json({ message: "User deleted successfully" });
+      res.json({ message: "User deactivated successfully" });
     } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Error deleting user" });
+      console.error("Error deactivating user:", error);
+      res.status(500).json({ message: "Error deactivating user" });
     }
   },
 
@@ -178,9 +182,11 @@ const userController = {
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
+      console.log("Login attempt for:", email);
 
       // Validera indata
       if (!email || !password) {
+        console.log("Missing email or password");
         return res
           .status(400)
           .json({ message: "Email and password are required" });
@@ -189,11 +195,15 @@ const userController = {
       // Hitta användaren
       const user = await User.findOne({ email });
       if (!user) {
+        console.log("User not found");
         return res.status(401).json({ message: "Invalid credentials" });
       }
+      console.log("User found:", user.email);
 
-      // Verifiera lösenord
-      const isMatch = await bcrypt.compare(password, user.password);
+      // Verifiera lösenord med matchPassword-metoden
+      const isMatch = await user.matchPassword(password);
+      console.log("Password match:", isMatch);
+
       if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -242,6 +252,34 @@ const userController = {
         message: "Ett fel uppstod vid hämtning av användare",
         error: error.message,
       });
+    }
+  },
+
+  // Aktivera/inaktivera användare
+  toggleUserStatus: async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      user.isActive = !user.isActive;
+      await user.save();
+
+      res.json({
+        message: `User ${
+          user.isActive ? "activated" : "deactivated"
+        } successfully`,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error toggling user status" });
     }
   },
 };

@@ -9,12 +9,14 @@ function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showInactive, setShowInactive] = useState(false);
   const { t } = useTranslation();
 
   const fetchUsers = async () => {
     try {
-      const response = await axiosInstance.get("/api/users");
-      console.log("Fetch users response:", response.data);
+      const response = await axiosInstance.get(
+        showInactive ? "/api/users/all" : "/api/users"
+      );
       setUsers(response.data);
       setLoading(false);
     } catch (error) {
@@ -25,12 +27,11 @@ function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [showInactive]);
 
   const handleCreate = async (userData) => {
     try {
       const response = await axiosInstance.post("/api/users", userData);
-      console.log("Create user response:", response.data);
       setUsers([...users, response.data]);
       setShowModal(false);
     } catch (error) {
@@ -44,7 +45,6 @@ function UserManagement() {
         `/api/users/${selectedUser._id}`,
         userData
       );
-      console.log("Update user response:", response.data);
       setUsers(
         users.map((user) =>
           user._id === selectedUser._id ? response.data : user
@@ -60,12 +60,20 @@ function UserManagement() {
   const handleDelete = async (userId) => {
     if (window.confirm(t("deleteUserConfirm"))) {
       try {
-        const response = await axiosInstance.delete(`/api/users/${userId}`);
-        console.log("Delete user response:", response.data);
-        setUsers(users.filter((user) => user._id !== userId));
+        await axiosInstance.delete(`/api/users/${userId}`);
+        await fetchUsers();
       } catch (error) {
-        console.error("Error deleting user:", error);
+        console.error("Error deactivating user:", error);
       }
+    }
+  };
+
+  const handleToggleStatus = async (userId) => {
+    try {
+      await axiosInstance.put(`/api/users/${userId}/toggle`);
+      await fetchUsers();
+    } catch (error) {
+      console.error("Error toggling user status:", error);
     }
   };
 
@@ -80,9 +88,22 @@ function UserManagement() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
-          {t("users")}
-        </h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
+            {t("users")}
+          </h1>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-df-primary"
+            />
+            <span className="text-sm text-df-primary dark:text-white">
+              {t("showInactive")}
+            </span>
+          </label>
+        </div>
         <button
           onClick={() => setShowModal(true)}
           className="bg-df-primary text-white px-4 py-2 rounded-md hover:bg-df-dark transition-colors duration-150"
@@ -114,7 +135,9 @@ function UserManagement() {
               {users.map((user) => (
                 <tr
                   key={user._id}
-                  className="hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150"
+                  className={`hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150 ${
+                    !user.isActive ? "opacity-50" : ""
+                  }`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-df-primary dark:text-white">
@@ -140,6 +163,17 @@ function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex space-x-3">
                       <button
+                        onClick={() => handleToggleStatus(user._id)}
+                        className={`${
+                          user.isActive
+                            ? "text-green-600 hover:text-green-900"
+                            : "text-red-600 hover:text-red-900"
+                        }`}
+                        title={user.isActive ? t("deactivate") : t("activate")}
+                      >
+                        {user.isActive ? "✓" : "×"}
+                      </button>
+                      <button
                         onClick={() => {
                           setSelectedUser(user);
                           setShowModal(true);
@@ -147,12 +181,6 @@ function UserManagement() {
                         className="text-df-secondary hover:text-df-primary dark:text-df-accent dark:hover:text-white transition-colors duration-150"
                       >
                         <FaEdit className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user._id)}
-                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors duration-150"
-                      >
-                        <FaTrash className="h-5 w-5" />
                       </button>
                     </div>
                   </td>
@@ -166,7 +194,10 @@ function UserManagement() {
       {showModal && (
         <UserForm
           user={selectedUser}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedUser(null);
+          }}
           onSubmit={selectedUser ? handleEdit : handleCreate}
         />
       )}

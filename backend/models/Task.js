@@ -17,6 +17,10 @@ const commentSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
@@ -60,6 +64,10 @@ const taskSchema = new mongoose.Schema(
       required: true,
     },
     comments: [commentSchema],
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

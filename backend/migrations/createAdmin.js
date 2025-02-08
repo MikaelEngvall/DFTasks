@@ -1,25 +1,31 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const User = require("../models/User");
 
 const createAdmin = async () => {
   try {
+    // Anslut till MongoDB
     await mongoose.connect(process.env.MONGODB_URL, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
     console.log("Connected to MongoDB...");
 
-    // Ta bort existerande admin-användare
+    // Ta bort befintlig admin
     await User.deleteOne({ email: "admin@example.com" });
-    console.log("Removed existing admin user if any");
+    console.log("Removed existing admin user");
 
-    // Skapa ny admin-användare utan att hasha lösenordet manuellt
+    // Skapa admin-användare
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash("Admin123!", salt);
+
     const adminUser = new User({
       name: "Admin User",
       email: "admin@example.com",
-      password: "Admin123!", // Lösenordet kommer att hashas automatiskt av pre-save middleware
+      password: hashedPassword,
       role: "ADMIN",
+      isActive: true,
     });
 
     await adminUser.save();

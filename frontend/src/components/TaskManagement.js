@@ -20,6 +20,7 @@ function TaskManagement({ userRole, userId }) {
   const { darkMode } = useTheme();
   const { t, i18n } = useTranslation();
   const [editedStatus, setEditedStatus] = useState(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   const { translateTask, translateTasks, translateComments, currentLanguage } =
     useTaskTranslation();
@@ -36,7 +37,7 @@ function TaskManagement({ userRole, userId }) {
   useEffect(() => {
     fetchTasks();
     fetchUsers();
-  }, [currentLanguage]);
+  }, [currentLanguage, showInactive]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
@@ -52,19 +53,19 @@ function TaskManagement({ userRole, userId }) {
   const fetchTasks = async () => {
     try {
       const endpoint =
-        userRole === "ADMIN" ? "/api/tasks" : "/api/tasks/assigned";
+        userRole === "ADMIN"
+          ? showInactive
+            ? "/api/tasks/all"
+            : "/api/tasks"
+          : "/api/tasks/assigned";
       const response = await axiosInstance.get(endpoint);
       if (Array.isArray(response.data.tasks)) {
-        const tasks = response.data.tasks.map((task) => {
-          return {
-            ...task,
-            dueDate:
-              task.dueDate && task.dueDate !== "00.00.000Z"
-                ? task.dueDate
-                : null,
-            assignedTo: task.assignedTo || null,
-          };
-        });
+        const tasks = response.data.tasks.map((task) => ({
+          ...task,
+          dueDate:
+            task.dueDate && task.dueDate !== "00.00.000Z" ? task.dueDate : null,
+          assignedTo: task.assignedTo || null,
+        }));
 
         const translatedTasks = await translateTasks(tasks);
         setTasks(translatedTasks);
@@ -98,10 +99,10 @@ function TaskManagement({ userRole, userId }) {
     if (window.confirm(t("deleteConfirm"))) {
       try {
         await axiosInstance.delete(`/api/tasks/${taskId}`);
-        setTasks(tasks.filter((task) => task._id !== taskId));
+        await fetchTasks();
         setShowTaskDetails(false);
       } catch (error) {
-        alert(t("errorDeletingTask"));
+        alert(t("errorDeactivatingTask"));
       }
     }
   };
@@ -273,6 +274,31 @@ function TaskManagement({ userRole, userId }) {
     }
   };
 
+  const handleToggleTaskStatus = async (taskId, e) => {
+    e?.stopPropagation();
+    try {
+      await axiosInstance.put(`/api/tasks/${taskId}/toggle`);
+      await fetchTasks();
+    } catch (error) {
+      alert(t("errorTogglingTaskStatus"));
+    }
+  };
+
+  const handleToggleCommentStatus = async (taskId, commentId) => {
+    try {
+      await axiosInstance.put(
+        `/api/tasks/${taskId}/comments/${commentId}/toggle`
+      );
+      await fetchTasks();
+      const updatedTask = tasks.find((t) => t._id === taskId);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    } catch (error) {
+      alert(t("errorTogglingCommentStatus"));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -284,9 +310,24 @@ function TaskManagement({ userRole, userId }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-          {t("tasks")}
-        </h2>
+        <div className="flex items-center space-x-4">
+          <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+            {t("tasks")}
+          </h2>
+          {userRole === "ADMIN" && (
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="form-checkbox h-4 w-4 text-df-primary"
+              />
+              <span className="text-sm text-df-primary dark:text-white">
+                {t("showInactive")}
+              </span>
+            </label>
+          )}
+        </div>
         {userRole === "ADMIN" && (
           <button
             onClick={() => {
@@ -335,7 +376,9 @@ function TaskManagement({ userRole, userId }) {
             {tasks.map((task) => (
               <tr
                 key={task._id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
+                  !task.isActive ? "opacity-50" : ""
+                }`}
                 onClick={() => handleTaskClick(task)}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -374,18 +417,22 @@ function TaskManagement({ userRole, userId }) {
                   {userRole === "ADMIN" && (
                     <>
                       <button
+                        onClick={(e) => handleToggleTaskStatus(task._id, e)}
+                        className={`mr-3 ${
+                          task.isActive
+                            ? "text-green-600 hover:text-green-900"
+                            : "text-red-600 hover:text-red-900"
+                        }`}
+                        title={task.isActive ? t("deactivate") : t("activate")}
+                      >
+                        {task.isActive ? "✓" : "×"}
+                      </button>
+                      <button
                         onClick={(e) => handleEdit(task, e)}
                         className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
                         title={t("edit")}
                       >
                         <FaEdit className="inline-block" />
-                      </button>
-                      <button
-                        onClick={(e) => handleDelete(task._id, e)}
-                        className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
-                        title={t("delete")}
-                      >
-                        <FaTrash className="inline-block" />
                       </button>
                     </>
                   )}
@@ -482,11 +529,37 @@ function TaskManagement({ userRole, userId }) {
                     {selectedTask.comments?.map((comment, index) => (
                       <div
                         key={index}
-                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
+                        className={`bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 ${
+                          !comment.isActive ? "opacity-50" : ""
+                        }`}
                       >
-                        <p className="text-df-primary dark:text-gray-100 whitespace-pre-wrap">
-                          {comment.content}
-                        </p>
+                        <div className="flex justify-between">
+                          <p className="text-df-primary dark:text-gray-100 whitespace-pre-wrap">
+                            {comment.content}
+                          </p>
+                          {userRole === "ADMIN" && (
+                            <button
+                              onClick={() =>
+                                handleToggleCommentStatus(
+                                  selectedTask._id,
+                                  comment._id
+                                )
+                              }
+                              className={`ml-2 ${
+                                comment.isActive
+                                  ? "text-green-600 hover:text-green-900"
+                                  : "text-red-600 hover:text-red-900"
+                              }`}
+                              title={
+                                comment.isActive
+                                  ? t("deactivate")
+                                  : t("activate")
+                              }
+                            >
+                              {comment.isActive ? "✓" : "×"}
+                            </button>
+                          )}
+                        </div>
                         <div className="mt-2 text-sm text-df-primary/70 dark:text-gray-400">
                           {comment.createdBy?.name || t("unassigned")} -{" "}
                           {formatDate(comment.createdAt, "yyyy-MM-dd HH:mm")}
