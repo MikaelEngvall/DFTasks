@@ -2,11 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { jwtDecode } from "jwt-decode";
 
-function UserModal({ user, onClose, onEdit, onToggleStatus }) {
+function UserModal({
+  user,
+  onClose,
+  onEdit,
+  onToggleStatus,
+  isCreating = false,
+}) {
   const [editedName, setEditedName] = useState(user?.name || "");
   const [editedEmail, setEditedEmail] = useState(user?.email || "");
   const [editedRole, setEditedRole] = useState(user?.role || "USER");
-  const [isEditing, setIsEditing] = useState(false);
+  const [editedPassword, setEditedPassword] = useState("");
+  const [isEditing, setIsEditing] = useState(isCreating);
   const [currentUserRole, setCurrentUserRole] = useState(null);
   const { t } = useTranslation();
 
@@ -19,12 +26,20 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
   }, []);
 
   const handleSave = () => {
-    onEdit({
+    const userData = {
       name: editedName,
       email: editedEmail,
       role: editedRole,
-    });
-    setIsEditing(false);
+    };
+
+    if (isCreating || editedPassword) {
+      userData.password = editedPassword;
+    }
+
+    onEdit(userData);
+    if (!isCreating) {
+      setIsEditing(false);
+    }
   };
 
   const getDisplayRole = (role) => {
@@ -35,8 +50,9 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
   };
 
   const canEditUser = () => {
+    if (isCreating) return true;
     if (currentUserRole === "SUPERADMIN") return true;
-    return user.role !== "SUPERADMIN";
+    return user?.role !== "SUPERADMIN";
   };
 
   return (
@@ -47,7 +63,7 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
           <div className="sticky top-0 z-[46] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-df-primary dark:text-white">
-                {user.name}
+                {isCreating ? t("createUser") : user?.name}
               </h3>
               <button
                 onClick={onClose}
@@ -76,7 +92,7 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                 <h4 className="text-sm font-medium text-df-primary dark:text-white">
                   {t("name")}
                 </h4>
-                {isEditing ? (
+                {isEditing || isCreating ? (
                   <input
                     type="text"
                     value={editedName}
@@ -85,7 +101,7 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                   />
                 ) : (
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {user.name}
+                    {user?.name}
                   </p>
                 )}
               </div>
@@ -94,7 +110,7 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                 <h4 className="text-sm font-medium text-df-primary dark:text-white">
                   {t("email")}
                 </h4>
-                {isEditing ? (
+                {isEditing || isCreating ? (
                   <input
                     type="email"
                     value={editedEmail}
@@ -103,16 +119,31 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                   />
                 ) : (
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {user.email}
+                    {user?.email}
                   </p>
                 )}
               </div>
+
+              {(isEditing || isCreating) && (
+                <div>
+                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
+                    {t("password")}
+                  </h4>
+                  <input
+                    type="password"
+                    value={editedPassword}
+                    onChange={(e) => setEditedPassword(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                    required={isCreating}
+                  />
+                </div>
+              )}
 
               <div>
                 <h4 className="text-sm font-medium text-df-primary dark:text-white">
                   {t("role")}
                 </h4>
-                {isEditing && canEditUser() ? (
+                {(isEditing || isCreating) && canEditUser() ? (
                   <select
                     value={editedRole}
                     onChange={(e) => setEditedRole(e.target.value)}
@@ -127,46 +158,54 @@ function UserModal({ user, onClose, onEdit, onToggleStatus }) {
                 ) : (
                   <span
                     className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      getDisplayRole(user.role) === "ADMIN"
+                      getDisplayRole(user?.role) === "ADMIN"
                         ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
                         : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                     }`}
                   >
-                    {getDisplayRole(user.role)}
+                    {getDisplayRole(user?.role)}
                   </span>
                 )}
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                  {t("status")}
-                </h4>
-                <div className="mt-1 flex items-center space-x-2">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.isActive
-                        ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                        : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                    }`}
-                  >
-                    {user.isActive ? t("active") : t("inactive")}
-                  </span>
-                  {canEditUser() && (
-                    <button
-                      onClick={() => onToggleStatus(user._id)}
-                      className="text-sm text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+              {!isCreating && (
+                <div>
+                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
+                    {t("status")}
+                  </h4>
+                  <div className="mt-1 flex items-center space-x-2">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user?.isActive
+                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                          : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                      }`}
                     >
-                      {user.isActive ? t("deactivate") : t("activate")}
-                    </button>
-                  )}
+                      {user?.isActive ? t("active") : t("inactive")}
+                    </span>
+                    {canEditUser() && onToggleStatus && (
+                      <button
+                        onClick={() => onToggleStatus(user?._id)}
+                        className="text-sm text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                      >
+                        {user?.isActive ? t("deactivate") : t("activate")}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-4 flex justify-end space-x-3">
-                {isEditing ? (
+                {isEditing || isCreating ? (
                   <>
                     <button
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => {
+                        if (isCreating) {
+                          onClose();
+                        } else {
+                          setIsEditing(false);
+                        }
+                      }}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                     >
                       {t("cancel")}

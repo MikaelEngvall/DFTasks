@@ -19,12 +19,7 @@ router.route("/all").get(admin, getAllUsers);
 
 // Routes som kräver admin eller superadmin
 router.route("/:id/toggle").put(admin, toggleUserStatus);
-
-// Routes som kräver superadmin för admin-hantering
-router.route("/").post(admin, createUser); // Admin kan skapa vanliga användare, superadmin kan skapa admin
-router
-  .route("/:id")
-  .put(admin, updateUser) // Admin kan uppdatera vanliga användare, superadmin kan uppdatera admin
-  .delete(admin, deleteUser); // Admin kan radera vanliga användare, superadmin kan radera admin
+router.route("/").post(admin, createUser);
+router.route("/:id").put(admin, updateUser).delete(admin, deleteUser);
 
 module.exports = router;

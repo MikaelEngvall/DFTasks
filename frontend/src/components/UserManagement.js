@@ -11,6 +11,7 @@ function UserManagement() {
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const { t } = useTranslation();
   const [currentUserRole, setCurrentUserRole] = useState(null);
 
@@ -98,6 +99,19 @@ function UserManagement() {
     setSelectedUser(user);
   };
 
+  const handleCreate = async (userData) => {
+    try {
+      const response = await axiosInstance.post("/users", userData);
+      if (response.data) {
+        await fetchUsers();
+        setIsCreating(false);
+      }
+    } catch (error) {
+      console.error("Error creating user:", error.response || error);
+      alert(t("errorCreatingUser"));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -125,6 +139,15 @@ function UserManagement() {
             </span>
           </label>
         </div>
+        {currentUserRole === "SUPERADMIN" && (
+          <button
+            onClick={() => setIsCreating(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+          >
+            <FaPlus className="mr-2" />
+            {t("newUser")}
+          </button>
+        )}
       </div>
 
       {error && (
@@ -210,6 +233,14 @@ function UserManagement() {
           onClose={() => setSelectedUser(null)}
           onEdit={handleEdit}
           onToggleStatus={handleToggleStatus}
+        />
+      )}
+
+      {isCreating && (
+        <UserModal
+          isCreating={true}
+          onClose={() => setIsCreating(false)}
+          onEdit={handleCreate}
         />
       )}
     </div>

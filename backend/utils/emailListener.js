@@ -174,38 +174,5 @@ function startEmailListener() {
   }
 }
 
-// Testfunktion för att simulera ett inkommande e-postmeddelande
-async function testEmailProcessing() {
-  const testEmail = `Namn: Test Testsson
-E-post: test@example.com
-Telefon: 0701234567
-Adress: Testgatan 1
-Lägenhetsnummer: 1001
-Beskrivning: Detta är en testfelanmälan.
-Kranen i köket läcker och behöver åtgärdas snarast.`;
-
-  try {
-    const parsedContent = parseEmailContent(testEmail);
-    console.log("Test email parsed content:", parsedContent);
-
-    const title = `${parsedContent.address} - Lgh ${parsedContent.apartmentNumber} - ${parsedContent.reporterPhone}`;
-
-    const pendingTask = new PendingTask({
-      title,
-      description: parsedContent.description,
-      reporterName: parsedContent.reporterName,
-      reporterEmail: parsedContent.reporterEmail,
-      reporterPhone: parsedContent.reporterPhone,
-      address: parsedContent.address,
-      apartmentNumber: parsedContent.apartmentNumber,
-    });
-
-    await pendingTask.save();
-    console.log("Test pending task created:", title);
-  } catch (error) {
-    console.error("Error in test email processing:", error);
-  }
-}
-
-// Exportera testfunktionen tillsammans med startEmailListener
-module.exports = { startEmailListener, testEmailProcessing };
+// Exportera endast startEmailListener
+module.exports = { startEmailListener };

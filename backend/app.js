@@ -2,10 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-const {
-  startEmailListener,
-  testEmailProcessing,
-} = require("./utils/emailListener");
+const { startEmailListener } = require("./utils/emailListener");
 
 const app = express();
 
@@ -54,12 +51,6 @@ mongoose
     console.log("MongoDB connected...");
     startEmailListener();
     console.log("Email listener started...");
-
-    // Kör testfunktionen efter 5 sekunder för att säkerställa att allt är uppstartat
-    setTimeout(async () => {
-      console.log("Running test email processing...");
-      await testEmailProcessing();
-    }, 5000);
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err);

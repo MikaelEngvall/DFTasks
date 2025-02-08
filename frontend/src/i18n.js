@@ -334,6 +334,19 @@ const resources = {
       resetPasswordError:
         "Nie udało się zresetować hasła. Spróbuj ponownie później.",
       invalidResetToken: "Nieprawidłowy lub wygasły link do resetowania",
+
+      // Issue reporting management
+      pendingTasks: "Zadania oczekujące",
+      reviewTask: "Przejrzyj zadanie",
+      reporterInfo: "Informacje o zgłaszającym",
+      phone: "Telefon",
+      taskDetails: "Task Details",
+      assignTo: "Assign To",
+      selectUser: "Select User",
+      approve: "Approve",
+      review: "Review",
+      receivedAt: "Received At",
+      reporter: "Reporter",
     },
   },
   uk: {
@@ -437,6 +450,19 @@ const resources = {
       resetPasswordError:
         "Не вдалося скинути пароль. Спробуйте ще раз пізніше.",
       invalidResetToken: "Недійсне або застаріле посилання для скидання",
+
+      // Issue reporting management
+      pendingTasks: "Очікуючі завдання",
+      reviewTask: "Переглянути завдання",
+      reporterInfo: "Інформація про заявника",
+      phone: "Телефон",
+      taskDetails: "Деталі завдання",
+      assignTo: "Назначити",
+      selectUser: "Вибрати користувача",
+      approve: "Затвердити",
+      review: "Перевірити",
+      receivedAt: "Отримано",
+      reporter: "Звільняючий",
     },
   },
 };

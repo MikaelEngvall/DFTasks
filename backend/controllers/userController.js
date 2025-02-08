@@ -32,9 +32,12 @@ const userController = {
   createUser: async (req, res) => {
     try {
       const { name, email, password, role } = req.body;
+      console.log("Creating user with role:", role);
+      console.log("Current user role:", req.user.role);
 
       // Validera indata
       if (!name || !email || !password) {
+        console.log("Missing required fields:", { name, email, password });
         return res.status(400).json({
           message: "Name, email and password are required",
         });
@@ -43,6 +46,7 @@ const userController = {
       // Kontrollera om användaren redan finns
       const existingUser = await User.findOne({ email });
       if (existingUser) {
+        console.log("User already exists:", email);
         return res.status(400).json({
           message: "A user with this email already exists",
         });
@@ -50,18 +54,28 @@ const userController = {
 
       // Kontrollera behörigheter för rollsättning
       const requestedRole = (role || "USER").toUpperCase();
+      console.log("Requested role after normalization:", requestedRole);
 
       // SUPERADMIN kan skapa alla typer av användare
       if (req.user.role === "SUPERADMIN") {
-        // Tillåt alla roller
+        console.log("User is SUPERADMIN, allowing creation of all roles");
       } else if (req.user.role === "ADMIN") {
+        console.log("User is ADMIN, checking role restrictions");
         // Admin kan bara skapa USER
         if (requestedRole !== "USER") {
+          console.log(
+            "ADMIN attempted to create non-USER role:",
+            requestedRole
+          );
           return res.status(403).json({
             message: "Not authorized to create admin or superadmin users",
           });
         }
       } else {
+        console.log(
+          "Unauthorized user attempted to create user:",
+          req.user.role
+        );
         return res.status(403).json({
           message: "Not authorized to create users",
         });
@@ -81,6 +95,7 @@ const userController = {
 
       // Spara användaren
       const savedUser = await newUser.save();
+      console.log("User created successfully:", savedUser.email);
 
       // Ta bort lösenord från svaret
       const userResponse = savedUser.toObject();
