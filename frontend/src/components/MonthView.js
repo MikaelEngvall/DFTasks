@@ -215,22 +215,18 @@ function MonthView() {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+  const handleAddComment = async (taskId, commentText) => {
+    if (!commentText.trim()) return;
     try {
-      const response = await axiosInstance.post(
-        `/tasks/${selectedTask._id}/comments`,
-        { content: newComment }
-      );
+      const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
+        content: commentText,
+      });
       if (response.data && response.data.task) {
         const translatedTask = await translateTask(response.data.task);
         setTasks(
-          tasks.map((task) =>
-            task._id === selectedTask._id ? translatedTask : task
-          )
+          tasks.map((task) => (task._id === taskId ? translatedTask : task))
         );
         setSelectedTask(translatedTask);
-        setNewComment("");
       }
     } catch (error) {
       alert(t("errorAddingComment"));

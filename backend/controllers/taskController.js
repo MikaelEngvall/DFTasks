@@ -284,68 +284,74 @@ const toggleCommentStatus = async (req, res) => {
 // Lägg till kommentar
 const addComment = async (req, res) => {
   try {
-    if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid task ID" });
-    }
+    console.log("Server - Tar emot kommentarsförfrågan:", {
+      body: req.body,
+      taskId: req.params.id,
+      userId: req.user._id,
+    });
 
-    if (!req.body.content || !req.body.content.trim()) {
+    const { content } = req.body;
+    if (!content) {
+      console.log("Server - Inget innehåll i kommentaren");
       return res.status(400).json({ message: "Comment content is required" });
     }
 
-    const task = await Task.findById(req.params.id)
-      .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
-      .populate("comments.createdBy", "name email");
-
+    // Hämta uppgiften utan population först
+    let task = await Task.findById(req.params.id);
     if (!task) {
+      console.log("Server - Hittade inte uppgiften");
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Kontrollera behörighet - tillåt admin/superadmin och tilldelad användare
-    const isAdmin = req.user.role === "ADMIN" || req.user.role === "SUPERADMIN";
-    const isAssignedUser =
-      task.assignedTo &&
-      task.assignedTo._id &&
-      task.assignedTo._id.toString() === req.user._id.toString();
+    // Kontrollera behörighet
+    const isAdmin = ["ADMIN", "SUPERADMIN"].includes(req.user.role);
+    const isAssigned =
+      task.assignedTo && task.assignedTo.toString() === req.user._id.toString();
 
-    if (!isAdmin && !isAssignedUser) {
-      return res.status(403).json({ message: "Access denied" });
+    console.log("Server - Behörighetskontroll:", {
+      isAdmin,
+      isAssigned,
+      userRole: req.user.role,
+      assignedTo: task.assignedTo,
+    });
+
+    if (!isAdmin && !isAssigned) {
+      console.log("Server - Användaren har inte behörighet");
+      return res
+        .status(403)
+        .json({ message: "Not authorized to add comments to this task" });
     }
 
-    // Lägg till ny kommentar
+    // Skapa ny kommentar
     const newComment = {
-      content: req.body.content.trim(),
+      content,
       createdBy: req.user._id,
-      isActive: true,
       createdAt: new Date(),
+      isActive: true,
     };
 
-    // Lägg till kommentaren i början av arrayen för att visa senaste först
-    task.comments.unshift(newComment);
-    await task.save();
+    console.log("Server - Skapar ny kommentar:", newComment);
 
-    // Hämta den uppdaterade uppgiften med alla populerade fält
-    const updatedTask = await Task.findById(req.params.id)
+    // Lägg till kommentaren i början av arrayen
+    task.comments.unshift(newComment);
+
+    // Spara uppgiften
+    await task.save();
+    console.log("Server - Uppgift sparad med ny kommentar");
+
+    // Hämta den uppdaterade uppgiften med population
+    const updatedTask = await Task.findById(task._id)
       .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
       .populate("comments.createdBy", "name email");
 
-    if (!updatedTask) {
-      return res
-        .status(500)
-        .json({ message: "Failed to retrieve updated task" });
-    }
-
-    // Sortera kommentarer efter datum (senaste först)
-    updatedTask.comments.sort((a, b) => b.createdAt - a.createdAt);
-
-    res.json({
-      message: "Comment added successfully",
-      task: updatedTask,
-    });
+    console.log("Server - Skickar tillbaka uppdaterad uppgift");
+    // Returnera i rätt format för frontend
+    res.json({ task: updatedTask });
   } catch (error) {
-    console.error("Error in addComment:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Server - Fel i addComment:", error);
+    res
+      .status(500)
+      .json({ message: "Error adding comment", error: error.message });
   }
 };
 

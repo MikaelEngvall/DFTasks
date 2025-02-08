@@ -187,24 +187,29 @@ function TaskManagement({ userRole, userId }) {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+  const handleAddComment = async (taskId, commentText) => {
+    if (!commentText.trim()) return;
     try {
-      const response = await axiosInstance.post(
-        `/tasks/${selectedTask._id}/comments`,
-        { content: newComment }
-      );
+      console.log("TaskManagement - Skickar kommentar till servern:", {
+        taskId: taskId,
+        content: commentText,
+      });
+      const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
+        content: commentText,
+      });
+      console.log("TaskManagement - Svar från servern:", response.data);
       if (response.data && response.data.task) {
         const translatedTask = await translateTask(response.data.task);
         setTasks(
-          tasks.map((task) =>
-            task._id === selectedTask._id ? translatedTask : task
-          )
+          tasks.map((task) => (task._id === taskId ? translatedTask : task))
         );
         setSelectedTask(translatedTask);
-        setNewComment("");
       }
     } catch (error) {
+      console.error(
+        "TaskManagement - Fel vid tillägg av kommentar:",
+        error.response || error
+      );
       alert(t("errorAddingComment"));
     }
   };
