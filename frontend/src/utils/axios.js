@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000", // Eller den port där din backend körs
+  baseURL: "http://localhost:5000",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -28,7 +29,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token is invalid or expired
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      window.location.href = "/dftasks/login";
     }
     return Promise.reject(error);
   }

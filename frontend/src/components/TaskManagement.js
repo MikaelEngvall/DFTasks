@@ -35,6 +35,27 @@ function TaskManagement({ userRole, userId }) {
     fetchUsers();
   }, [i18n.language]);
 
+  // Ny useEffect för att uppdatera den valda uppgiftens kommentarer när språket ändras
+  useEffect(() => {
+    const updateSelectedTaskComments = async () => {
+      if (selectedTask && selectedTask.comments?.length > 0) {
+        const translatedComments = await Promise.all(
+          selectedTask.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
+        );
+        setSelectedTask({
+          ...selectedTask,
+          comments: translatedComments,
+        });
+      }
+    };
+
+    updateSelectedTaskComments();
+  }, [i18n.language, selectedTask?._id, t]);
+
   const fetchTasks = async () => {
     try {
       const endpoint =
@@ -62,10 +83,21 @@ function TaskManagement({ userRole, userId }) {
               task.description,
               i18n.language
             );
+
+            // Översätt alla kommentarer
+            const translatedComments = await Promise.all(
+              (task.comments || []).map(async (comment) => ({
+                ...comment,
+                content: await translateContent(comment.content, i18n.language),
+                createdBy: comment.createdBy || { name: t("unassigned") },
+              }))
+            );
+
             return {
               ...task,
               title: translatedTitle,
               description: translatedDesc,
+              comments: translatedComments,
             };
           })
         );
@@ -115,9 +147,26 @@ function TaskManagement({ userRole, userId }) {
     setShowTaskForm(true);
   };
 
-  const handleTaskClick = (task) => {
-    setSelectedTask(task);
-    setShowTaskDetails(true);
+  const handleTaskClick = async (task) => {
+    try {
+      // Översätt kommentarer när uppgiften öppnas
+      if (task.comments?.length > 0) {
+        const translatedComments = await Promise.all(
+          task.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
+        );
+        task.comments = translatedComments;
+      }
+      setSelectedTask(task);
+      setShowTaskDetails(true);
+    } catch (error) {
+      console.error("Error translating comments:", error);
+      setSelectedTask(task);
+      setShowTaskDetails(true);
+    }
   };
 
   const handleStatusUpdate = async (task) => {
@@ -254,19 +303,23 @@ function TaskManagement({ userRole, userId }) {
         { content: newComment }
       );
       if (response.data && response.data.task) {
-        const translatedTask = await translateContent(
-          response.data.task,
-          i18n.language
+        // Översätt den nya kommentaren och alla befintliga kommentarer
+        const translatedComments = await Promise.all(
+          response.data.task.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
         );
+        response.data.task.comments = translatedComments;
+
         setTasks(
           tasks.map((task) =>
-            task._id === selectedTask._id ? translatedTask : task
+            task._id === selectedTask._id ? response.data.task : task
           )
         );
-        setSelectedTask(translatedTask);
+        setSelectedTask(response.data.task);
         setNewComment("");
-      } else {
-        throw new Error("Invalid response format");
       }
     } catch (error) {
       alert(t("errorAddingComment"));

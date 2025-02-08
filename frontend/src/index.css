@@ -5,5 +5,9 @@
 @tailwind utilities;
 
 body {
-    font-family: "Roboto", sans-serif;
+    font-family: 'Cinzel', serif;
+}
+
+* {
+    font-family: 'Cinzel', serif;
 }

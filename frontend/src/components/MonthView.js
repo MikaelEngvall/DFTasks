@@ -78,14 +78,24 @@ function MonthView() {
                 task.description,
                 i18n.language
               );
+
+              // Översätt alla kommentarer
+              const translatedComments = await Promise.all(
+                (task.comments || []).map(async (comment) => ({
+                  ...comment,
+                  content: await translateContent(
+                    comment.content,
+                    i18n.language
+                  ),
+                  createdBy: comment.createdBy || { name: t("unassigned") },
+                }))
+              );
+
               return {
                 ...task,
                 title: translatedTitle,
                 description: translatedDesc,
-                comments: task.comments?.map((comment) => ({
-                  ...comment,
-                  createdBy: comment.createdBy || { name: t("unassigned") },
-                })),
+                comments: translatedComments,
               };
             })
           );
@@ -99,16 +109,45 @@ function MonthView() {
     };
 
     fetchTasks();
-  }, [i18n.language]);
+  }, [i18n.language, t]);
 
-  const handleTaskClick = (task) => {
-    if (currentUser.role === "ADMIN") {
+  // Ny useEffect för att uppdatera den valda uppgiftens kommentarer när språket ändras
+  useEffect(() => {
+    const updateSelectedTaskComments = async () => {
+      if (selectedTask && selectedTask.comments?.length > 0) {
+        const translatedComments = await Promise.all(
+          selectedTask.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
+        );
+        setSelectedTask({
+          ...selectedTask,
+          comments: translatedComments,
+        });
+      }
+    };
+
+    updateSelectedTaskComments();
+  }, [i18n.language, selectedTask?._id]);
+
+  const handleTaskClick = async (task) => {
+    try {
+      if (task.comments?.length > 0) {
+        const translatedComments = await Promise.all(
+          task.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
+        );
+        task.comments = translatedComments;
+      }
       setSelectedTask(task);
       setShowTaskDetails(true);
-    } else if (task.assignedTo?._id === currentUser.id) {
-      setSelectedTask(task);
-      setShowTaskDetails(true);
-    } else {
+    } catch (error) {
+      console.error("Error translating comments:", error);
       setSelectedTask(task);
       setShowTaskDetails(true);
     }
@@ -219,16 +258,21 @@ function MonthView() {
         { content: newComment }
       );
       if (response.data && response.data.task) {
-        const translatedTask = await translateContent(
-          response.data.task,
-          i18n.language
+        const translatedComments = await Promise.all(
+          response.data.task.comments.map(async (comment) => ({
+            ...comment,
+            content: await translateContent(comment.content, i18n.language),
+            createdBy: comment.createdBy || { name: t("unassigned") },
+          }))
         );
+        response.data.task.comments = translatedComments;
+
         setTasks(
           tasks.map((task) =>
-            task._id === selectedTask._id ? translatedTask : task
+            task._id === selectedTask._id ? response.data.task : task
           )
         );
-        setSelectedTask(translatedTask);
+        setSelectedTask(response.data.task);
         setNewComment("");
       }
     } catch (error) {
@@ -332,7 +376,7 @@ function MonthView() {
 
       {showTaskDetails && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-xl font-semibold text-df-primary dark:text-white">
                 {selectedTask.title}
