@@ -46,7 +46,10 @@ const protect = async (req, res, next) => {
 
 // Admin middleware
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === "ADMIN") {
+  if (
+    req.user &&
+    (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN")
+  ) {
     next();
   } else {
     res.status(401);
@@ -54,4 +57,14 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin };
+// Superadmin middleware
+const superadmin = (req, res, next) => {
+  if (req.user && req.user.role === "SUPERADMIN") {
+    next();
+  } else {
+    res.status(401);
+    throw new Error("Not authorized as a superadmin");
+  }
+};
+
+module.exports = { protect, admin, superadmin };

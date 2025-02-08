@@ -48,6 +48,16 @@ const userController = {
         });
       }
 
+      // Kontrollera behörigheter för rollsättning
+      if (
+        req.user.role !== "SUPERADMIN" &&
+        (role === "ADMIN" || role === "SUPERADMIN")
+      ) {
+        return res.status(403).json({
+          message: "Not authorized to create admin or superadmin users",
+        });
+      }
+
       // Konvertera roll till uppercase
       const userRole = (role || "USER").toUpperCase();
 
@@ -91,6 +101,33 @@ const userController = {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Kontrollera behörigheter
+      if (req.user.role !== "SUPERADMIN") {
+        // Admin kan inte ändra andra admins eller superadmins
+        if (user.role === "ADMIN" || user.role === "SUPERADMIN") {
+          return res.status(403).json({
+            message: "Not authorized to modify admin or superadmin users",
+          });
+        }
+        // Admin kan inte ändra någons roll till admin eller superadmin
+        if (role === "ADMIN" || role === "SUPERADMIN") {
+          return res.status(403).json({
+            message: "Not authorized to assign admin or superadmin roles",
+          });
+        }
+      } else {
+        // Superadmin kan inte ändra sin egen roll
+        if (
+          user._id.toString() === req.user.id &&
+          role &&
+          role !== "SUPERADMIN"
+        ) {
+          return res.status(403).json({
+            message: "Superadmin cannot change their own role",
+          });
+        }
+      }
+
       // Update fields
       if (name) user.name = name;
       if (email) user.email = email;
@@ -101,8 +138,6 @@ const userController = {
       }
 
       const updatedUser = await user.save();
-
-      // Ta bort lösenord från svaret
       const userResponse = updatedUser.toObject();
       delete userResponse.password;
 
@@ -116,17 +151,37 @@ const userController = {
     }
   },
 
-  // Delete user
+  // Delete user (deactivate)
   deleteUser: async (req, res) => {
     try {
-      const user = await User.findByIdAndUpdate(
-        req.params.id,
-        { isActive: false },
-        { new: true }
-      );
-      if (!user) {
+      const userToDelete = await User.findById(req.params.id);
+      if (!userToDelete) {
         return res.status(404).json({ message: "User not found" });
       }
+
+      // Kontrollera behörigheter
+      if (req.user.role !== "SUPERADMIN") {
+        // Admin kan inte radera andra admins eller superadmins
+        if (
+          userToDelete.role === "ADMIN" ||
+          userToDelete.role === "SUPERADMIN"
+        ) {
+          return res.status(403).json({
+            message: "Not authorized to delete admin or superadmin users",
+          });
+        }
+      } else {
+        // Superadmin kan inte radera sig själv
+        if (userToDelete._id.toString() === req.user.id) {
+          return res.status(403).json({
+            message: "Superadmin cannot delete themselves",
+          });
+        }
+      }
+
+      userToDelete.isActive = false;
+      await userToDelete.save();
+
       res.json({ message: "User deactivated successfully" });
     } catch (error) {
       console.error("Error deactivating user:", error);

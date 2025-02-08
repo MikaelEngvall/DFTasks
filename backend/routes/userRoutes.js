@@ -8,22 +8,23 @@ const {
   deleteUser,
   toggleUserStatus,
 } = require("../controllers/userController");
-const { protect, admin } = require("../middleware/authMiddleware");
+const { protect, admin, superadmin } = require("../middleware/authMiddleware");
 
 // Protect all routes
 router.use(protect);
-router.use(admin);
 
-// Get all users
-router.route("/").get(getUsers).post(createUser);
+// Admin routes
+router.route("/").get(admin, getUsers);
+router.route("/all").get(admin, getAllUsers);
 
-// Get all users
-router.route("/all").get(getAllUsers);
+// Routes som kräver admin eller superadmin
+router.route("/:id/toggle").put(admin, toggleUserStatus);
 
-// Get single user
-router.route("/:id").put(updateUser).delete(deleteUser);
-
-// Toggle user status
-router.route("/:id/toggle").put(toggleUserStatus);
+// Routes som kräver superadmin för admin-hantering
+router.route("/").post(admin, createUser); // Admin kan skapa vanliga användare, superadmin kan skapa admin
+router
+  .route("/:id")
+  .put(admin, updateUser) // Admin kan uppdatera vanliga användare, superadmin kan uppdatera admin
+  .delete(admin, deleteUser); // Admin kan radera vanliga användare, superadmin kan radera admin
 
 module.exports = router;
