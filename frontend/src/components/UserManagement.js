@@ -1,41 +1,36 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axios";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import UserForm from "./UserForm";
+import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import UserModal from "./UserModal";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const { t } = useTranslation();
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get(
-        showInactive ? "/api/users/all" : "/api/users"
-      );
-      setUsers(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchUsers();
   }, [showInactive]);
 
-  const handleCreate = async (userData) => {
+  const fetchUsers = async () => {
     try {
-      const response = await axiosInstance.post("/api/users", userData);
-      setUsers([...users, response.data]);
-      setShowModal(false);
+      const endpoint = showInactive ? "/api/users/all" : "/api/users";
+      const response = await axiosInstance.get(endpoint);
+      if (Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else if (Array.isArray(response.data.users)) {
+        setUsers(response.data.users);
+      } else {
+        setUsers([]);
+      }
+      setLoading(false);
     } catch (error) {
-      console.error("Error creating user:", error);
+      setError(t("errorFetchingUsers"));
+      setLoading(false);
     }
   };
 
@@ -45,26 +40,16 @@ function UserManagement() {
         `/api/users/${selectedUser._id}`,
         userData
       );
-      setUsers(
-        users.map((user) =>
-          user._id === selectedUser._id ? response.data : user
-        )
-      );
-      setShowModal(false);
-      setSelectedUser(null);
-    } catch (error) {
-      console.error("Error updating user:", error);
-    }
-  };
-
-  const handleDelete = async (userId) => {
-    if (window.confirm(t("deleteUserConfirm"))) {
-      try {
-        await axiosInstance.delete(`/api/users/${userId}`);
-        await fetchUsers();
-      } catch (error) {
-        console.error("Error deactivating user:", error);
+      if (response.data) {
+        setUsers(
+          users.map((user) =>
+            user._id === selectedUser._id ? response.data : user
+          )
+        );
+        setSelectedUser(null);
       }
+    } catch (error) {
+      alert(t("errorUpdatingUser"));
     }
   };
 
@@ -72,26 +57,31 @@ function UserManagement() {
     try {
       await axiosInstance.put(`/api/users/${userId}/toggle`);
       await fetchUsers();
+      setSelectedUser(null);
     } catch (error) {
-      console.error("Error toggling user status:", error);
+      alert(t("errorTogglingUserStatus"));
     }
+  };
+
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary dark:border-df-accent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-semibold text-df-primary dark:text-white">
+          <h2 className="text-xl font-semibold text-df-primary dark:text-white">
             {t("users")}
-          </h1>
+          </h2>
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -104,101 +94,85 @@ function UserManagement() {
             </span>
           </label>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-df-primary text-white px-4 py-2 rounded-md hover:bg-df-dark transition-colors duration-150"
-        >
-          {t("newUser")}
-        </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-df-primary/10 dark:border-gray-700">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t("name")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t("email")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t("role")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  {t("actions")}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {users.map((user) => (
-                <tr
-                  key={user._id}
-                  className={`hover:bg-df-primary/5 dark:hover:bg-gray-700 transition-colors duration-150 ${
-                    !user.isActive ? "opacity-50" : ""
-                  }`}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-df-primary dark:text-white">
-                      {user.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-df-primary/80 dark:text-gray-300">
-                      {user.email}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === "ADMIN"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => handleToggleStatus(user._id)}
-                        className={`${
-                          user.isActive
-                            ? "text-green-600 hover:text-green-900"
-                            : "text-red-600 hover:text-red-900"
-                        }`}
-                        title={user.isActive ? t("deactivate") : t("activate")}
-                      >
-                        {user.isActive ? "✓" : "×"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowModal(true);
-                        }}
-                        className="text-df-secondary hover:text-df-primary dark:text-df-accent dark:hover:text-white transition-colors duration-150"
-                      >
-                        <FaEdit className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          {error}
         </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {t("name")}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {t("email")}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {t("role")}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {t("status")}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {users.map((user) => (
+              <tr
+                key={user._id}
+                onClick={() => handleUserClick(user)}
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
+                  !user.isActive ? "opacity-50" : ""
+                }`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-df-primary dark:text-white">
+                    {user.name}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900 dark:text-gray-300">
+                    {user.email}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.role === "ADMIN"
+                        ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                        : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.isActive
+                        ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                        : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                    }`}
+                  >
+                    {user.isActive ? t("active") : t("inactive")}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {showModal && (
-        <UserForm
+      {selectedUser && (
+        <UserModal
           user={selectedUser}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedUser(null);
-          }}
-          onSubmit={selectedUser ? handleEdit : handleCreate}
+          onClose={() => setSelectedUser(null)}
+          onEdit={handleEdit}
+          onToggleStatus={handleToggleStatus}
         />
       )}
     </div>
