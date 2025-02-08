@@ -88,9 +88,21 @@ const createTask = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    // Validera nödvändiga fält
+    const { title, description, assignedTo, dueDate } = req.body;
+    if (!title || !description || !dueDate) {
+      return res.status(400).json({ message: "Required fields are missing" });
+    }
+
     const task = new Task({
-      ...req.body,
+      title,
+      description,
+      assignedTo: assignedTo || null,
+      dueDate,
       createdBy: req.user._id,
+      status: "pending",
+      isActive: true,
+      comments: [],
     });
 
     const savedTask = await task.save();
@@ -168,14 +180,20 @@ const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 const toggleTaskStatus = async (req, res) => {
   try {
-    console.log("Received status update request:", {
-      taskId: req.params.id,
-      status: req.body.status,
-      user: req.user._id,
-    });
-
     if (!validateObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    if (!req.body.status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const validStatuses = ["pending", "in progress", "completed", "cannot fix"];
+    if (!validStatuses.includes(req.body.status.toLowerCase())) {
+      return res.status(400).json({
+        message:
+          "Invalid status. Must be one of: pending, in progress, completed, cannot fix",
+      });
     }
 
     const task = await Task.findById(req.params.id)
@@ -194,41 +212,29 @@ const toggleTaskStatus = async (req, res) => {
       task.assignedTo._id &&
       task.assignedTo._id.toString() === req.user._id.toString();
 
-    console.log("Permission check:", {
-      isAdmin,
-      isAssignedUser,
-      userRole: req.user.role,
-      assignedTo: task.assignedTo?._id,
-    });
-
     if (!isAdmin && !isAssignedUser) {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // Validera status
-    const validStatuses = ["pending", "in progress", "completed", "cannot fix"];
-    if (!validStatuses.includes(req.body.status?.toLowerCase())) {
-      return res.status(400).json({ message: "Invalid status value" });
-    }
-
     // Uppdatera status
     task.status = req.body.status.toLowerCase();
-    const updatedTask = await task.save();
+    await task.save();
 
-    console.log("Task updated successfully:", {
-      taskId: updatedTask._id,
-      newStatus: updatedTask.status,
-    });
-
-    // Hämta och returnera den uppdaterade uppgiften med alla populerade fält
-    const populatedTask = await Task.findById(updatedTask._id)
+    // Hämta den uppdaterade uppgiften med alla populerade fält
+    const updatedTask = await Task.findById(task._id)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")
       .populate("comments.createdBy", "name email");
 
+    if (!updatedTask) {
+      return res
+        .status(500)
+        .json({ message: "Failed to retrieve updated task" });
+    }
+
     res.json({
       message: "Task status updated successfully",
-      task: populatedTask,
+      task: updatedTask,
     });
   } catch (error) {
     console.error("Error in toggleTaskStatus:", error);
@@ -282,33 +288,61 @@ const addComment = async (req, res) => {
       return res.status(400).json({ message: "Invalid task ID" });
     }
 
-    const task = await Task.findById(req.params.id);
+    if (!req.body.content || !req.body.content.trim()) {
+      return res.status(400).json({ message: "Comment content is required" });
+    }
+
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
+
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Kontrollera behörighet
-    if (
-      req.user.role !== "ADMIN" &&
-      req.user.role !== "SUPERADMIN" &&
-      task.assignedTo?.toString() !== req.user._id.toString()
-    ) {
+    // Kontrollera behörighet - tillåt admin/superadmin och tilldelad användare
+    const isAdmin = req.user.role === "ADMIN" || req.user.role === "SUPERADMIN";
+    const isAssignedUser =
+      task.assignedTo &&
+      task.assignedTo._id &&
+      task.assignedTo._id.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isAssignedUser) {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    task.comments.push({
-      content: req.body.content,
+    // Lägg till ny kommentar
+    const newComment = {
+      content: req.body.content.trim(),
       createdBy: req.user._id,
-    });
+      isActive: true,
+      createdAt: new Date(),
+    };
 
+    // Lägg till kommentaren i början av arrayen för att visa senaste först
+    task.comments.unshift(newComment);
     await task.save();
 
+    // Hämta den uppdaterade uppgiften med alla populerade fält
     const updatedTask = await Task.findById(req.params.id)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")
       .populate("comments.createdBy", "name email");
 
-    res.json({ task: updatedTask });
+    if (!updatedTask) {
+      return res
+        .status(500)
+        .json({ message: "Failed to retrieve updated task" });
+    }
+
+    // Sortera kommentarer efter datum (senaste först)
+    updatedTask.comments.sort((a, b) => b.createdAt - a.createdAt);
+
+    res.json({
+      message: "Comment added successfully",
+      task: updatedTask,
+    });
   } catch (error) {
     console.error("Error in addComment:", error);
     res.status(500).json({ message: "Server error" });
