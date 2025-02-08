@@ -49,17 +49,23 @@ const userController = {
       }
 
       // Kontrollera behörigheter för rollsättning
-      if (
-        req.user.role !== "SUPERADMIN" &&
-        (role === "ADMIN" || role === "SUPERADMIN")
-      ) {
+      const requestedRole = (role || "USER").toUpperCase();
+
+      // SUPERADMIN kan skapa alla typer av användare
+      if (req.user.role === "SUPERADMIN") {
+        // Tillåt alla roller
+      } else if (req.user.role === "ADMIN") {
+        // Admin kan bara skapa USER
+        if (requestedRole !== "USER") {
+          return res.status(403).json({
+            message: "Not authorized to create admin or superadmin users",
+          });
+        }
+      } else {
         return res.status(403).json({
-          message: "Not authorized to create admin or superadmin users",
+          message: "Not authorized to create users",
         });
       }
-
-      // Konvertera roll till uppercase
-      const userRole = (role || "USER").toUpperCase();
 
       // Kryptera lösenord
       const salt = await bcrypt.genSalt(10);
@@ -70,7 +76,7 @@ const userController = {
         name,
         email,
         password: hashedPassword,
-        role: userRole,
+        role: requestedRole,
       });
 
       // Spara användaren
