@@ -10,56 +10,52 @@ const imapConfig = {
   tls: true,
   tlsOptions: {
     rejectUnauthorized: false,
-    enableTrace: true,
+    enableTrace: false,
   },
   keepalive: true,
-  debug: console.log,
 };
 
 function parseEmailContent(emailText) {
-  console.log("Raw email content:", emailText); // Debug-loggning
-
   const lines = emailText.split("\n");
   let reporterName = "";
   let reporterEmail = "";
   let reporterPhone = "";
   let address = "";
   let apartmentNumber = "";
-  let description = "";
+  let description = [];
   let isDescription = false;
 
   for (const line of lines) {
     const trimmedLine = line.trim();
-    console.log("Processing line:", trimmedLine); // Debug-loggning
 
     if (trimmedLine.startsWith("Namn:")) {
       reporterName = trimmedLine.replace("Namn:", "").trim();
     } else if (trimmedLine.startsWith("E-post:")) {
       reporterEmail = trimmedLine.replace("E-post:", "").trim();
-    } else if (trimmedLine.startsWith("Telefon:")) {
-      reporterPhone = trimmedLine.replace("Telefon:", "").trim();
+    } else if (trimmedLine.startsWith("Telefonnummer:")) {
+      reporterPhone = trimmedLine.replace("Telefonnummer:", "").trim();
     } else if (trimmedLine.startsWith("Adress:")) {
       address = trimmedLine.replace("Adress:", "").trim();
     } else if (trimmedLine.startsWith("Lägenhetsnummer:")) {
       apartmentNumber = trimmedLine.replace("Lägenhetsnummer:", "").trim();
-    } else if (trimmedLine.startsWith("Beskrivning:")) {
+    } else if (trimmedLine.startsWith("Meddelande:")) {
       isDescription = true;
+      description.push(trimmedLine.replace("Meddelande:", "").trim());
+    } else if (trimmedLine === "---") {
+      isDescription = false;
     } else if (isDescription && trimmedLine) {
-      description += trimmedLine + "\n";
+      description.push(trimmedLine);
     }
   }
 
-  const parsedContent = {
+  return {
     reporterName,
     reporterEmail,
     reporterPhone,
     address,
     apartmentNumber,
-    description: description.trim() || "Ingen beskrivning tillgänglig", // Sätt standardvärde om tom
+    description: description.join("\n") || "Ingen beskrivning tillgänglig",
   };
-
-  console.log("Parsed content:", parsedContent); // Debug-loggning
-  return parsedContent;
 }
 
 function processEmail(stream) {
@@ -72,7 +68,6 @@ function processEmail(stream) {
     try {
       const emailContent = parsed.text;
       const parsedContent = parseEmailContent(emailContent);
-
       const title = `${parsedContent.address} - Lgh ${parsedContent.apartmentNumber} - ${parsedContent.reporterPhone}`;
 
       const pendingTask = new PendingTask({
@@ -86,7 +81,6 @@ function processEmail(stream) {
       });
 
       await pendingTask.save();
-      console.log("Pending task created:", title);
     } catch (error) {
       console.error("Error creating pending task:", error);
     }
@@ -97,7 +91,6 @@ let retryCount = 0;
 const MAX_RETRIES = 5;
 
 function startEmailListener() {
-  console.log("Starting email listener...");
   const imap = new Imap(imapConfig);
 
   function handleConnectionError(err) {
@@ -105,14 +98,8 @@ function startEmailListener() {
     retryCount++;
 
     if (retryCount <= MAX_RETRIES) {
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 300000); // Max 5 minutes
-      console.log(
-        `Retry attempt ${retryCount} of ${MAX_RETRIES} in ${
-          delay / 1000
-        } seconds`
-      );
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 300000);
       setTimeout(() => {
-        console.log("Attempting to reconnect...");
         startEmailListener();
       }, delay);
     } else {
@@ -123,8 +110,7 @@ function startEmailListener() {
   }
 
   imap.once("ready", () => {
-    console.log("IMAP connection established successfully");
-    retryCount = 0; // Reset retry count on successful connection
+    retryCount = 0;
 
     imap.openBox("INBOX", false, (err, box) => {
       if (err) {
@@ -132,11 +118,7 @@ function startEmailListener() {
         return;
       }
 
-      console.log("Inbox opened successfully");
-
-      // Lyssna på nya mail
       imap.on("mail", () => {
-        console.log("New email received");
         const fetch = imap.seq.fetch(`${box.messages.total}:*`, {
           bodies: "",
           struct: true,
@@ -151,10 +133,6 @@ function startEmailListener() {
         fetch.once("error", (err) => {
           console.error("Fetch error:", err);
         });
-
-        fetch.once("end", () => {
-          console.log("Message processing completed");
-        });
       });
     });
   });
@@ -162,12 +140,10 @@ function startEmailListener() {
   imap.once("error", handleConnectionError);
 
   imap.once("end", () => {
-    console.log("IMAP connection ended");
     handleConnectionError(new Error("Connection ended unexpectedly"));
   });
 
   try {
-    console.log("Attempting to connect to IMAP server...");
     imap.connect();
   } catch (err) {
     handleConnectionError(err);

@@ -179,19 +179,22 @@ function MonthView() {
     setIsEditing(true);
   };
 
-  const handleStatusUpdate = async (task) => {
+  const handleStatusUpdate = async (task, newStatus) => {
     try {
-      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
-        status: editedStatus,
+      console.log("Updating task status:", {
+        taskId: task._id,
+        currentStatus: task.status,
+        newStatus: newStatus,
       });
+
+      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
+        status: newStatus,
+      });
+
       if (response.status === 200) {
-        setTasks(
-          tasks.map((t) =>
-            t._id === task._id ? { ...t, status: editedStatus } : t
-          )
-        );
-        setEditedStatus(null);
-        setSelectedTask(response.data.task);
+        const updatedTask = response.data.task;
+        setTasks(tasks.map((t) => (t._id === task._id ? updatedTask : t)));
+        setSelectedTask(updatedTask);
       }
     } catch (error) {
       console.error("Error updating task status:", error);

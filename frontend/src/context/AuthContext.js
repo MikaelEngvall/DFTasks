@@ -7,17 +7,29 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      setUser(decoded);
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const decoded = jwtDecode(token);
+        setUser(decoded);
+      }
+    } catch (error) {
+      console.error("Error parsing token:", error);
+      localStorage.removeItem("token");
+      setUser(null);
     }
   }, []);
 
   const login = (token) => {
-    localStorage.setItem("token", token);
-    const decoded = jwtDecode(token);
-    setUser(decoded);
+    try {
+      localStorage.setItem("token", token);
+      const decoded = jwtDecode(token);
+      setUser(decoded);
+    } catch (error) {
+      console.error("Error setting token:", error);
+      localStorage.removeItem("token");
+      setUser(null);
+    }
   };
 
   const logout = () => {

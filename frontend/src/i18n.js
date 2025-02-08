@@ -301,7 +301,7 @@ const resources = {
       users: "Użytkownicy",
       newUser: "Nowy użytkownik",
       editUser: "Edytuj użytkownika",
-      name: "Nazwa",
+      name: "Imię",
       email: "E-mail",
       password: "Hasło",
       role: "Rola",

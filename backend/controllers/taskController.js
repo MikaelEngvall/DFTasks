@@ -168,28 +168,67 @@ const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 const toggleTaskStatus = async (req, res) => {
   try {
-    // Kontrollera om användaren är admin eller superadmin
-    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    console.log("Received status update request:", {
+      taskId: req.params.id,
+      status: req.body.status,
+      user: req.user._id,
+    });
 
     if (!validateObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid task ID" });
     }
 
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
+
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    task.isActive = !task.isActive;
-    await task.save();
+    // Kontrollera behörighet
+    const isAdmin = req.user.role === "ADMIN" || req.user.role === "SUPERADMIN";
+    const isAssignedUser =
+      task.assignedTo &&
+      task.assignedTo._id &&
+      task.assignedTo._id.toString() === req.user._id.toString();
+
+    console.log("Permission check:", {
+      isAdmin,
+      isAssignedUser,
+      userRole: req.user.role,
+      assignedTo: task.assignedTo?._id,
+    });
+
+    if (!isAdmin && !isAssignedUser) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Validera status
+    const validStatuses = ["pending", "in progress", "completed", "cannot fix"];
+    if (!validStatuses.includes(req.body.status?.toLowerCase())) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    // Uppdatera status
+    task.status = req.body.status.toLowerCase();
+    const updatedTask = await task.save();
+
+    console.log("Task updated successfully:", {
+      taskId: updatedTask._id,
+      newStatus: updatedTask.status,
+    });
+
+    // Hämta och returnera den uppdaterade uppgiften med alla populerade fält
+    const populatedTask = await Task.findById(updatedTask._id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
 
     res.json({
-      message: `Task ${
-        task.isActive ? "activated" : "deactivated"
-      } successfully`,
-      task,
+      message: "Task status updated successfully",
+      task: populatedTask,
     });
   } catch (error) {
     console.error("Error in toggleTaskStatus:", error);
@@ -279,43 +318,20 @@ const addComment = async (req, res) => {
 // Hämta alla väntande uppgifter
 const getPendingTasks = async (req, res) => {
   try {
-    console.log("Getting pending tasks...");
-    console.log("User role:", req.user.role);
-    console.log("User ID:", req.user._id);
-    console.log("PendingTask model:", !!PendingTask);
-    console.log(
-      "PendingTask schema:",
-      JSON.stringify(PendingTask.schema.paths, null, 2)
-    );
-
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
-      console.log("Access denied - user role not authorized");
       return res.status(403).json({ message: "Access denied" });
     }
 
-    console.log("Attempting to find pending tasks...");
     const pendingTasks = await PendingTask.find({ status: "pending" }).sort({
       createdAt: -1,
     });
-    console.log("Raw pending tasks:", JSON.stringify(pendingTasks, null, 2));
-    console.log("Found pending tasks count:", pendingTasks.length);
 
     // Returnera konsekvent format
     res.json({ pendingTasks });
   } catch (error) {
     console.error("Error in getPendingTasks:", error);
-    console.error("Error stack:", error.stack);
-    console.error("Error name:", error.name);
-    console.error("Error message:", error.message);
-
-    if (error.name === "ValidationError") {
-      return res
-        .status(400)
-        .json({ message: "Validation error", error: error.message });
-    }
-
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
