@@ -9,6 +9,9 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
+import { useTranslation } from "react-i18next";
+import TaskModal from "./TaskModal";
+import { useTaskTranslation } from "../hooks/useTaskTranslation";
 
 function WeekView() {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +19,8 @@ function WeekView() {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { translateTask } = useTaskTranslation();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -25,50 +30,100 @@ function WeekView() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axiosInstance.get("/api/tasks");
-        console.log("API Response:", response.data);
-        if (!Array.isArray(response.data.tasks)) {
-          console.error("Tasks is not an array:", response.data.tasks);
-          setTasks([]);
-        } else {
-          setTasks(response.data.tasks || []);
-        }
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      } finally {
-        setLoading(false);
+  const fetchTasks = async () => {
+    try {
+      const response = await axiosInstance.get("/api/tasks");
+      if (!Array.isArray(response.data.tasks)) {
+        console.error("Tasks is not an array:", response.data.tasks);
+        setTasks([]);
+      } else {
+        setTasks(response.data.tasks || []);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTasks();
   }, []);
 
-  const handleTaskClick = (task) => {
-    if (currentUser.role === "ADMIN") {
-      navigate("/dftasks/admin", {
-        state: { selectedTaskId: task._id, view: "tasks" },
+  const handleTaskClick = async (task) => {
+    try {
+      const translatedTask = await translateTask(task);
+      setSelectedTask(translatedTask);
+    } catch (error) {
+      console.error("Error translating task:", error);
+    }
+  };
+
+  const handleStatusUpdate = async (task, newStatus) => {
+    try {
+      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
+        status: newStatus,
       });
-    } else if (task.assignedTo?._id === currentUser.id) {
-      navigate("/dftasks/dashboard", { state: { selectedTaskId: task._id } });
-    } else {
-      // Visa bara detaljer för andra användares uppgifter
-      setSelectedTask(task);
+      if (response.status === 200) {
+        setTasks(
+          tasks.map((t) => (t._id === task._id ? response.data.task : t))
+        );
+        setSelectedTask(response.data.task);
+      }
+    } catch (error) {
+      alert(t("errorSavingTask"));
+    }
+  };
+
+  const handleAddComment = async (comment) => {
+    try {
+      const response = await axiosInstance.post(
+        `/tasks/${selectedTask._id}/comments`,
+        { content: comment }
+      );
+      if (response.data && response.data.task) {
+        const translatedTask = await translateTask(response.data.task);
+        setTasks(
+          tasks.map((task) =>
+            task._id === selectedTask._id ? translatedTask : task
+          )
+        );
+        setSelectedTask(translatedTask);
+      }
+    } catch (error) {
+      alert(t("errorAddingComment"));
     }
   };
 
   const getStatusClass = (status) => {
-    switch (status) {
+    if (!status || typeof status !== "string") {
+      return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
+    }
+
+    const statusLower = status.toLowerCase();
+
+    switch (statusLower) {
       case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
       case "in progress":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
       case "cannot fix":
         return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
+      case "pending":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
+    }
+  };
+
+  const renderStatus = (status) => {
+    if (!status || typeof status !== "string") {
+      return t("pending");
+    }
+    try {
+      return t(status.toLowerCase().replace(" ", ""));
+    } catch (error) {
+      return t("pending");
     }
   };
 
@@ -125,10 +180,10 @@ function WeekView() {
                               task.status
                             )}`}
                           >
-                            {task.status}
+                            {renderStatus(task.status)}
                           </span>
                           <span className="text-xs text-df-primary/70 dark:text-gray-400">
-                            {task.assignedTo?.name || "Unassigned"}
+                            {task.assignedTo?.name || t("unassigned")}
                           </span>
                         </div>
                       </div>
@@ -140,43 +195,17 @@ function WeekView() {
         </div>
       </div>
 
-      {/* Task Details Modal */}
       {selectedTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6">
-            <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                {selectedTask.title}
-              </h2>
-              <button
-                onClick={() => setSelectedTask(null)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-4 space-y-4">
-              <p className="text-df-primary/80 dark:text-gray-300">
-                {selectedTask.description}
-              </p>
-              <div className="flex items-center space-x-4">
-                <span
-                  className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
-                    selectedTask.status
-                  )}`}
-                >
-                  {selectedTask.status}
-                </span>
-                <span className="text-sm text-df-primary/70 dark:text-gray-400">
-                  Assigned to: {selectedTask.assignedTo?.name || "Unassigned"}
-                </span>
-              </div>
-              <div className="text-sm text-df-primary/70 dark:text-gray-400">
-                Due: {format(new Date(selectedTask.dueDate), "PPP")}
-              </div>
-            </div>
-          </div>
-        </div>
+        <TaskModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onStatusUpdate={handleStatusUpdate}
+          onAddComment={handleAddComment}
+          userRole={currentUser.role}
+          userId={currentUser.id}
+          getStatusClass={getStatusClass}
+          renderStatus={renderStatus}
+        />
       )}
     </div>
   );
