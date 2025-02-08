@@ -238,13 +238,15 @@ const userController = {
   // Hämta alla användare (endast admin)
   getAllUsers: async (req, res) => {
     try {
-      if (req.user.role !== "admin") {
+      if (req.user.role !== "ADMIN") {
         return res.status(403).json({
           message: "Åtkomst nekad",
         });
       }
 
+      // Hämta alla användare, både aktiva och inaktiva
       const users = await User.find().select("-password");
+      console.log("Fetched users:", users); // Debug-logg
       res.json(users);
     } catch (error) {
       console.error("Get users error:", error);
