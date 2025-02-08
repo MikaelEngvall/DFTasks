@@ -2,9 +2,17 @@
 
 const express = require("express");
 const router = express.Router();
-const userController = require("../controllers/userController");
+const {
+  login,
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/authController");
 
 // Endast login tillåts, ingen signup
-router.post("/login", userController.login);
+router.post("/login", login);
+
+// Lösenordsåterställning
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 module.exports = router;

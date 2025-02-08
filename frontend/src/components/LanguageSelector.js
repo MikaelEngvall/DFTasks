@@ -22,13 +22,15 @@ const LanguageSelector = () => {
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-1 sm:space-x-2">
       {Object.entries(countryFlags).map(([lang, country]) => (
         <button
           key={lang}
           onClick={() => handleLanguageChange(lang)}
           className={`transition-transform duration-150 ${
-            i18n.language === lang ? "transform scale-125" : "hover:scale-110"
+            i18n.language === lang
+              ? "transform scale-110 sm:scale-125"
+              : "hover:scale-110"
           }`}
           aria-label={`Byt språk till ${lang.toUpperCase()}`}
         >
@@ -36,8 +38,12 @@ const LanguageSelector = () => {
             countryCode={country}
             svg
             style={{
-              width: "2em",
-              height: "2em",
+              width: "1.5em",
+              height: "1.5em",
+              "@media (min-width: 640px)": {
+                width: "2em",
+                height: "2em",
+              },
             }}
             title={country}
           />

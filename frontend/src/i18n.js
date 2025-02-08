@@ -82,6 +82,22 @@ const resources = {
       dueDateRequired: "Deadline är obligatorisk",
       statusRequired: "Status är obligatorisk",
       assignedToRequired: "Tilldelad användare är obligatorisk",
+
+      // Lösenordsåterställning
+      forgotPassword: "Glömt lösenord?",
+      resetPassword: "Återställ lösenord",
+      enterNewPassword: "Ange ditt nya lösenord",
+      newPassword: "Nytt lösenord",
+      confirmPassword: "Bekräfta lösenord",
+      passwordsDoNotMatch: "Lösenorden matchar inte",
+      resetPasswordInstructions:
+        "Ange din e-postadress så skickar vi instruktioner för att återställa ditt lösenord",
+      sendResetLink: "Skicka återställningslänk",
+      resetPasswordSuccess:
+        "Ditt lösenord har återställts. Du kommer att omdirigeras till inloggningssidan.",
+      resetPasswordError:
+        "Det gick inte att återställa lösenordet. Försök igen senare.",
+      invalidResetToken: "Ogiltig eller utgången återställningslänk",
     },
   },
   en: {
@@ -164,6 +180,21 @@ const resources = {
       dueDateRequired: "Due date is required",
       statusRequired: "Status is required",
       assignedToRequired: "Assigned user is required",
+
+      // Password Reset
+      forgotPassword: "Forgot password?",
+      resetPassword: "Reset Password",
+      enterNewPassword: "Enter your new password",
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      passwordsDoNotMatch: "Passwords do not match",
+      resetPasswordInstructions:
+        "Enter your email address and we'll send you instructions to reset your password",
+      sendResetLink: "Send reset link",
+      resetPasswordSuccess:
+        "Your password has been reset. You will be redirected to the login page.",
+      resetPasswordError: "Failed to reset password. Please try again later.",
+      invalidResetToken: "Invalid or expired reset link",
     },
   },
   pl: {
@@ -246,6 +277,22 @@ const resources = {
       dueDateRequired: "Termin jest wymagany",
       statusRequired: "Status jest wymagany",
       assignedToRequired: "Przypisany użytkownik jest wymagany",
+
+      // Resetowanie hasła
+      forgotPassword: "Zapomniałeś hasła?",
+      resetPassword: "Zresetuj hasło",
+      enterNewPassword: "Wprowadź nowe hasło",
+      newPassword: "Nowe hasło",
+      confirmPassword: "Potwierdź hasło",
+      passwordsDoNotMatch: "Hasła nie są zgodne",
+      resetPasswordInstructions:
+        "Wprowadź swój adres e-mail, a wyślemy Ci instrukcje resetowania hasła",
+      sendResetLink: "Wyślij link do resetowania",
+      resetPasswordSuccess:
+        "Twoje hasło zostało zresetowane. Zostaniesz przekierowany do strony logowania.",
+      resetPasswordError:
+        "Nie udało się zresetować hasła. Spróbuj ponownie później.",
+      invalidResetToken: "Nieprawidłowy lub wygasły link do resetowania",
     },
   },
   uk: {
@@ -328,6 +375,22 @@ const resources = {
       dueDateRequired: "Термін обов'язковий",
       statusRequired: "Статус обов'язковий",
       assignedToRequired: "Призначений користувач обов'язковий",
+
+      // Скидання пароля
+      forgotPassword: "Забули пароль?",
+      resetPassword: "Скинути пароль",
+      enterNewPassword: "Введіть новий пароль",
+      newPassword: "Новий пароль",
+      confirmPassword: "Підтвердіть пароль",
+      passwordsDoNotMatch: "Паролі не співпадають",
+      resetPasswordInstructions:
+        "Введіть свою електронну адресу, і ми надішлемо вам інструкції для скидання пароля",
+      sendResetLink: "Надіслати посилання для скидання",
+      resetPasswordSuccess:
+        "Ваш пароль було скинуто. Ви будете перенаправлені на сторінку входу.",
+      resetPasswordError:
+        "Не вдалося скинути пароль. Спробуйте ще раз пізніше.",
+      invalidResetToken: "Недійсне або застаріле посилання для скидання",
     },
   },
 };

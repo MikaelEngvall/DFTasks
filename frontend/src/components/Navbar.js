@@ -21,8 +21,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-[60]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center space-x-4">
-            <LanguageSelector />
+          <div className="flex items-center">
             <Link
               to={user ? "/dftasks/month-view" : "/dftasks"}
               className="text-xl font-bold text-df-primary dark:text-white"
@@ -31,16 +30,20 @@ const Navbar = () => {
             </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="scale-75 sm:scale-100">
+              <LanguageSelector />
+            </div>
+
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-1.5 sm:p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label={darkMode ? t("lightMode") : t("darkMode")}
             >
               {darkMode ? (
-                <FaSun className="h-5 w-5" />
+                <FaSun className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
-                <FaMoon className="h-5 w-5" />
+                <FaMoon className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </button>
 
@@ -48,13 +51,13 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dftasks/dashboard"
-                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
                 >
                   {t("dashboard")}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
                 >
                   {t("logout")}
                 </button>
