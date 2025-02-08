@@ -18,18 +18,28 @@ function UserManagement() {
 
   const fetchUsers = async () => {
     try {
+      setError(null);
       const endpoint = showInactive ? "/api/users/all" : "/api/users";
+      console.log("Fetching users from endpoint:", endpoint);
       const response = await axiosInstance.get(endpoint);
-      if (Array.isArray(response.data)) {
-        setUsers(response.data);
-      } else if (Array.isArray(response.data.users)) {
-        setUsers(response.data.users);
-      } else {
-        setUsers([]);
+      console.log("API response:", response.data);
+
+      let userData = [];
+      if (response.data && Array.isArray(response.data)) {
+        userData = response.data;
+      } else if (response.data && Array.isArray(response.data.users)) {
+        userData = response.data.users;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        userData = response.data.data;
       }
+
+      console.log("Processed user data:", userData);
+      setUsers(userData);
       setLoading(false);
     } catch (error) {
+      console.error("Error fetching users:", error.response || error);
       setError(t("errorFetchingUsers"));
+      setUsers([]);
       setLoading(false);
     }
   };
