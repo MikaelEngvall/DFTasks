@@ -314,7 +314,7 @@ const userController = {
   // Hämta alla användare (endast admin)
   getAllUsers: async (req, res) => {
     try {
-      if (req.user.role !== "ADMIN") {
+      if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
         return res.status(403).json({
           message: "Åtkomst nekad",
         });
