@@ -87,7 +87,7 @@ function MonthView() {
     };
 
     updateSelectedTaskComments();
-  }, [currentLanguage, selectedTask, translateTask]);
+  }, [currentLanguage, selectedTask]);
 
   const handleTaskClick = async (task) => {
     try {
