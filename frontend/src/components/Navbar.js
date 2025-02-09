@@ -17,6 +17,8 @@ const Navbar = () => {
     navigate("/dftasks/login");
   };
 
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg dark:shadow-[0_4px_12px_0_rgba(0,0,0,0.5)] z-[60]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,12 +50,14 @@ const Navbar = () => {
 
             {user && (
               <>
-                <Link
-                  to="/dftasks/dashboard"
-                  className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
-                >
-                  {t("dashboard")}
-                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/dftasks/dashboard"
+                    className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  >
+                    {t("dashboard")}
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"

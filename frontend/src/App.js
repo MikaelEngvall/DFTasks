@@ -48,10 +48,6 @@ function App() {
                   }
                 />
                 <Route
-                  path="/dftasks/admin"
-                  element={<Navigate to="/dftasks/dashboard" replace />}
-                />
-                <Route
                   path="/dftasks/dashboard"
                   element={
                     <ProtectedRoute>
@@ -61,15 +57,15 @@ function App() {
                 />
                 <Route
                   path="/dftasks"
-                  element={<Navigate to="/dftasks/login" replace />}
+                  element={<Navigate to="/dftasks/month-view" replace />}
                 />
                 <Route
                   path="/"
-                  element={<Navigate to="/dftasks/login" replace />}
+                  element={<Navigate to="/dftasks/month-view" replace />}
                 />
                 <Route
                   path="*"
-                  element={<Navigate to="/dftasks/login" replace />}
+                  element={<Navigate to="/dftasks/month-view" replace />}
                 />
               </Routes>
             </Suspense>

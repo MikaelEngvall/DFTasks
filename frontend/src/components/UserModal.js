@@ -1,70 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { jwtDecode } from "jwt-decode";
+import axiosInstance from "../utils/axios";
 
-function UserModal({
-  user,
-  onClose,
-  onEdit,
-  onToggleStatus,
-  isCreating = false,
-}) {
-  const [editedName, setEditedName] = useState(user?.name || "");
-  const [editedEmail, setEditedEmail] = useState(user?.email || "");
-  const [editedRole, setEditedRole] = useState(user?.role || "USER");
-  const [editedPassword, setEditedPassword] = useState("");
-  const [isEditing, setIsEditing] = useState(isCreating);
-  const [currentUserRole, setCurrentUserRole] = useState(null);
+function UserModal({ user, onClose }) {
+  const [name, setName] = useState(user.name || "");
+  const [email, setEmail] = useState(user.email || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      setCurrentUserRole(decoded.role);
-    }
-  }, []);
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  const handleSave = () => {
-    const userData = {
-      name: editedName,
-      email: editedEmail,
-      role: editedRole,
-    };
-
-    if (isCreating || editedPassword) {
-      userData.password = editedPassword;
-    }
-
-    onEdit(userData);
-    if (!isCreating) {
-      setIsEditing(false);
+    try {
+      const response = await axiosInstance.patch("/users/profile", {
+        name,
+        email,
+      });
+      setSuccess(t("profileUpdated"));
+    } catch (error) {
+      setError(error.response?.data?.message || t("error"));
     }
   };
 
-  const getDisplayRole = (role) => {
-    if (currentUserRole === "SUPERADMIN") {
-      return role;
-    }
-    return role === "SUPERADMIN" ? "ADMIN" : role;
-  };
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  const canEditUser = () => {
-    if (isCreating) return true;
-    if (currentUserRole === "SUPERADMIN") return true;
-    return user?.role !== "SUPERADMIN";
+    if (newPassword !== confirmPassword) {
+      setError(t("passwordsDoNotMatch"));
+      return;
+    }
+
+    try {
+      await axiosInstance.patch("/users/password", {
+        currentPassword,
+        newPassword,
+      });
+      setSuccess(t("passwordUpdated"));
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      setError(error.response?.data?.message || t("error"));
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-[45] overflow-y-auto">
+    <div className="fixed inset-0 z-[55] overflow-y-auto">
       <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
       <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl">
-          <div className="sticky top-0 z-[46] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-df-primary dark:text-white">
-                {isCreating ? t("createUser") : user?.name}
-              </h3>
+        <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-md">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+                {t("userSettings")}
+              </h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -85,150 +82,114 @@ function UserModal({
                 </svg>
               </button>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                  {t("name")}
-                </h4>
-                {isEditing || isCreating ? (
+
+            {error && (
+              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleProfileUpdate} className="mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("name")}
+                  </label>
                   <input
                     type="text"
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                   />
-                ) : (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {user?.name}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                  {t("email")}
-                </h4>
-                {isEditing || isCreating ? (
+                </div>
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("email")}
+                  </label>
                   <input
                     type="email"
-                    value={editedEmail}
-                    onChange={(e) => setEditedEmail(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                   />
-                ) : (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {user?.email}
-                  </p>
-                )}
+                </div>
+                <button
+                  type="submit"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                >
+                  {t("updateProfile")}
+                </button>
               </div>
+            </form>
 
-              {(isEditing || isCreating) && (
+            <form onSubmit={handlePasswordUpdate}>
+              <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("password")}
-                  </h4>
+                  <label
+                    htmlFor="currentPassword"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("currentPassword")}
+                  </label>
                   <input
                     type="password"
-                    value={editedPassword}
-                    onChange={(e) => setEditedPassword(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
-                    required={isCreating}
+                    id="currentPassword"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                   />
                 </div>
-              )}
-
-              <div>
-                <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                  {t("role")}
-                </h4>
-                {(isEditing || isCreating) && canEditUser() ? (
-                  <select
-                    value={editedRole}
-                    onChange={(e) => setEditedRole(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
-                  >
-                    <option value="USER">USER</option>
-                    <option value="ADMIN">ADMIN</option>
-                    {currentUserRole === "SUPERADMIN" && (
-                      <option value="SUPERADMIN">SUPERADMIN</option>
-                    )}
-                  </select>
-                ) : (
-                  <span
-                    className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      getDisplayRole(user?.role) === "ADMIN"
-                        ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                        : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                    }`}
-                  >
-                    {getDisplayRole(user?.role)}
-                  </span>
-                )}
-              </div>
-
-              {!isCreating && (
                 <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("status")}
-                  </h4>
-                  <div className="mt-1 flex items-center space-x-2">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user?.isActive
-                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                          : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                      }`}
-                    >
-                      {user?.isActive ? t("active") : t("inactive")}
-                    </span>
-                    {canEditUser() && onToggleStatus && (
-                      <button
-                        onClick={() => onToggleStatus(user?._id)}
-                        className="text-sm text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                      >
-                        {user?.isActive ? t("deactivate") : t("activate")}
-                      </button>
-                    )}
-                  </div>
+                  <label
+                    htmlFor="newPassword"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("newPassword")}
+                  </label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                  />
                 </div>
-              )}
-
-              <div className="pt-4 flex justify-end space-x-3">
-                {isEditing || isCreating ? (
-                  <>
-                    <button
-                      onClick={() => {
-                        if (isCreating) {
-                          onClose();
-                        } else {
-                          setIsEditing(false);
-                        }
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                    >
-                      {t("cancel")}
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
-                    >
-                      {t("save")}
-                    </button>
-                  </>
-                ) : (
-                  canEditUser() && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90"
-                    >
-                      {t("edit")}
-                    </button>
-                  )
-                )}
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("confirmPassword")}
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                >
+                  {t("updatePassword")}
+                </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>

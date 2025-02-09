@@ -44,7 +44,7 @@ function TaskModal({
       <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
       <div className="relative min-h-screen flex items-center justify-center p-4 pt-24 sm:pt-4">
         <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl">
-          <div className="sticky top-0 z-[56] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div className="sticky top-0 z-[56] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 rounded-t-lg">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-df-primary dark:text-white">
                 {task.title}

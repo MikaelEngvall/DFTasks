@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import TaskModal from "./TaskModal";
+import UserModal from "./UserModal";
 import { tasksAPI } from "../services/api";
 
 function MonthView() {
@@ -13,6 +14,7 @@ function MonthView() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [currentMonth] = useState(new Date());
   const { t } = useTranslation();
 
@@ -202,9 +204,19 @@ function MonthView() {
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          <h2 className="text-xl font-semibold text-df-primary dark:text-white p-4">
-            {format(currentMonth, "MMMM yyyy")}
-          </h2>
+          <div className="flex justify-between items-center p-4">
+            <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+              {format(currentMonth, "MMMM yyyy")}
+            </h2>
+            {currentUser && (
+              <button
+                onClick={() => setShowUserModal(true)}
+                className="text-sm text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+              >
+                {t("hello")} {currentUser.name}
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
             {weekDays[i18n.language].map((day) => (
               <div key={day} className="bg-white dark:bg-gray-800 p-2">
@@ -286,6 +298,10 @@ function MonthView() {
           getStatusClass={getStatusClass}
           renderStatus={renderStatus}
         />
+      )}
+
+      {showUserModal && currentUser && (
+        <UserModal user={currentUser} onClose={() => setShowUserModal(false)} />
       )}
     </div>
   );
