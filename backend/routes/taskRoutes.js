@@ -22,7 +22,7 @@ const Task = require("../models/Task");
 router.use(protect);
 
 // Status update route - tillåt både admin och tilldelade användare
-router.route("/:id/status").put(toggleTaskStatus);
+router.patch("/:id/status", toggleTaskStatus);
 
 // Pending task routes
 router.route("/pending").get(admin, getPendingTasks);

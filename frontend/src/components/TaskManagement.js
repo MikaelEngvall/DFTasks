@@ -9,6 +9,7 @@ import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import { jwtDecode } from "jwt-decode";
 import TaskModal from "./TaskModal";
 import { useTaskUtils } from "../utils/taskUtils";
+import { tasksAPI } from "../services/api";
 
 function TaskManagement({ userRole, userId }) {
   const [tasks, setTasks] = useState([]);
@@ -59,8 +60,9 @@ function TaskManagement({ userRole, userId }) {
   const fetchTasks = async () => {
     try {
       setError(null);
-      const endpoint = showInactive ? "/tasks/all" : "/tasks";
-      const response = await axiosInstance.get(endpoint);
+      const response = await (showInactive
+        ? tasksAPI.getAllTasks()
+        : tasksAPI.getTasks());
 
       let taskData = [];
       if (response.data && Array.isArray(response.data.tasks)) {
@@ -209,13 +211,15 @@ function TaskManagement({ userRole, userId }) {
     }
   };
 
-  const handleToggleTaskStatus = async (taskId, e) => {
-    e?.stopPropagation();
+  const handleToggleTaskStatus = async (taskId, currentStatus, e) => {
+    if (e) {
+      e.stopPropagation();
+    }
     try {
-      await axiosInstance.put(`/tasks/${taskId}/toggle`);
+      await tasksAPI.toggleTaskStatus(taskId, currentStatus);
       await fetchTasks();
     } catch (error) {
-      alert(t("errorTogglingTaskStatus"));
+      console.error("Error toggling task status:", error);
     }
   };
 
@@ -350,15 +354,12 @@ function TaskManagement({ userRole, userId }) {
                   {isAdmin && (
                     <>
                       <button
-                        onClick={(e) => handleToggleTaskStatus(task._id, e)}
-                        className={`mr-3 ${
-                          task.isActive
-                            ? "text-green-600 hover:text-green-900"
-                            : "text-red-600 hover:text-red-900"
-                        }`}
-                        title={task.isActive ? t("deactivate") : t("activate")}
+                        onClick={(e) =>
+                          handleToggleTaskStatus(task._id, task.isActive, e)
+                        }
+                        className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
                       >
-                        {task.isActive ? "✓" : "×"}
+                        {task.isActive ? t("deactivate") : t("activate")}
                       </button>
                       <button
                         onClick={(e) => handleEdit(task, e)}

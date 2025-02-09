@@ -12,11 +12,15 @@ export const authAPI = {
 // Tasks API
 export const tasksAPI = {
   getTasks: () => axiosInstance.get("/tasks"),
+  getAllTasks: () => axiosInstance.get("/tasks/all"),
   getTask: (id) => axiosInstance.get(`/tasks/${id}`),
   createTask: (taskData) => axiosInstance.post("/tasks", taskData),
   updateTaskStatus: (taskId, status) =>
-    axiosInstance.put(`/tasks/${taskId}/status`, { status }),
-  toggleTaskStatus: (taskId) => axiosInstance.put(`/tasks/${taskId}/toggle`),
+    axiosInstance.patch(`/tasks/${taskId}/status`, { status }),
+  toggleTaskStatus: async (taskId, currentStatus) =>
+    axiosInstance.patch(`/tasks/${taskId}/status`, {
+      isActive: !currentStatus,
+    }),
   addComment: (taskId, content) =>
     axiosInstance.post(`/tasks/${taskId}/comments`, { content }),
   toggleCommentStatus: (taskId, commentId) =>

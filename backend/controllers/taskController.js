@@ -180,65 +180,48 @@ const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 const toggleTaskStatus = async (req, res) => {
   try {
-    if (!validateObjectId(req.params.id)) {
-      return res.status(400).json({ message: "Invalid task ID" });
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res
+        .status(400)
+        .json({ message: "isActive must be a boolean value" });
     }
 
-    if (!req.body.status) {
-      return res.status(400).json({ message: "Status is required" });
-    }
-
-    const validStatuses = ["pending", "in progress", "completed", "cannot fix"];
-    if (!validStatuses.includes(req.body.status.toLowerCase())) {
-      return res.status(400).json({
-        message:
-          "Invalid status. Must be one of: pending, in progress, completed, cannot fix",
-      });
-    }
-
-    const task = await Task.findById(req.params.id)
-      .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
-      .populate("comments.createdBy", "name email");
+    const task = await Task.findById(id)
+      .populate("assignedTo", "name email role")
+      .populate("createdBy", "name email role")
+      .populate("comments.createdBy", "name email role");
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Kontrollera behörighet
-    const isAdmin = req.user.role === "ADMIN" || req.user.role === "SUPERADMIN";
-    const isAssignedUser =
-      task.assignedTo &&
-      task.assignedTo._id &&
-      task.assignedTo._id.toString() === req.user._id.toString();
-
-    if (!isAdmin && !isAssignedUser) {
-      return res.status(403).json({ message: "Access denied" });
+    // Kontrollera behörighet - endast admin eller tilldelad användare kan ändra status
+    if (
+      req.user.role !== "ADMIN" &&
+      req.user.role !== "SUPERADMIN" &&
+      (!task.assignedTo || task.assignedTo._id.toString() !== req.user.id)
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this task" });
     }
 
-    // Uppdatera status
-    task.status = req.body.status.toLowerCase();
+    task.isActive = isActive;
     await task.save();
 
     // Hämta den uppdaterade uppgiften med alla populerade fält
-    const updatedTask = await Task.findById(task._id)
-      .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
-      .populate("comments.createdBy", "name email");
+    const updatedTask = await Task.findById(id)
+      .populate("assignedTo", "name email role")
+      .populate("createdBy", "name email role")
+      .populate("comments.createdBy", "name email role");
 
-    if (!updatedTask) {
-      return res
-        .status(500)
-        .json({ message: "Failed to retrieve updated task" });
-    }
-
-    res.json({
-      message: "Task status updated successfully",
-      task: updatedTask,
-    });
+    res.json(updatedTask);
   } catch (error) {
     console.error("Error in toggleTaskStatus:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
