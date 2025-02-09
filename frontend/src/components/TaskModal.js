@@ -31,22 +31,11 @@ function TaskModal({
 
   const handleAddComment = () => {
     if (!newComment.trim()) {
-      console.log("TaskModal - Kommentaren är tom");
       return;
     }
-    console.log("TaskModal - Försöker lägga till kommentar:", {
-      kommentarText: newComment,
-      uppgiftId: task._id,
-      onAddComment: !!onAddComment,
-    });
     if (typeof onAddComment === "function") {
       onAddComment(task._id, newComment);
       setNewComment("");
-    } else {
-      console.error(
-        "TaskModal - onAddComment är inte en funktion:",
-        onAddComment
-      );
     }
   };
 
