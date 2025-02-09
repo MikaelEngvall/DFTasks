@@ -17,11 +17,13 @@ function TaskModal({
   const { t } = useTranslation();
 
   const handleStatusUpdate = () => {
+    if (!editedStatus || editedStatus === task.status) return;
     onStatusUpdate(task, editedStatus);
     setEditedStatus(null);
   };
 
   const canEditTask = () => {
+    if (!userRole || !userId || !task) return false;
     return (
       userRole === "ADMIN" ||
       userRole === "SUPERADMIN" ||
@@ -30,9 +32,7 @@ function TaskModal({
   };
 
   const handleAddComment = () => {
-    if (!newComment.trim()) {
-      return;
-    }
+    if (!newComment.trim() || !task?._id) return;
     if (typeof onAddComment === "function") {
       onAddComment(task._id, newComment);
       setNewComment("");

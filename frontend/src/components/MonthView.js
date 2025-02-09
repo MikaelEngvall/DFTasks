@@ -81,15 +81,21 @@ function MonthView() {
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
       if (selectedTask && selectedTask.comments?.length > 0) {
-        const translatedTask = await translateTask(selectedTask);
-        setSelectedTask(translatedTask);
+        try {
+          const translatedTask = await translateTask(selectedTask);
+          if (JSON.stringify(translatedTask) !== JSON.stringify(selectedTask)) {
+            setSelectedTask(translatedTask);
+          }
+        } catch (error) {
+          console.error("Error translating task comments:", error);
+        }
       }
     };
-
     updateSelectedTaskComments();
-  }, [currentLanguage, selectedTask]);
+  }, [currentLanguage]);
 
   const handleTaskClick = async (task) => {
+    if (!task) return;
     try {
       const translatedTask = await translateTask(task);
       setSelectedTask(translatedTask);
@@ -100,6 +106,7 @@ function MonthView() {
   };
 
   const canEditTask = (task) => {
+    if (!currentUser || !task) return false;
     return (
       currentUser.role === "ADMIN" ||
       currentUser.role === "SUPERADMIN" ||
