@@ -6,40 +6,7 @@ const translateText = async (text, targetLang) => {
 
   // Om texten redan finns i översättningarna, använd den
   const translated = i18n.t(text, { lng: targetLang });
-  if (translated !== text) {
-    return translated;
-  }
-
-  // Om ingen översättning finns, använd Google Translate API
-  try {
-    const apiKey = process.env.REACT_APP_GOOGLE_TRANSLATE_API_KEY;
-    if (!apiKey) {
-      return text;
-    }
-
-    const response = await fetch(
-      `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: text,
-          target: targetLang,
-        }),
-      }
-    );
-
-    const data = await response.json();
-    if (data.data && data.data.translations && data.data.translations[0]) {
-      return data.data.translations[0].translatedText;
-    }
-  } catch (error) {
-    return text;
-  }
-
-  return text;
+  return translated !== text ? translated : text;
 };
 
 export const translateContent = async (content, targetLang) => {
