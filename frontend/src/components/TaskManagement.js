@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import { jwtDecode } from "jwt-decode";
 import TaskModal from "./TaskModal";
+import { useTaskUtils } from "../utils/taskUtils";
 
 function TaskManagement({ userRole, userId }) {
   const [tasks, setTasks] = useState([]);
@@ -25,6 +26,8 @@ function TaskManagement({ userRole, userId }) {
 
   const { translateTask, translateTasks, translateComments, currentLanguage } =
     useTaskTranslation();
+
+  const { getStatusClass, renderStatus } = useTaskUtils();
 
   const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
 
@@ -166,27 +169,6 @@ function TaskManagement({ userRole, userId }) {
     }
   };
 
-  const getStatusClass = (status) => {
-    if (!status || typeof status !== "string") {
-      return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"; // default style
-    }
-
-    const statusLower = status.toLowerCase();
-
-    switch (statusLower) {
-      case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
-      case "in progress":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
-      case "cannot fix":
-        return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
-      case "pending":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
-      default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
-    }
-  };
-
   const handleAddComment = async (taskId, commentText) => {
     if (!commentText.trim()) return;
     try {
@@ -224,17 +206,6 @@ function TaskManagement({ userRole, userId }) {
       return format(date, formatStr);
     } catch (error) {
       return t("noDate");
-    }
-  };
-
-  const renderStatus = (status) => {
-    if (!status || typeof status !== "string") {
-      return t("pending");
-    }
-    try {
-      return t(status.toLowerCase().replace(" ", ""));
-    } catch (error) {
-      return t("pending");
     }
   };
 
