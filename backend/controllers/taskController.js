@@ -181,13 +181,7 @@ const deleteTask = async (req, res) => {
 const toggleTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isActive } = req.body;
-
-    if (typeof isActive !== "boolean") {
-      return res
-        .status(400)
-        .json({ message: "isActive must be a boolean value" });
-    }
+    const { status, isActive } = req.body;
 
     const task = await Task.findById(id)
       .populate("assignedTo", "name email role")
@@ -209,7 +203,16 @@ const toggleTaskStatus = async (req, res) => {
         .json({ message: "Not authorized to update this task" });
     }
 
-    task.isActive = isActive;
+    // Uppdatera status om det skickades med
+    if (status) {
+      task.status = status;
+    }
+
+    // Uppdatera isActive om det skickades med
+    if (typeof isActive === "boolean") {
+      task.isActive = isActive;
+    }
+
     await task.save();
 
     // Hämta den uppdaterade uppgiften med alla populerade fält

@@ -34,11 +34,11 @@ router.route("/all").get(admin, getAllTasks);
 router
   .route("/:id")
   .get(getTask)
-  .put(admin, updateTask)
+  .patch(admin, updateTask)
   .delete(admin, deleteTask);
 router
   .route("/:taskId/comments/:commentId/toggle")
-  .put(admin, toggleCommentStatus);
+  .patch(admin, toggleCommentStatus);
 router.route("/:id/comments").post(addComment);
 
 module.exports = router;

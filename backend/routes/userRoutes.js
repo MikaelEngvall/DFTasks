@@ -18,8 +18,8 @@ router.route("/").get(admin, getUsers);
 router.route("/all").get(admin, getAllUsers);
 
 // Routes som kräver admin eller superadmin
-router.route("/:id/toggle").put(admin, toggleUserStatus);
+router.route("/:id/toggle").patch(admin, toggleUserStatus);
 router.route("/").post(admin, createUser);
-router.route("/:id").put(admin, updateUser).delete(admin, deleteUser);
+router.route("/:id").patch(admin, updateUser).delete(admin, deleteUser);
 
 module.exports = router;

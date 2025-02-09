@@ -1,29 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axios";
 import { format } from "date-fns";
 import { jwtDecode } from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { FaEdit, FaTrash } from "react-icons/fa";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import TaskModal from "./TaskModal";
+import { tasksAPI } from "../services/api";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState(null);
-  const [showTaskDetails, setShowTaskDetails] = useState(false);
-  const [editedStatus, setEditedStatus] = useState(null);
-  const [newComment, setNewComment] = useState("");
-  const navigate = useNavigate();
+  const [currentMonth] = useState(new Date());
   const { t } = useTranslation();
 
-  const { translateTask, translateTasks, translateComments, currentLanguage } =
+  const { translateTask, translateTasks, currentLanguage } =
     useTaskTranslation();
 
   const weekDays = {
@@ -94,17 +87,15 @@ function MonthView() {
     };
 
     updateSelectedTaskComments();
-  }, [currentLanguage, selectedTask?._id]);
+  }, [currentLanguage, selectedTask, translateTask]);
 
   const handleTaskClick = async (task) => {
     try {
       const translatedTask = await translateTask(task);
       setSelectedTask(translatedTask);
-      setShowTaskDetails(true);
     } catch (error) {
       console.error("Error translating task:", error);
       setSelectedTask(task);
-      setShowTaskDetails(true);
     }
   };
 
@@ -140,45 +131,6 @@ function MonthView() {
     1
   ).getDay();
 
-  const handleEditTask = async () => {
-    try {
-      const response = await axiosInstance.put(
-        `/tasks/${editedTask._id}`,
-        editedTask
-      );
-      if (response.status === 200) {
-        setTasks(
-          tasks.map((task) =>
-            task._id === editedTask._id ? response.data.task : task
-          )
-        );
-        setIsEditing(false);
-        setSelectedTask(response.data.task);
-      }
-    } catch (error) {
-      console.error("Error updating task:", error);
-      alert(t("errorSavingTask"));
-    }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    if (window.confirm(t("deleteConfirm"))) {
-      try {
-        await axiosInstance.delete(`/tasks/${taskId}`);
-        setTasks(tasks.filter((task) => task._id !== taskId));
-        setSelectedTask(null);
-      } catch (error) {
-        console.error("Error deleting task:", error);
-        alert(t("errorDeletingTask"));
-      }
-    }
-  };
-
-  const startEditing = (task) => {
-    setEditedTask({ ...task });
-    setIsEditing(true);
-  };
-
   const handleStatusUpdate = async (task, newStatus) => {
     try {
       console.log("Updating task status:", {
@@ -187,12 +139,10 @@ function MonthView() {
         newStatus: newStatus,
       });
 
-      const response = await axiosInstance.put(`/tasks/${task._id}/status`, {
-        status: newStatus,
-      });
+      const response = await tasksAPI.updateTaskStatus(task._id, newStatus);
 
-      if (response.status === 200) {
-        const updatedTask = response.data.task;
+      if (response.data) {
+        const updatedTask = response.data;
         setTasks(tasks.map((t) => (t._id === task._id ? updatedTask : t)));
         setSelectedTask(updatedTask);
       }
@@ -231,15 +181,6 @@ function MonthView() {
     } catch (error) {
       alert(t("errorAddingComment"));
     }
-  };
-
-  const handleEdit = (task) => {
-    navigate("/dftasks/dashboard", {
-      state: {
-        selectedTaskId: task._id,
-        view: "tasks",
-      },
-    });
   };
 
   if (loading) {
