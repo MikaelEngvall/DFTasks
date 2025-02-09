@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "../utils/axios";
+import { useAuth } from "../context/AuthContext";
 
 function UserModal({ user, onClose }) {
   const [name, setName] = useState(user.name || "");
@@ -11,6 +12,7 @@ function UserModal({ user, onClose }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { t } = useTranslation();
+  const { updateUser } = useAuth();
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -18,13 +20,22 @@ function UserModal({ user, onClose }) {
     setSuccess("");
 
     try {
-      const response = await axiosInstance.patch("/users/profile", {
+      const response = await axiosInstance.patch("/profile", {
         name,
         email,
       });
-      setSuccess(t("profileUpdated"));
+
+      if (response.data.status) {
+        setSuccess(t("profileUpdated"));
+        updateUser({ name, email });
+        if (typeof onClose === "function") {
+          setTimeout(() => onClose(), 1500);
+        }
+      } else {
+        setError(response.data.msg || t("error"));
+      }
     } catch (error) {
-      setError(error.response?.data?.message || t("error"));
+      setError(error.response?.data?.msg || t("error"));
     }
   };
 

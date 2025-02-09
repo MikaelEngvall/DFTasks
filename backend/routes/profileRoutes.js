@@ -2,10 +2,14 @@
 
 const express = require("express");
 const router = express.Router();
-const { getProfile } = require("../controllers/profileControllers");
-const { verifyAccessToken } = require("../middleware/index.js");
+const {
+  getProfile,
+  updateProfile,
+} = require("../controllers/profileControllers");
+const { protect } = require("../middleware/authMiddleware");
 
 // Routes beginning with /api/profile
-router.get("/", verifyAccessToken, getProfile);
+router.get("/", protect, getProfile);
+router.patch("/", protect, updateProfile);
 
 module.exports = router;

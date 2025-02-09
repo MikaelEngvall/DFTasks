@@ -8,6 +8,7 @@ import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import TaskModal from "./TaskModal";
 import UserModal from "./UserModal";
 import { tasksAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
@@ -17,6 +18,7 @@ function MonthView() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [currentMonth] = useState(new Date());
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const { translateTask, translateTasks, currentLanguage } =
     useTaskTranslation();
@@ -203,86 +205,94 @@ function MonthView() {
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          <div className="flex justify-between items-center p-4">
-            <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-              {format(currentMonth, "MMMM yyyy")}
-            </h2>
-            {currentUser && (
-              <button
-                onClick={() => setShowUserModal(true)}
-                className="text-sm text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
-              >
-                {t("hello")} {currentUser.name}
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
-            {weekDays[i18n.language].map((day) => (
-              <div key={day} className="bg-white dark:bg-gray-800 p-2">
-                <h3 className="text-sm font-semibold text-df-primary dark:text-white">
-                  {day}
-                </h3>
-              </div>
-            ))}
-            {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
-              <div
-                key={`empty-${index}`}
-                className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
-              />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, index) => {
-              const date = new Date(
-                currentMonth.getFullYear(),
-                currentMonth.getMonth(),
-                index + 1
-              );
-              const dayTasks = tasks.filter(
-                (task) =>
-                  format(new Date(task.dueDate), "yyyy-MM-dd") ===
-                  format(date, "yyyy-MM-dd")
-              );
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => setShowUserModal(true)}
+            className="text-2xl font-bold text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-white/80 transition-colors duration-150"
+          >
+            {t("welcome")} {user?.name}
+          </button>
+        </div>
 
-              return (
-                <div
-                  key={index}
-                  className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
-                >
-                  <p className="text-sm text-df-primary/70 dark:text-gray-400">
-                    {index + 1}
-                  </p>
-                  <div className="mt-2 space-y-2">
-                    {dayTasks.map((task) => (
-                      <div
-                        key={task._id}
-                        className={`p-2 rounded-lg ${
-                          canEditTask(task)
-                            ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
-                            : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        } cursor-pointer transition-colors duration-150`}
-                        onClick={() => handleTaskClick(task)}
-                      >
-                        <div className="text-sm font-medium text-df-primary dark:text-white truncate">
-                          {task.title}
-                        </div>
-                        <div className="mt-1 flex items-center justify-between">
-                          <span
-                            className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
-                              task.status
-                            )}`}
-                          >
-                            {renderStatus(task.status)}
-                          </span>
-                          <span className="text-xs text-df-primary/70 dark:text-gray-400">
-                            {task.assignedTo?.name || t("unassigned")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+          <div className="p-6">
+            <h2 className="text-xl font-semibold text-df-primary dark:text-white mb-4">
+              {t("calendar")}
+            </h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+              <div className="flex justify-between items-center p-4">
+                <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+                  {format(currentMonth, "MMMM yyyy")}
+                </h2>
+              </div>
+              <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
+                {weekDays[i18n.language].map((day) => (
+                  <div key={day} className="bg-white dark:bg-gray-800 p-2">
+                    <h3 className="text-sm font-semibold text-df-primary dark:text-white">
+                      {day}
+                    </h3>
                   </div>
-                </div>
-              );
-            })}
+                ))}
+                {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
+                  <div
+                    key={`empty-${index}`}
+                    className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
+                  />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, index) => {
+                  const date = new Date(
+                    currentMonth.getFullYear(),
+                    currentMonth.getMonth(),
+                    index + 1
+                  );
+                  const dayTasks = tasks.filter(
+                    (task) =>
+                      format(new Date(task.dueDate), "yyyy-MM-dd") ===
+                      format(date, "yyyy-MM-dd")
+                  );
+
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
+                    >
+                      <p className="text-sm text-df-primary/70 dark:text-gray-400">
+                        {index + 1}
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        {dayTasks.map((task) => (
+                          <div
+                            key={task._id}
+                            className={`p-2 rounded-lg ${
+                              canEditTask(task)
+                                ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
+                                : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            } cursor-pointer transition-colors duration-150`}
+                            onClick={() => handleTaskClick(task)}
+                          >
+                            <div className="text-sm font-medium text-df-primary dark:text-white truncate">
+                              {task.title}
+                            </div>
+                            <div className="mt-1 flex items-center justify-between">
+                              <span
+                                className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
+                                  task.status
+                                )}`}
+                              >
+                                {renderStatus(task.status)}
+                              </span>
+                              <span className="text-xs text-df-primary/70 dark:text-gray-400">
+                                {task.assignedTo?.name || t("unassigned")}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -300,8 +310,8 @@ function MonthView() {
         />
       )}
 
-      {showUserModal && currentUser && (
-        <UserModal user={currentUser} onClose={() => setShowUserModal(false)} />
+      {showUserModal && (
+        <UserModal user={user} onClose={() => setShowUserModal(false)} />
       )}
     </div>
   );
