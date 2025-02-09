@@ -42,16 +42,16 @@ function TaskModal({
   return (
     <div className="fixed inset-0 z-[55] overflow-y-auto">
       <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
-      <div className="relative min-h-screen flex items-center justify-center p-4 pt-24 sm:pt-4">
+      <div className="relative min-h-screen flex items-start justify-center p-4 pt-16">
         <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl">
           <div className="sticky top-0 z-[56] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 rounded-t-lg">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-df-primary dark:text-white">
+              <h3 className="text-lg font-medium text-df-primary dark:text-white pr-8">
                 {task.title}
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 absolute top-4 right-4"
               >
                 <span className="sr-only">{t("close")}</span>
                 <svg
