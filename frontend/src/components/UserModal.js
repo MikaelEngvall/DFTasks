@@ -37,7 +37,7 @@ function UserModal({ user, onClose, onEdit, isCreating }) {
       let response;
       // Om det är den inloggade användaren som uppdaterar sin egen profil
       if (user?._id === currentUser?.id) {
-        response = await axiosInstance.patch("/profile", updateData);
+        response = await axiosInstance.patch("/api/profile", updateData);
         if (response.data?.user) {
           i18n.changeLanguage(preferredLanguage);
           localStorage.setItem("language", preferredLanguage);

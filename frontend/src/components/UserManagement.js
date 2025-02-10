@@ -68,8 +68,8 @@ function UserManagement() {
 
   const handleEdit = async (userData) => {
     try {
-      const response = await axiosInstance.patch(
-        `/users/${selectedUser._id}`,
+      const response = await axiosInstance.put(
+        `/api/users/${selectedUser._id}`,
         userData
       );
       if (response.data) {
