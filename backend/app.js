@@ -47,10 +47,7 @@ app.use((err, req, res, next) => {
 
 // Connect to MongoDB and start email listener
 mongoose
-  .connect(process.env.MONGODB_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URL)
   .then(async () => {
     console.log("MongoDB connected...");
     startEmailListener();
