@@ -69,7 +69,7 @@ function UserManagement() {
   const handleEdit = async (userData) => {
     try {
       const response = await axiosInstance.put(
-        `/api/users/${selectedUser._id}`,
+        `/users/${selectedUser._id}`,
         userData
       );
       if (response.data) {
@@ -98,7 +98,7 @@ function UserManagement() {
 
   const handleToggleStatus = async (userId) => {
     try {
-      await axiosInstance.put(`/users/${userId}/toggle`);
+      await axiosInstance.patch(`/users/${userId}/toggle-status`);
       await fetchUsers();
       setSelectedUser(null);
     } catch (error) {

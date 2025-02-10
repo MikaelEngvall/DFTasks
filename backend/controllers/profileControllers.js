@@ -23,6 +23,20 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ status: false, msg: "User not found" });
     }
 
+    // Kontrollera om e-postadressen redan finns hos en annan användare
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: user._id },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          status: false,
+          msg: "En användare med denna e-postadress finns redan",
+        });
+      }
+    }
+
     // Uppdatera användarens information
     if (name) user.name = name;
     if (email) user.email = email;
