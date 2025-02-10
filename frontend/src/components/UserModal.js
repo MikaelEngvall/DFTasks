@@ -1,27 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "../utils/axios";
 import { useAuth } from "../context/AuthContext";
 
 function UserModal({ user, onClose }) {
-  const [name, setName] = useState(user.name || "");
-  const [email, setEmail] = useState(user.email || "");
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [preferredLanguage, setPreferredLanguage] = useState(
-    user.preferredLanguage || "en"
+    user?.preferredLanguage || "en"
   );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { t, i18n } = useTranslation();
   const { updateUser } = useAuth();
 
-  // Uppdatera språket när användaren ändrar preferredLanguage
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setPreferredLanguage(newLang);
-    // Vi väntar med att ändra i18n tills användaren sparar
   };
 
   const handleProfileUpdate = async (e) => {
@@ -29,30 +27,20 @@ function UserModal({ user, onClose }) {
     setError("");
     setSuccess("");
 
-    if (!user) {
-      setError(t("userNotFound"));
-      return;
-    }
-
     try {
-      const response = await axiosInstance.patch(`/users/${user._id}`, {
+      const response = await axiosInstance.patch("/profile", {
         name,
         email,
         preferredLanguage,
       });
 
-      if (response.data) {
+      if (response.data?.user) {
         // Uppdatera språket först efter lyckad uppdatering
         i18n.changeLanguage(preferredLanguage);
         localStorage.setItem("language", preferredLanguage);
 
         setSuccess(t("profileUpdated"));
-        updateUser({
-          ...user,
-          name,
-          email,
-          preferredLanguage,
-        });
+        updateUser(response.data.user);
 
         if (typeof onClose === "function") {
           setTimeout(() => onClose(), 1500);
