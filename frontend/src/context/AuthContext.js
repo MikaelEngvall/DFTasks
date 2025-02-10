@@ -14,10 +14,10 @@ export function AuthProvider({ children }) {
       localStorage.setItem("language", userData.preferredLanguage);
       document.documentElement.lang = userData.preferredLanguage;
     } else {
-      // Om ingen preferredLanguage finns, använd sv som standard
-      i18next.changeLanguage("sv");
-      localStorage.setItem("language", "sv");
-      document.documentElement.lang = "sv";
+      // Om ingen preferredLanguage finns, använd engelska som standard
+      i18next.changeLanguage("en");
+      localStorage.setItem("language", "en");
+      document.documentElement.lang = "en";
     }
   };
 
