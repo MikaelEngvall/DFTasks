@@ -1,8 +1,11 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
-const { startEmailListener } = require("./utils/emailListener");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import { config } from "dotenv";
+import { startEmailListener } from "./utils/emailListener.js";
+
+// Ladda miljövariabler
+config();
 
 const app = express();
 
@@ -23,11 +26,11 @@ app.use(
 );
 
 // Routes
-const authRoutes = require("./routes/authRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const profileRoutes = require("./routes/profileRoutes");
-const userRoutes = require("./routes/userRoutes");
-const translateRoutes = require("./routes/translateRoutes");
+import authRoutes from "./routes/authRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import translateRoutes from "./routes/translateRoutes.js";
 
 // API routes with /api prefix
 app.use("/api/auth", authRoutes);

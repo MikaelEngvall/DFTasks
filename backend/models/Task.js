@@ -1,6 +1,6 @@
 //models/Task.js
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema(
   {
@@ -105,4 +105,4 @@ taskSchema.pre("save", function (next) {
 });
 
 const Task = mongoose.model("Task", taskSchema);
-module.exports = Task;
+export default Task;

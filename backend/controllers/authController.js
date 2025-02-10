@@ -1,7 +1,7 @@
-const User = require("../models/User");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 const authController = {
   // Login
@@ -177,4 +177,4 @@ const authController = {
   },
 };
 
-module.exports = authController;
+export default authController;

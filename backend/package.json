@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Backend för DFTasks applikationen",
   "main": "app.js",
+  "type": "module",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "migrate": "node migrations/setActiveStatus.js"
+    "start": "bun run app.js",
+    "dev": "bun --hot run app.js",
+    "migrate": "bun run migrations/setActiveStatus.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

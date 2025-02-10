@@ -1,12 +1,12 @@
 //routes/authRoutes.js
 
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   login,
   forgotPassword,
   resetPassword,
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
 // Endast login tillåts, ingen signup
 router.post("/login", login);
@@ -15,4 +15,4 @@ router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
-module.exports = router;
+export default router;

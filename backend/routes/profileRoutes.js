@@ -1,15 +1,15 @@
 // routes/profileRoutes.js
 
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getProfile,
   updateProfile,
-} = require("../controllers/profileControllers");
-const { protect } = require("../middleware/authMiddleware");
+} from "../controllers/profileControllers.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 // Routes beginning with /api/profile
 router.get("/", protect, getProfile);
 router.patch("/", protect, updateProfile);
 
-module.exports = router;
+export default router;

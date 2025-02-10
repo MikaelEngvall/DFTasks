@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 // Skydda routes - verifiera token
 const protect = async (req, res, next) => {
@@ -67,4 +67,4 @@ const superadmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin, superadmin };
+export { protect, admin, superadmin };
