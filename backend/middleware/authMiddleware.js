@@ -20,27 +20,25 @@ const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select("-password");
 
       if (!req.user) {
-        res.status(401);
-        throw new Error("Not authorized, user not found");
+        return res
+          .status(401)
+          .json({ message: "Not authorized, user not found" });
       }
 
       // Kontrollera om användaren är aktiv
       if (!req.user.isActive) {
-        res.status(401);
-        throw new Error("Not authorized, user is inactive");
+        return res
+          .status(401)
+          .json({ message: "Not authorized, user is inactive" });
       }
 
       next();
     } catch (error) {
-      console.error(error);
-      res.status(401);
-      throw new Error("Not authorized, token failed");
+      console.error("Auth error:", error);
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
-    res.status(401);
-    throw new Error("Not authorized, no token");
+  } else {
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
 
@@ -52,19 +50,17 @@ const admin = (req, res, next) => {
   ) {
     next();
   } else {
-    res.status(401);
-    throw new Error("Not authorized as an admin");
+    return res.status(403).json({ message: "Not authorized as an admin" });
   }
 };
 
 // Superadmin middleware
-const superadmin = (req, res, next) => {
+const superAdmin = (req, res, next) => {
   if (req.user && req.user.role === "SUPERADMIN") {
     next();
   } else {
-    res.status(401);
-    throw new Error("Not authorized as a superadmin");
+    return res.status(403).json({ message: "Not authorized as a superadmin" });
   }
 };
 
-export { protect, admin, superadmin };
+export { protect, admin, superAdmin };
