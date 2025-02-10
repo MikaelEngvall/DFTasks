@@ -29,6 +29,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        preferredLanguage: user.preferredLanguage,
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "1d" }
@@ -41,6 +42,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        preferredLanguage: user.preferredLanguage,
       },
     });
   } catch (error) {

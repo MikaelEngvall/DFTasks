@@ -12,6 +12,12 @@ export function AuthProvider({ children }) {
     if (userData?.preferredLanguage) {
       i18next.changeLanguage(userData.preferredLanguage);
       localStorage.setItem("language", userData.preferredLanguage);
+      document.documentElement.lang = userData.preferredLanguage;
+    } else {
+      // Om ingen preferredLanguage finns, använd sv som standard
+      i18next.changeLanguage("sv");
+      localStorage.setItem("language", "sv");
+      document.documentElement.lang = "sv";
     }
   };
 
