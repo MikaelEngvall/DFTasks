@@ -9,6 +9,9 @@ function UserModal({ user, onClose }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [preferredLanguage, setPreferredLanguage] = useState(
+    user.preferredLanguage || "en"
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { t } = useTranslation();
@@ -23,11 +26,12 @@ function UserModal({ user, onClose }) {
       const response = await axiosInstance.patch("/profile", {
         name,
         email,
+        preferredLanguage,
       });
 
       if (response.data.status) {
         setSuccess(t("profileUpdated"));
-        updateUser({ name, email });
+        updateUser({ name, email, preferredLanguage });
         if (typeof onClose === "function") {
           setTimeout(() => onClose(), 1500);
         }
@@ -136,6 +140,25 @@ function UserModal({ user, onClose }) {
                     onChange={(e) => setEmail(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                   />
+                </div>
+                <div>
+                  <label
+                    htmlFor="preferredLanguage"
+                    className="block text-sm font-medium text-df-primary dark:text-white"
+                  >
+                    {t("preferredLanguage")}
+                  </label>
+                  <select
+                    id="preferredLanguage"
+                    value={preferredLanguage}
+                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                  >
+                    <option value="sv">Svenska</option>
+                    <option value="pl">Polski</option>
+                    <option value="uk">Українська</option>
+                    <option value="en">English</option>
+                  </select>
                 </div>
                 <button
                   type="submit"

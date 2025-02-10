@@ -16,7 +16,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, preferredLanguage } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -26,6 +26,7 @@ export const updateProfile = async (req, res) => {
     // Uppdatera användarens information
     if (name) user.name = name;
     if (email) user.email = email;
+    if (preferredLanguage) user.preferredLanguage = preferredLanguage;
 
     const updatedUser = await user.save();
     const userResponse = updatedUser.toObject();

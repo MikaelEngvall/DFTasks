@@ -46,6 +46,11 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
     lockUntil: Date,
+    preferredLanguage: {
+      type: String,
+      enum: ["sv", "pl", "uk", "en"],
+      default: "en",
+    },
   },
   {
     timestamps: true,
