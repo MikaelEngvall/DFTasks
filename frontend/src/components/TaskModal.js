@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
+import { useTaskTranslation } from "../hooks/useTaskTranslation";
 
 function TaskModal({
   task,
@@ -15,26 +16,41 @@ function TaskModal({
   const [editedStatus, setEditedStatus] = useState(null);
   const [newComment, setNewComment] = useState("");
   const { t } = useTranslation();
+  const { translateTask, currentLanguage } = useTaskTranslation();
+  const [translatedTask, setTranslatedTask] = useState(task);
+
+  useEffect(() => {
+    const updateTranslation = async () => {
+      if (
+        task &&
+        (!task._translated || task._translatedLang !== currentLanguage)
+      ) {
+        const translated = await translateTask(task);
+        setTranslatedTask(translated);
+      }
+    };
+    updateTranslation();
+  }, [task, currentLanguage, translateTask]);
 
   const handleStatusUpdate = () => {
-    if (!editedStatus || editedStatus === task.status) return;
-    onStatusUpdate(task, editedStatus);
+    if (!editedStatus || editedStatus === translatedTask.status) return;
+    onStatusUpdate(translatedTask, editedStatus);
     setEditedStatus(null);
   };
 
   const canEditTask = () => {
-    if (!userRole || !userId || !task) return false;
+    if (!userRole || !userId || !translatedTask) return false;
     return (
       userRole === "ADMIN" ||
       userRole === "SUPERADMIN" ||
-      task.assignedTo?._id === userId
+      translatedTask.assignedTo?._id === userId
     );
   };
 
   const handleAddComment = () => {
-    if (!newComment.trim() || !task?._id) return;
+    if (!newComment.trim() || !translatedTask?._id) return;
     if (typeof onAddComment === "function") {
-      onAddComment(task._id, newComment);
+      onAddComment(translatedTask._id, newComment);
       setNewComment("");
     }
   };
@@ -47,7 +63,7 @@ function TaskModal({
           <div className="sticky top-0 z-[56] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 rounded-t-lg">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-df-primary dark:text-white pr-8">
-                {task.title}
+                {translatedTask.title}
               </h3>
               <button
                 onClick={onClose}
@@ -78,7 +94,7 @@ function TaskModal({
                     {t("description")}
                   </h4>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {task.description}
+                    {translatedTask.description}
                   </p>
                 </div>
                 <div>
@@ -88,7 +104,7 @@ function TaskModal({
                   {canEditTask() ? (
                     <div className="space-y-2">
                       <select
-                        value={editedStatus || task.status}
+                        value={editedStatus || translatedTask.status}
                         onChange={(e) => setEditedStatus(e.target.value)}
                         className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
                       >
@@ -97,23 +113,24 @@ function TaskModal({
                         <option value="completed">{t("completed")}</option>
                         <option value="cannot fix">{t("cannotFix")}</option>
                       </select>
-                      {editedStatus && editedStatus !== task.status && (
-                        <button
-                          onClick={handleStatusUpdate}
-                          className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
-                        >
-                          {t("save")}
-                        </button>
-                      )}
+                      {editedStatus &&
+                        editedStatus !== translatedTask.status && (
+                          <button
+                            onClick={handleStatusUpdate}
+                            className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+                          >
+                            {t("save")}
+                          </button>
+                        )}
                     </div>
                   ) : (
                     <div className="mt-1">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                          task.status
+                          translatedTask.status
                         )}`}
                       >
-                        {renderStatus(task.status)}
+                        {renderStatus(translatedTask.status)}
                       </span>
                     </div>
                   )}
@@ -123,7 +140,7 @@ function TaskModal({
                     {t("assignedTo")}
                   </h4>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {task.assignedTo?.name || t("unassigned")}
+                    {translatedTask.assignedTo?.name || t("unassigned")}
                   </p>
                 </div>
                 <div>
@@ -131,7 +148,7 @@ function TaskModal({
                     {t("deadline")}
                   </h4>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {format(new Date(task.dueDate), "PPP")}
+                    {format(new Date(translatedTask.dueDate), "PPP")}
                   </p>
                 </div>
               </div>
@@ -140,8 +157,8 @@ function TaskModal({
                   {t("comments")}
                 </h4>
                 <div className="space-y-4">
-                  {task.comments?.length > 0 ? (
-                    task.comments.map((comment) => (
+                  {translatedTask.comments?.length > 0 ? (
+                    translatedTask.comments.map((comment) => (
                       <div
                         key={comment._id}
                         className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"

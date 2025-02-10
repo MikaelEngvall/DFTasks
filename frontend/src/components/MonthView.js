@@ -65,6 +65,7 @@ function MonthView() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
+        setLoading(true);
         const response = await axiosInstance.get("/tasks");
         if (!Array.isArray(response.data.tasks)) {
           setTasks([]);
@@ -73,6 +74,7 @@ function MonthView() {
           setTasks(translatedTasks || []);
         }
       } catch (error) {
+        console.error("Error fetching tasks:", error);
         setTasks([]);
       } finally {
         setLoading(false);
@@ -80,14 +82,17 @@ function MonthView() {
     };
 
     fetchTasks();
-  }, [currentLanguage]);
+  }, [currentLanguage, translateTasks]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
-      if (selectedTask && selectedTask.comments?.length > 0) {
+      if (selectedTask) {
         try {
-          const translatedTask = await translateTask(selectedTask);
-          if (JSON.stringify(translatedTask) !== JSON.stringify(selectedTask)) {
+          if (
+            !selectedTask._translated ||
+            selectedTask._translatedLang !== currentLanguage
+          ) {
+            const translatedTask = await translateTask(selectedTask);
             setSelectedTask(translatedTask);
           }
         } catch (error) {
@@ -96,13 +101,17 @@ function MonthView() {
       }
     };
     updateSelectedTaskComments();
-  }, [currentLanguage]);
+  }, [currentLanguage, selectedTask, translateTask]);
 
   const handleTaskClick = async (task) => {
     if (!task) return;
     try {
-      const translatedTask = await translateTask(task);
-      setSelectedTask(translatedTask);
+      if (!task._translated || task._translatedLang !== currentLanguage) {
+        const translatedTask = await translateTask(task);
+        setSelectedTask(translatedTask);
+      } else {
+        setSelectedTask(task);
+      }
     } catch (error) {
       console.error("Error translating task:", error);
       setSelectedTask(task);
