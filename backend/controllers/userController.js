@@ -112,9 +112,20 @@ export const updateUser = async (req, res) => {
       }
     }
 
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({
+          message: "En användare med denna e-postadress finns redan",
+        });
+      }
+    }
+
     if (name) user.name = name;
     if (email) user.email = email;
     if (role) user.role = role.toUpperCase();
+    if (req.body.preferredLanguage)
+      user.preferredLanguage = req.body.preferredLanguage;
     if (password) {
       const salt = await bcryptjs.genSalt(10);
       user.password = await bcryptjs.hash(password, salt);

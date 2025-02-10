@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "../utils/axios";
 import { useAuth } from "../context/AuthContext";
+import { updateProfile } from "../utils/api";
 
 function UserModal({ user, onClose }) {
   const [name, setName] = useState(user.name || "");
@@ -14,13 +15,32 @@ function UserModal({ user, onClose }) {
   );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { updateUser } = useAuth();
+
+  // Sätt språket när komponenten laddas baserat på användarens preferens
+  useEffect(() => {
+    if (user.preferredLanguage) {
+      i18n.changeLanguage(user.preferredLanguage);
+    }
+  }, [user.preferredLanguage, i18n]);
+
+  // Uppdatera språket när användaren ändrar preferredLanguage
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setPreferredLanguage(newLang);
+    i18n.changeLanguage(newLang);
+  };
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!user) {
+      setError(t("userNotFound"));
+      return;
+    }
 
     try {
       const response = await axiosInstance.patch("/profile", {
@@ -29,17 +49,26 @@ function UserModal({ user, onClose }) {
         preferredLanguage,
       });
 
-      if (response.data.status) {
+      if (response.data) {
         setSuccess(t("profileUpdated"));
         updateUser({ name, email, preferredLanguage });
+        // Spara språkpreferensen i localStorage
+        localStorage.setItem("language", preferredLanguage);
         if (typeof onClose === "function") {
           setTimeout(() => onClose(), 1500);
         }
-      } else {
-        setError(response.data.msg || t("error"));
       }
     } catch (error) {
-      setError(error.response?.data?.msg || t("error"));
+      console.error("Update error:", error);
+      if (error.response?.status === 400) {
+        setError(error.response.data.message || t("invalidData"));
+      } else if (error.response?.status === 401) {
+        setError(t("unauthorized"));
+      } else if (error.response?.status === 409) {
+        setError(t("emailAlreadyExists"));
+      } else {
+        setError(t("error"));
+      }
     }
   };
 
@@ -151,7 +180,7 @@ function UserModal({ user, onClose }) {
                   <select
                     id="preferredLanguage"
                     value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                    onChange={handleLanguageChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                   >
                     <option value="sv">Svenska</option>
