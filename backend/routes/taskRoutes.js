@@ -1,8 +1,8 @@
 // routes/taskRoutes.js
 
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getTasks,
   getAllTasks,
   getTask,
@@ -14,9 +14,9 @@ const {
   addComment,
   getPendingTasks,
   approvePendingTask,
-} = require("../controllers/taskController");
-const { protect, admin, superadmin } = require("../middleware/authMiddleware");
-const Task = require("../models/Task");
+} from "../controllers/taskController.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
+import Task from "../models/Task.js";
 
 // Skydda alla routes med auth middleware
 router.use(protect);
@@ -41,4 +41,4 @@ router
   .patch(admin, toggleCommentStatus);
 router.route("/:id/comments").post(addComment);
 
-module.exports = router;
+export default router;

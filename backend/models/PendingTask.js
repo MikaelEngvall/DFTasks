@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const pendingTaskSchema = new mongoose.Schema(
   {
@@ -53,4 +53,4 @@ const pendingTaskSchema = new mongoose.Schema(
 );
 
 const PendingTask = mongoose.model("PendingTask", pendingTaskSchema);
-module.exports = PendingTask;
+export default PendingTask;

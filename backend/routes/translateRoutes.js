@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 router.post("/translate", async (req, res) => {
   try {
@@ -31,4 +31,4 @@ router.post("/translate", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,14 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getUsers,
   getAllUsers,
   createUser,
   updateUser,
   deleteUser,
   toggleUserStatus,
-} = require("../controllers/userController");
-const { protect, admin, superadmin } = require("../middleware/authMiddleware");
+} from "../controllers/userController.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 // Protect all routes
 router.use(protect);
@@ -22,4 +22,4 @@ router.route("/:id/toggle").patch(admin, toggleUserStatus);
 router.route("/").post(admin, createUser);
 router.route("/:id").patch(admin, updateUser).delete(admin, deleteUser);
 
-module.exports = router;
+export default router;

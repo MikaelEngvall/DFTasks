@@ -1,6 +1,6 @@
-const Imap = require("node-imap");
-const { simpleParser } = require("mailparser");
-const PendingTask = require("../models/PendingTask");
+import Imap from "node-imap";
+import { simpleParser } from "mailparser";
+import PendingTask from "../models/PendingTask.js";
 
 const imapConfig = {
   user: process.env.EMAIL_USER,
@@ -150,5 +150,4 @@ function startEmailListener() {
   }
 }
 
-// Exportera endast startEmailListener
-module.exports = { startEmailListener };
+export { startEmailListener };

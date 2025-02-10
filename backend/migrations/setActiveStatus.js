@@ -1,7 +1,9 @@
-const mongoose = require("mongoose");
-require("dotenv").config();
-const User = require("../models/User");
-const Task = require("../models/Task");
+import mongoose from "mongoose";
+import { config } from "dotenv";
+import User from "../models/User.js";
+import Task from "../models/Task.js";
+
+config();
 
 const migrateData = async () => {
   try {
