@@ -91,28 +91,53 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, preferredLanguage } = req.body;
     const userId = req.params.id;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const userToUpdate = await User.findById(userId);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: "Användaren hittades inte" });
     }
 
-    if (req.user.role !== "SUPERADMIN") {
-      if (user.role === "ADMIN" || user.role === "SUPERADMIN") {
+    // Kontrollera behörigheter
+    if (req.user.role === "USER") {
+      // Användare kan bara uppdatera sina egna uppgifter
+      if (req.user.id !== userId) {
         return res.status(403).json({
-          message: "Not authorized to modify admin or superadmin users",
+          message:
+            "Du har inte behörighet att ändra andra användares uppgifter",
         });
       }
-      if (role === "ADMIN" || role === "SUPERADMIN") {
+      // Användare kan inte ändra sin roll
+      if (role && role !== userToUpdate.role) {
         return res.status(403).json({
-          message: "Not authorized to assign admin or superadmin roles",
+          message: "Du har inte behörighet att ändra din roll",
+        });
+      }
+    } else if (req.user.role === "ADMIN") {
+      // Admin kan inte ändra superadmin eller andra admin
+      if (
+        userToUpdate.role === "SUPERADMIN" ||
+        (userToUpdate.role === "ADMIN" && req.user.id !== userId)
+      ) {
+        return res.status(403).json({
+          message: "Du har inte behörighet att ändra denna användare",
+        });
+      }
+      // Admin kan inte sätta admin eller superadmin roll
+      if (
+        role &&
+        (role === "SUPERADMIN" || (role === "ADMIN" && req.user.id !== userId))
+      ) {
+        return res.status(403).json({
+          message: "Du har inte behörighet att tilldela denna roll",
         });
       }
     }
+    // SUPERADMIN har full behörighet
 
-    if (email && email !== user.email) {
+    // Kontrollera om e-postadressen redan finns
+    if (email && email !== userToUpdate.email) {
       const existingUser = await User.findOne({ email, _id: { $ne: userId } });
       if (existingUser) {
         return res.status(400).json({
@@ -121,17 +146,27 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (role) user.role = role.toUpperCase();
-    if (req.body.preferredLanguage)
-      user.preferredLanguage = req.body.preferredLanguage;
-    if (password) {
-      const salt = await bcryptjs.genSalt(10);
-      user.password = await bcryptjs.hash(password, salt);
+    // Uppdatera fälten
+    if (name) userToUpdate.name = name;
+    if (email) userToUpdate.email = email;
+    if (preferredLanguage) userToUpdate.preferredLanguage = preferredLanguage;
+
+    // Endast tillåt rolluppdatering om användaren har rätt behörighet
+    if (
+      role &&
+      (req.user.role === "SUPERADMIN" ||
+        (req.user.role === "ADMIN" && req.user.id === userId))
+    ) {
+      userToUpdate.role = role.toUpperCase();
     }
 
-    const updatedUser = await user.save();
+    // Hantera lösenordsuppdatering
+    if (password) {
+      const salt = await bcryptjs.genSalt(10);
+      userToUpdate.password = await bcryptjs.hash(password, salt);
+    }
+
+    const updatedUser = await userToUpdate.save();
     const userResponse = updatedUser.toObject();
     delete userResponse.password;
 
@@ -139,7 +174,7 @@ export const updateUser = async (req, res) => {
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({
-      message: "Error updating user",
+      message: "Ett fel uppstod vid uppdatering av användaren",
       error: error.message,
     });
   }
