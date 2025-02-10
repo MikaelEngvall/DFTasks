@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "../utils/axios";
 import { useAuth } from "../context/AuthContext";
-import { updateProfile } from "../utils/api";
 
 function UserModal({ user, onClose }) {
   const [name, setName] = useState(user.name || "");
@@ -18,18 +17,11 @@ function UserModal({ user, onClose }) {
   const { t, i18n } = useTranslation();
   const { updateUser } = useAuth();
 
-  // Sätt språket när komponenten laddas baserat på användarens preferens
-  useEffect(() => {
-    if (user.preferredLanguage) {
-      i18n.changeLanguage(user.preferredLanguage);
-    }
-  }, [user.preferredLanguage, i18n]);
-
   // Uppdatera språket när användaren ändrar preferredLanguage
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setPreferredLanguage(newLang);
-    i18n.changeLanguage(newLang);
+    // Vi väntar med att ändra i18n tills användaren sparar
   };
 
   const handleProfileUpdate = async (e) => {
@@ -43,17 +35,25 @@ function UserModal({ user, onClose }) {
     }
 
     try {
-      const response = await axiosInstance.patch("/profile", {
+      const response = await axiosInstance.patch(`/users/${user._id}`, {
         name,
         email,
         preferredLanguage,
       });
 
       if (response.data) {
-        setSuccess(t("profileUpdated"));
-        updateUser({ name, email, preferredLanguage });
-        // Spara språkpreferensen i localStorage
+        // Uppdatera språket först efter lyckad uppdatering
+        i18n.changeLanguage(preferredLanguage);
         localStorage.setItem("language", preferredLanguage);
+
+        setSuccess(t("profileUpdated"));
+        updateUser({
+          ...user,
+          name,
+          email,
+          preferredLanguage,
+        });
+
         if (typeof onClose === "function") {
           setTimeout(() => onClose(), 1500);
         }
