@@ -21,10 +21,7 @@ function TaskModal({
 
   useEffect(() => {
     const updateTranslation = async () => {
-      if (
-        task &&
-        (!task._translated || task._translatedLang !== currentLanguage)
-      ) {
+      if (task) {
         const translated = await translateTask(task);
         setTranslatedTask(translated);
       }
