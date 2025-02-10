@@ -57,15 +57,15 @@ function App() {
                 />
                 <Route
                   path="/dftasks"
-                  element={<Navigate to="/dftasks/month-view" replace />}
+                  element={<Navigate to="/dftasks/login" replace />}
                 />
                 <Route
                   path="/"
-                  element={<Navigate to="/dftasks/month-view" replace />}
+                  element={<Navigate to="/dftasks/login" replace />}
                 />
                 <Route
                   path="*"
-                  element={<Navigate to="/dftasks/month-view" replace />}
+                  element={<Navigate to="/dftasks/login" replace />}
                 />
               </Routes>
             </Suspense>

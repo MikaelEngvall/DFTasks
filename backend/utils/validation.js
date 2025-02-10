@@ -1,6 +1,6 @@
 // validations/index.js
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 // Funktion för att validera email-format med regex
 const isValidEmail = (email) => {
@@ -68,9 +68,4 @@ const validateObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
-module.exports = {
-  isValidEmail,
-  validate,
-  validateManyFields,
-  validateObjectId,
-};
+export { isValidEmail, validate, validateManyFields, validateObjectId };

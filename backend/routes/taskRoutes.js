@@ -16,7 +16,6 @@ import {
   approvePendingTask,
 } from "../controllers/taskController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
-import Task from "../models/Task.js";
 
 // Skydda alla routes med auth middleware
 router.use(protect);

@@ -1,9 +1,9 @@
-const Task = require("../models/Task");
-const PendingTask = require("../models/PendingTask");
-const { validateObjectId } = require("../utils/validation");
+import Task from "../models/Task.js";
+import PendingTask from "../models/PendingTask.js";
+import { validateObjectId } from "../utils/validation.js";
 
 // Hämta alla uppgifter (för inloggad användare eller admin)
-const getTasks = async (req, res) => {
+export const getTasks = async (req, res) => {
   try {
     let tasks;
     // Om användaren är admin eller superadmin, hämta alla aktiva uppgifter
@@ -30,7 +30,7 @@ const getTasks = async (req, res) => {
 };
 
 // Hämta alla uppgifter (inklusive inaktiva)
-const getAllTasks = async (req, res) => {
+export const getAllTasks = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -49,7 +49,7 @@ const getAllTasks = async (req, res) => {
 };
 
 // Hämta en specifik uppgift
-const getTask = async (req, res) => {
+export const getTask = async (req, res) => {
   try {
     if (!validateObjectId(req.params.id)) {
       return res.status(400).json({ message: "Invalid task ID" });
@@ -81,7 +81,7 @@ const getTask = async (req, res) => {
 };
 
 // Skapa ny uppgift
-const createTask = async (req, res) => {
+export const createTask = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -118,7 +118,7 @@ const createTask = async (req, res) => {
 };
 
 // Uppdatera uppgift
-const updateTask = async (req, res) => {
+export const updateTask = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -151,7 +151,7 @@ const updateTask = async (req, res) => {
 };
 
 // Radera (inaktivera) uppgift
-const deleteTask = async (req, res) => {
+export const deleteTask = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -178,7 +178,7 @@ const deleteTask = async (req, res) => {
 };
 
 // Växla uppgiftsstatus
-const toggleTaskStatus = async (req, res) => {
+export const toggleTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, isActive } = req.body;
@@ -229,7 +229,7 @@ const toggleTaskStatus = async (req, res) => {
 };
 
 // Växla kommentarstatus
-const toggleCommentStatus = async (req, res) => {
+export const toggleCommentStatus = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -268,7 +268,7 @@ const toggleCommentStatus = async (req, res) => {
 };
 
 // Lägg till kommentar
-const addComment = async (req, res) => {
+export const addComment = async (req, res) => {
   try {
     console.log("Server - Tar emot kommentarsförfrågan:", {
       body: req.body,
@@ -342,7 +342,7 @@ const addComment = async (req, res) => {
 };
 
 // Hämta alla väntande uppgifter
-const getPendingTasks = async (req, res) => {
+export const getPendingTasks = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -362,7 +362,7 @@ const getPendingTasks = async (req, res) => {
 };
 
 // Godkänn väntande uppgift
-const approvePendingTask = async (req, res) => {
+export const approvePendingTask = async (req, res) => {
   try {
     // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
@@ -412,18 +412,4 @@ const approvePendingTask = async (req, res) => {
     console.error("Error in approvePendingTask:", error);
     res.status(500).json({ message: "Server error" });
   }
-};
-
-module.exports = {
-  getTasks,
-  getAllTasks,
-  getTask,
-  createTask,
-  updateTask,
-  deleteTask,
-  toggleTaskStatus,
-  toggleCommentStatus,
-  addComment,
-  getPendingTasks,
-  approvePendingTask,
 };
