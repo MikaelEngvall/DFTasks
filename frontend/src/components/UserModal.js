@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import axiosInstance from "../utils/axios";
 import { useAuth } from "../context/AuthContext";
 
-function UserModal({ user, onClose }) {
+function UserModal({ user, onClose, onEdit, isCreating }) {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -15,7 +15,7 @@ function UserModal({ user, onClose }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { t, i18n } = useTranslation();
-  const { updateUser } = useAuth();
+  const { user: currentUser, updateUser } = useAuth();
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
@@ -28,23 +28,29 @@ function UserModal({ user, onClose }) {
     setSuccess("");
 
     try {
-      const response = await axiosInstance.patch("/profile", {
+      const updateData = {
         name,
         email,
         preferredLanguage,
-      });
+      };
 
-      if (response.data?.user) {
-        // Uppdatera språket först efter lyckad uppdatering
-        i18n.changeLanguage(preferredLanguage);
-        localStorage.setItem("language", preferredLanguage);
-
-        setSuccess(t("profileUpdated"));
-        updateUser(response.data.user);
-
-        if (typeof onClose === "function") {
-          setTimeout(() => onClose(), 1500);
+      let response;
+      // Om det är den inloggade användaren som uppdaterar sin egen profil
+      if (user?._id === currentUser?.id) {
+        response = await axiosInstance.patch("/profile", updateData);
+        if (response.data?.user) {
+          i18n.changeLanguage(preferredLanguage);
+          localStorage.setItem("language", preferredLanguage);
+          updateUser(response.data.user);
         }
+      } else {
+        // Om det är en admin/superadmin som uppdaterar en annan användare
+        await onEdit(updateData);
+      }
+
+      setSuccess(t("profileUpdated"));
+      if (typeof onClose === "function") {
+        setTimeout(() => onClose(), 1500);
       }
     } catch (error) {
       console.error("Update error:", error);

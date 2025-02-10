@@ -68,7 +68,7 @@ function UserManagement() {
 
   const handleEdit = async (userData) => {
     try {
-      const response = await axiosInstance.put(
+      const response = await axiosInstance.patch(
         `/users/${selectedUser._id}`,
         userData
       );
@@ -81,7 +81,18 @@ function UserManagement() {
         setSelectedUser(null);
       }
     } catch (error) {
-      alert(t("errorUpdatingUser"));
+      console.error("Update error:", error);
+      if (error.response?.status === 400) {
+        alert(error.response.data.message || t("invalidData"));
+      } else if (error.response?.status === 401) {
+        alert(t("unauthorized"));
+      } else if (error.response?.status === 403) {
+        alert(t("notAuthorized"));
+      } else if (error.response?.status === 409) {
+        alert(t("emailAlreadyExists"));
+      } else {
+        alert(t("errorUpdatingUser"));
+      }
     }
   };
 
