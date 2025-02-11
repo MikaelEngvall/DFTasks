@@ -282,14 +282,14 @@ export const addComment = async (req, res) => {
       return res.status(404).json({ message: "Uppgift hittades inte" });
     }
 
-    // Översätt kommentaren till alla språk
-    const translations = {
-      en: content, // Originalspråk (engelska)
-    };
+    // Initiera översättningar med originalinnehållet
+    const translations = {};
 
-    // Översätt till andra språk
-    const targetLanguages = ["sv", "pl", "uk"];
-    for (const lang of targetLanguages) {
+    // Lista över alla språk som vi behöver översättningar för
+    const allLanguages = ["en", "sv", "pl", "uk"];
+
+    // Översätt till alla språk
+    for (const lang of allLanguages) {
       try {
         const response = await fetch(
           `https://translation.googleapis.com/language/translate/v2?key=${process.env.GOOGLE_TRANSLATE_API_KEY}`,
@@ -317,6 +317,8 @@ export const addComment = async (req, res) => {
         }
       } catch (error) {
         console.error(`Fel vid översättning till ${lang}:`, error);
+        // Om översättning misslyckas, använd originalinnehållet
+        translations[lang] = content;
       }
     }
 
