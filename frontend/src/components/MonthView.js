@@ -205,7 +205,7 @@ function MonthView() {
       <div className="max-w-7xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <div className="p-6">
-            <PageHeader title={t("calendar")} />
+            <PageHeader title={t("tasks")} />
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
               <div className="flex justify-between items-center p-4">
                 <h2 className="text-xl font-semibold text-df-primary dark:text-white">

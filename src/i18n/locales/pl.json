@@ -49,5 +49,14 @@
   "errorApprovingTask": "Nie można zatwierdzić zadania",
 
   "success": "Sukces",
-  "loading": "Ładowanie..."
+  "loading": "Ładowanie...",
+
+  "changePassword": "Zmień hasło",
+  "currentPassword": "Obecne hasło",
+  "newPassword": "Nowe hasło",
+  "confirmNewPassword": "Potwierdź nowe hasło",
+  "updatePassword": "Zaktualizuj hasło",
+  "passwordsDoNotMatch": "Nowe hasła nie są zgodne",
+  "passwordUpdated": "Hasło zostało zaktualizowane",
+  "errorUpdatingPassword": "Wystąpił błąd podczas aktualizacji hasła"
 } 

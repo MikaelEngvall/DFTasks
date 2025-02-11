@@ -49,5 +49,14 @@
   "errorApprovingTask": "Could not approve task",
 
   "success": "Success",
-  "loading": "Loading..."
+  "loading": "Loading...",
+
+  "changePassword": "Change Password",
+  "currentPassword": "Current Password",
+  "newPassword": "New Password",
+  "confirmNewPassword": "Confirm New Password",
+  "updatePassword": "Update Password",
+  "passwordsDoNotMatch": "The new passwords do not match",
+  "passwordUpdated": "Password has been updated",
+  "errorUpdatingPassword": "An error occurred while updating the password"
 } 

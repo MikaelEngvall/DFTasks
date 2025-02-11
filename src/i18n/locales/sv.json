@@ -49,5 +49,14 @@
   "errorApprovingTask": "Kunde inte godkänna uppgiften",
 
   "success": "Klart",
-  "loading": "Laddar..."
+  "loading": "Laddar...",
+
+  "changePassword": "Byt lösenord",
+  "currentPassword": "Nuvarande lösenord",
+  "newPassword": "Nytt lösenord",
+  "confirmNewPassword": "Bekräfta nytt lösenord",
+  "updatePassword": "Uppdatera lösenord",
+  "passwordsDoNotMatch": "De nya lösenorden matchar inte",
+  "passwordUpdated": "Lösenordet har uppdaterats",
+  "errorUpdatingPassword": "Ett fel uppstod när lösenordet skulle uppdateras"
 } 

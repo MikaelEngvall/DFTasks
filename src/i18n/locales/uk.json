@@ -49,5 +49,14 @@
   "errorApprovingTask": "Не вдалося підтвердити завдання",
 
   "success": "Успішно",
-  "loading": "Завантаження..."
+  "loading": "Завантаження...",
+
+  "changePassword": "Змінити пароль",
+  "currentPassword": "Поточний пароль",
+  "newPassword": "Новий пароль",
+  "confirmNewPassword": "Підтвердіть новий пароль",
+  "updatePassword": "Оновити пароль",
+  "passwordsDoNotMatch": "Нові паролі не співпадають",
+  "passwordUpdated": "Пароль оновлено",
+  "errorUpdatingPassword": "Виникла помилка під час оновлення пароля"
 } 
