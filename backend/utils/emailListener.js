@@ -58,7 +58,7 @@ function parseEmailContent(emailText) {
   };
 }
 
-function processEmail(stream) {
+function processEmail(stream, seqno, uid) {
   simpleParser(stream, async (err, parsed) => {
     if (err) {
       console.error("Error parsing email:", err);
@@ -67,6 +67,15 @@ function processEmail(stream) {
 
     try {
       const emailContent = parsed.text;
+      const messageId = parsed.messageId; // Unikt ID för e-postmeddelandet
+
+      // Kontrollera om en pending task med samma messageId redan finns
+      const existingTask = await PendingTask.findOne({ messageId });
+      if (existingTask) {
+        console.log("Duplicate email detected, skipping processing");
+        return;
+      }
+
       const parsedContent = parseEmailContent(emailContent);
       const title = `${parsedContent.address} - Lgh ${parsedContent.apartmentNumber} - ${parsedContent.reporterPhone}`;
 
@@ -78,9 +87,11 @@ function processEmail(stream) {
         reporterPhone: parsedContent.reporterPhone,
         address: parsedContent.address,
         apartmentNumber: parsedContent.apartmentNumber,
+        messageId, // Spara messageId för framtida dubblettkontroll
       });
 
       await pendingTask.save();
+      console.log("New pending task created:", title);
     } catch (error) {
       console.error("Error creating pending task:", error);
     }
@@ -122,11 +133,27 @@ function startEmailListener() {
         const fetch = imap.seq.fetch(`${box.messages.total}:*`, {
           bodies: "",
           struct: true,
+          markSeen: true,
         });
 
-        fetch.on("message", (msg) => {
+        fetch.on("message", (msg, seqno) => {
+          let uid;
+
+          msg.once("attributes", (attrs) => {
+            uid = attrs.uid;
+          });
+
           msg.on("body", (stream) => {
-            processEmail(stream);
+            processEmail(stream, seqno, uid);
+          });
+
+          msg.once("end", () => {
+            // Markera meddelandet som läst
+            imap.addFlags(seqno, ["\\Seen"], (err) => {
+              if (err) {
+                console.error("Error marking message as read:", err);
+              }
+            });
           });
         });
 

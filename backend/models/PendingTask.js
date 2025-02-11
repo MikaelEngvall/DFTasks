@@ -42,6 +42,11 @@ const pendingTaskSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    messageId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
