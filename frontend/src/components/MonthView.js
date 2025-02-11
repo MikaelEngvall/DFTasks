@@ -192,6 +192,25 @@ function MonthView() {
     }
   };
 
+  const getMonthName = (date) => {
+    const monthIndex = date.getMonth();
+    const months = [
+      "months.january",
+      "months.february",
+      "months.march",
+      "months.april",
+      "months.may",
+      "months.june",
+      "months.july",
+      "months.august",
+      "months.september",
+      "months.october",
+      "months.november",
+      "months.december",
+    ];
+    return t(months[monthIndex]);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -209,7 +228,9 @@ function MonthView() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
               <div className="flex justify-between items-center p-4">
                 <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                  {format(currentMonth, "MMMM yyyy")}
+                  {`${getMonthName(
+                    currentMonth
+                  )} ${currentMonth.getFullYear()}`}
                 </h2>
               </div>
               <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">

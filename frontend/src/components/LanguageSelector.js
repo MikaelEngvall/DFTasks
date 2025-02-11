@@ -10,7 +10,7 @@ const countryFlags = {
 };
 
 const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const handleLanguageChange = (lang) => {
     i18n.changeLanguage(lang);
@@ -32,7 +32,8 @@ const LanguageSelector = () => {
               ? "transform scale-110 sm:scale-125"
               : "hover:scale-110"
           }`}
-          aria-label={`Byt språk till ${lang.toUpperCase()}`}
+          aria-label={t(`${lang}`)}
+          title={t(`${lang}`)}
         >
           <ReactCountryFlag
             countryCode={country}
@@ -45,7 +46,7 @@ const LanguageSelector = () => {
                 height: "2em",
               },
             }}
-            title={country}
+            title={t(`${lang}`)}
           />
         </button>
       ))}

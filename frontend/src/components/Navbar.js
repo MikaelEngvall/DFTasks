@@ -2,7 +2,14 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import { FaSun, FaMoon } from "react-icons/fa";
+import {
+  FaSun,
+  FaMoon,
+  FaTasks,
+  FaClipboardList,
+  FaUsers,
+  FaSignOutAlt,
+} from "react-icons/fa";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
 
@@ -30,53 +37,58 @@ const Navbar = () => {
             >
               DFTasks
             </Link>
+
             <div className="scale-75 sm:scale-100">
               <LanguageSelector />
             </div>
 
             {user && isAdmin && (
-              <div className="hidden sm:flex space-x-4">
+              <div className="flex space-x-2 sm:space-x-6">
                 <Link
                   to="/dftasks/month-view"
-                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={t("tasks")}
                 >
-                  {t("tasks")}
+                  <FaTasks className="text-xl" />
                 </Link>
                 <Link
                   to="/dftasks/pending-tasks"
-                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={t("pending.tasks")}
                 >
-                  {t("pendingTasks")}
+                  <FaClipboardList className="text-xl" />
                 </Link>
                 <Link
                   to="/dftasks/users"
-                  className="text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={t("users")}
                 >
-                  {t("users")}
+                  <FaUsers className="text-xl" />
                 </Link>
               </div>
             )}
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-4">
             <button
               onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label={darkMode ? t("lightMode") : t("darkMode")}
+              className="p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={darkMode ? t("light.mode") : t("dark.mode")}
             >
               {darkMode ? (
-                <FaSun className="h-4 w-4 sm:h-5 sm:w-5" />
+                <FaSun className="text-xl" />
               ) : (
-                <FaMoon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <FaMoon className="text-xl" />
               )}
             </button>
 
             {user && (
               <button
                 onClick={handleLogout}
-                className="text-sm sm:text-base text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300"
+                className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title={t("logout")}
               >
-                {t("logout")}
+                <FaSignOutAlt className="text-xl" />
               </button>
             )}
           </div>
