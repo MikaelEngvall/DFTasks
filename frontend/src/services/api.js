@@ -29,9 +29,12 @@ export const tasksAPI = {
 
 // Pending Tasks API
 export const pendingTasksAPI = {
-  getPendingTasks: () => axiosInstance.get("/tasks/pending"),
+  getPendingTasks: (showArchived = false) =>
+    axiosInstance.get(`/tasks/pending?showArchived=${showArchived}`),
   approvePendingTask: (taskId, data) =>
     axiosInstance.post(`/tasks/pending/${taskId}/approve`, data),
+  declinePendingTask: (taskId, reason) =>
+    axiosInstance.post(`/tasks/pending/${taskId}/decline`, { reason }),
 };
 
 // Users API

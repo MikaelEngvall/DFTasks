@@ -44,6 +44,24 @@ const taskSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    translations: {
+      sv: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      en: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      pl: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      uk: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+    },
     status: {
       type: String,
       enum: ["pending", "in progress", "completed", "cannot fix"],

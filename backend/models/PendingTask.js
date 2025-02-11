@@ -12,6 +12,24 @@ const pendingTaskSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    translations: {
+      sv: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      en: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      pl: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+      uk: {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+      },
+    },
     reporterName: {
       type: String,
       required: true,
@@ -39,13 +57,31 @@ const pendingTaskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "declined"],
       default: "pending",
     },
     messageId: {
       type: String,
       unique: true,
       sparse: true,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
+    },
+    declinedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    declinedAt: {
+      type: Date,
+    },
+    declineReason: {
+      type: String,
+      trim: true,
     },
     createdAt: {
       type: Date,

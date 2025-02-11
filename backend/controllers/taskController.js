@@ -352,11 +352,17 @@ export const getPendingTasks = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const pendingTasks = await PendingTask.find({ status: "pending" }).sort({
+    const { showArchived } = req.query;
+    let query = {};
+
+    if (!showArchived) {
+      query.status = "pending";
+    }
+
+    const pendingTasks = await PendingTask.find(query).sort({
       createdAt: -1,
     });
 
-    // Returnera konsekvent format
     res.json({ pendingTasks });
   } catch (error) {
     console.error("Error in getPendingTasks:", error);
@@ -367,7 +373,6 @@ export const getPendingTasks = async (req, res) => {
 // Godkänn väntande uppgift
 export const approvePendingTask = async (req, res) => {
   try {
-    // Kontrollera om användaren är admin eller superadmin
     if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
       return res.status(403).json({ message: "Access denied" });
     }
@@ -384,15 +389,73 @@ export const approvePendingTask = async (req, res) => {
       return res.status(404).json({ message: "Pending task not found" });
     }
 
-    // Skapa ny uppgift från den väntande uppgiften
+    // Initiera översättningar med alla språk
+    const translations = {};
+    const allLanguages = ["sv", "en", "pl", "uk"];
+    const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
+
+    // Översätt till alla språk
+    for (const targetLang of allLanguages) {
+      try {
+        const [titleResponse, descResponse] = await Promise.all([
+          fetch(
+            `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                q: pendingTask.title,
+                target: targetLang,
+                format: "text",
+              }),
+            }
+          ),
+          fetch(
+            `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                q: pendingTask.description,
+                target: targetLang,
+                format: "text",
+              }),
+            }
+          ),
+        ]);
+
+        const [titleData, descData] = await Promise.all([
+          titleResponse.json(),
+          descResponse.json(),
+        ]);
+
+        translations[targetLang] = {
+          title: titleData.data.translations[0].translatedText,
+          description: descData.data.translations[0].translatedText,
+        };
+      } catch (error) {
+        console.error(`Translation error for ${targetLang}:`, error);
+        // Om översättningen misslyckas, använd originaltexten
+        translations[targetLang] = {
+          title: pendingTask.title,
+          description: pendingTask.description,
+        };
+      }
+    }
+
+    // Spara översättningarna i pending task
+    pendingTask.translations = translations;
+    await pendingTask.save();
+
+    // Skapa ny uppgift med översättningar
     const task = new Task({
       title: pendingTask.title,
       description: pendingTask.description,
+      translations,
       assignedTo,
       dueDate,
       createdBy: req.user._id,
       status: "pending",
-      // Lägg till reporterinformation från pendingTask
       reporterName: pendingTask.reporterName,
       reporterEmail: pendingTask.reporterEmail,
       reporterPhone: pendingTask.reporterPhone,
@@ -402,10 +465,12 @@ export const approvePendingTask = async (req, res) => {
 
     await task.save();
 
-    // Ta bort den godkända uppgiften från pendingTasks
-    await PendingTask.findByIdAndDelete(taskId);
+    // Uppdatera pending task status till approved
+    pendingTask.status = "approved";
+    pendingTask.approvedBy = req.user._id;
+    pendingTask.approvedAt = new Date();
+    await pendingTask.save();
 
-    // Hämta den sparade uppgiften med populerade fält
     const populatedTask = await Task.findById(task._id)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email");
@@ -413,6 +478,39 @@ export const approvePendingTask = async (req, res) => {
     res.json({ message: "Task approved successfully", task: populatedTask });
   } catch (error) {
     console.error("Error in approvePendingTask:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Avvisa väntande uppgift
+export const declinePendingTask = async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { taskId } = req.params;
+    const { reason } = req.body;
+
+    if (!validateObjectId(taskId)) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    const pendingTask = await PendingTask.findById(taskId);
+    if (!pendingTask) {
+      return res.status(404).json({ message: "Pending task not found" });
+    }
+
+    // Uppdatera pending task status till declined
+    pendingTask.status = "declined";
+    pendingTask.declinedBy = req.user._id;
+    pendingTask.declinedAt = new Date();
+    pendingTask.declineReason = reason;
+    await pendingTask.save();
+
+    res.json({ message: "Task declined successfully", pendingTask });
+  } catch (error) {
+    console.error("Error in declinePendingTask:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

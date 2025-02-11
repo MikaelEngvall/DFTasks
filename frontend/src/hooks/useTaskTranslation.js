@@ -8,18 +8,32 @@ export const useTaskTranslation = () => {
     () => async (task) => {
       if (!task) return null;
 
-      // Hämta översättningar för titel och beskrivning
-      const translatedTitle =
-        task.translations?.[i18n.language]?.title || task.title;
-      const translatedDesc =
-        task.translations?.[i18n.language]?.description || task.description;
+      console.log("Current task:", task); // För debugging
+      console.log("Current language:", i18n.language); // För debugging
+      console.log("Available translations:", task.translations); // För debugging
 
-      // Översätt kommentarer
-      const translatedComments = (task.comments || []).map((comment) => ({
-        ...comment,
-        content: comment.translations?.[i18n.language] || comment.content,
-        createdBy: comment.createdBy || { name: t("unassigned") },
-      }));
+      // Kontrollera och använd översättningar för titel och beskrivning
+      let translatedTitle = task.title;
+      let translatedDesc = task.description;
+
+      if (task.translations && task.translations[i18n.language]) {
+        translatedTitle = task.translations[i18n.language].title || task.title;
+        translatedDesc =
+          task.translations[i18n.language].description || task.description;
+      }
+
+      // Översätt kommentarer med lagrade översättningar
+      const translatedComments = (task.comments || []).map((comment) => {
+        let commentContent = comment.content;
+        if (comment.translations && comment.translations[i18n.language]) {
+          commentContent = comment.translations[i18n.language];
+        }
+        return {
+          ...comment,
+          content: commentContent,
+          createdBy: comment.createdBy || { name: t("unassigned") },
+        };
+      });
 
       // Returnera den översatta uppgiften
       return {
