@@ -82,7 +82,7 @@ function MonthView() {
     };
 
     fetchTasks();
-  }, [translateTasks]);
+  }, []);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
