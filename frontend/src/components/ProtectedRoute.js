@@ -1,32 +1,18 @@
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../context/AuthContext";
 
-function ProtectedRoute({ children, requiredRole }) {
-  const token = localStorage.getItem("token");
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { user } = useAuth();
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/dftasks/login" replace />;
   }
 
-  try {
-    const decoded = jwtDecode(token);
-
-    // Om en specifik roll krävs, kontrollera den
-    if (requiredRole && decoded.role !== requiredRole) {
-      // Om användaren inte har rätt roll, skicka dem till deras dashboard
-      return (
-        <Navigate
-          to={decoded.role === "ADMIN" ? "/admin" : "/dashboard"}
-          replace
-        />
-      );
-    }
-
-    return children;
-  } catch (error) {
-    localStorage.removeItem("token");
-    return <Navigate to="/login" replace />;
+  if (adminOnly && !(user.role === "ADMIN" || user.role === "SUPERADMIN")) {
+    return <Navigate to="/dftasks/month-view" replace />;
   }
-}
+
+  return children;
+};
 
 export default ProtectedRoute;

@@ -9,6 +9,7 @@ import TaskModal from "./TaskModal";
 import UserModal from "./UserModal";
 import { tasksAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import PageHeader from "./PageHeader";
 
 function MonthView() {
   const [tasks, setTasks] = useState([]);
@@ -202,20 +203,9 @@ function MonthView() {
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <button
-            onClick={() => setShowUserModal(true)}
-            className="text-2xl font-bold text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-white/80 transition-colors duration-150"
-          >
-            {t("welcome")} {user?.name}
-          </button>
-        </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <div className="p-6">
-            <h2 className="text-xl font-semibold text-df-primary dark:text-white mb-4">
-              {t("calendar")}
-            </h2>
+            <PageHeader title={t("calendar")} />
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
               <div className="flex justify-between items-center p-4">
                 <h2 className="text-xl font-semibold text-df-primary dark:text-white">

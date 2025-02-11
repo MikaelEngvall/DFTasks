@@ -1,35 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../utils/axios";
 import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import UserModal from "./UserModal";
 import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../context/AuthContext";
+import PageHeader from "./PageHeader";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { t } = useTranslation();
-  const [currentUserRole, setCurrentUserRole] = useState(null);
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode(token);
-      setCurrentUserRole(decoded.role);
+      if (decoded.role === "SUPERADMIN" || decoded.role === "ADMIN") {
+        fetchUsers();
+      } else {
+        setError(t("accessDenied"));
+      }
+    } else {
+      setError(t("accessDenied"));
     }
-  }, []);
+  }, [t]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [showInactive]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      setError(null);
+      setError("");
       const endpoint = showInactive ? "/users/all" : "/users";
       console.log("Fetching users from endpoint:", endpoint);
       const response = await axiosInstance.get(endpoint);
@@ -48,7 +52,7 @@ function UserManagement() {
       const processedUsers = userData.map((user) => ({
         ...user,
         displayRole:
-          currentUserRole === "SUPERADMIN"
+          currentUser?.role === "SUPERADMIN"
             ? user.role
             : user.role === "SUPERADMIN"
             ? "ADMIN"
@@ -60,14 +64,19 @@ function UserManagement() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching users:", error.response || error);
-      setError(t("errorFetchingUsers"));
+      if (error.response?.status === 403) {
+        setError(t("accessDenied"));
+      } else {
+        setError(t("errorFetchingUsers"));
+      }
       setUsers([]);
       setLoading(false);
     }
-  };
+  }, [t, showInactive, currentUser]);
 
   const handleEdit = async (userData) => {
     try {
+      setError("");
       const response = await axiosInstance.put(
         `/users/${selectedUser._id}`,
         userData
@@ -98,11 +107,13 @@ function UserManagement() {
 
   const handleToggleStatus = async (userId) => {
     try {
+      setError("");
       await axiosInstance.patch(`/users/${userId}/toggle-status`);
       await fetchUsers();
       setSelectedUser(null);
     } catch (error) {
-      alert(t("errorTogglingUserStatus"));
+      console.error("Error toggling user status:", error);
+      setError(t("errorTogglingUserStatus"));
     }
   };
 
@@ -112,11 +123,10 @@ function UserManagement() {
 
   const handleCreate = async (userData) => {
     try {
-      const response = await axiosInstance.post("/users", userData);
-      if (response.data) {
-        await fetchUsers();
-        setIsCreating(false);
-      }
+      setError("");
+      await axiosInstance.post("/users", userData);
+      await fetchUsers();
+      setIsCreating(false);
     } catch (error) {
       console.error("Error creating user:", error.response || error);
       alert(t("errorCreatingUser"));
@@ -132,128 +142,138 @@ function UserManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-            {t("users")}
-          </h2>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-              className="form-checkbox h-4 w-4 text-df-primary"
+    <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <PageHeader title={t("users")} />
+
+          {error ? (
+            <div className="p-4 bg-red-100 dark:bg-red-900/50 border border-red-400 text-red-700 dark:text-red-200 rounded relative">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {t("name")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {t("email")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {t("role")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {t("status")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {t("actions")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {users.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        {t("noUsers")}
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user) => (
+                      <tr
+                        key={user._id}
+                        onClick={() =>
+                          currentUser?.role === "SUPERADMIN" ||
+                          user.role !== "SUPERADMIN"
+                            ? handleUserClick(user)
+                            : null
+                        }
+                        className={`${!user.isActive ? "opacity-50" : ""} ${
+                          currentUser?.role === "SUPERADMIN" ||
+                          user.role !== "SUPERADMIN"
+                            ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                            : "cursor-default"
+                        }`}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-df-primary dark:text-white">
+                            {user.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-gray-300">
+                            {user.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.displayRole === "ADMIN"
+                                ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
+                                : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                            }`}
+                          >
+                            {user.displayRole}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.isActive
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            }`}
+                          >
+                            {user.isActive ? t("active") : t("inactive")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUserClick(user);
+                            }}
+                            className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-2"
+                          >
+                            {t("edit")}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleStatus(user._id);
+                            }}
+                            className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                          >
+                            {user.isActive ? t("deactivate") : t("activate")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {(selectedUser || isCreating) && (
+            <UserModal
+              user={selectedUser}
+              onClose={() => {
+                setSelectedUser(null);
+                setIsCreating(false);
+              }}
+              onEdit={handleEdit}
+              onSubmit={handleCreate}
+              isCreating={isCreating}
             />
-            <span className="text-sm text-df-primary dark:text-white">
-              {t("showInactive")}
-            </span>
-          </label>
+          )}
         </div>
-        {currentUserRole === "SUPERADMIN" && (
-          <button
-            onClick={() => setIsCreating(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
-          >
-            <FaPlus className="mr-2" />
-            {t("newUser")}
-          </button>
-        )}
       </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-          {error}
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("name")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("email")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("role")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("status")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {users.map((user) => (
-              <tr
-                key={user._id}
-                onClick={() =>
-                  currentUserRole === "SUPERADMIN" || user.role !== "SUPERADMIN"
-                    ? handleUserClick(user)
-                    : null
-                }
-                className={`${!user.isActive ? "opacity-50" : ""} ${
-                  currentUserRole === "SUPERADMIN" || user.role !== "SUPERADMIN"
-                    ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                    : "cursor-default"
-                }`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-df-primary dark:text-white">
-                    {user.name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {user.email}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.displayRole === "ADMIN"
-                        ? "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100"
-                        : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                    }`}
-                  >
-                    {user.displayRole}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.isActive
-                        ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                        : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                    }`}
-                  >
-                    {user.isActive ? t("active") : t("inactive")}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {selectedUser && (
-        <UserModal
-          user={selectedUser}
-          onClose={() => setSelectedUser(null)}
-          onEdit={handleEdit}
-          onToggleStatus={handleToggleStatus}
-        />
-      )}
-
-      {isCreating && (
-        <UserModal
-          isCreating={true}
-          onClose={() => setIsCreating(false)}
-          onEdit={handleCreate}
-        />
-      )}
     </div>
   );
 }

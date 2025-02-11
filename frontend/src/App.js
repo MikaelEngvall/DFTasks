@@ -7,12 +7,14 @@ import {
 import { Suspense } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
-import UserDashboard from "./components/UserDashboard";
+import MonthView from "./components/MonthView";
+import PendingTasksManagement from "./components/PendingTasksManagement";
+import UserManagement from "./components/UserManagement";
 import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import Profile from "./components/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
-import MonthView from "./components/MonthView";
 import Navbar from "./components/Navbar";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -48,10 +50,26 @@ function App() {
                   }
                 />
                 <Route
-                  path="/dftasks/dashboard"
+                  path="/dftasks/pending-tasks"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <PendingTasksManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dftasks/users"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dftasks/profile"
                   element={
                     <ProtectedRoute>
-                      <UserDashboard />
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />
