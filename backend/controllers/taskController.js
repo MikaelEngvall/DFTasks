@@ -270,74 +270,75 @@ export const toggleCommentStatus = async (req, res) => {
 // Lägg till kommentar
 export const addComment = async (req, res) => {
   try {
-    console.log("Server - Tar emot kommentarsförfrågan:", {
-      body: req.body,
-      taskId: req.params.id,
-      userId: req.user._id,
-    });
-
     const { content } = req.body;
+    const taskId = req.params.id;
+
     if (!content) {
-      console.log("Server - Inget innehåll i kommentaren");
-      return res.status(400).json({ message: "Comment content is required" });
+      return res.status(400).json({ message: "Kommentarinnehåll krävs" });
     }
 
-    // Hämta uppgiften utan population först
-    let task = await Task.findById(req.params.id);
+    const task = await Task.findById(taskId);
     if (!task) {
-      console.log("Server - Hittade inte uppgiften");
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({ message: "Uppgift hittades inte" });
     }
 
-    // Kontrollera behörighet
-    const isAdmin = ["ADMIN", "SUPERADMIN"].includes(req.user.role);
-    const isAssigned =
-      task.assignedTo && task.assignedTo.toString() === req.user._id.toString();
-
-    console.log("Server - Behörighetskontroll:", {
-      isAdmin,
-      isAssigned,
-      userRole: req.user.role,
-      assignedTo: task.assignedTo,
-    });
-
-    if (!isAdmin && !isAssigned) {
-      console.log("Server - Användaren har inte behörighet");
-      return res
-        .status(403)
-        .json({ message: "Not authorized to add comments to this task" });
-    }
-
-    // Skapa ny kommentar
-    const newComment = {
-      content,
-      createdBy: req.user._id,
-      createdAt: new Date(),
-      isActive: true,
+    // Översätt kommentaren till alla språk
+    const translations = {
+      en: content, // Originalspråk (engelska)
     };
 
-    console.log("Server - Skapar ny kommentar:", newComment);
+    // Översätt till andra språk
+    const targetLanguages = ["sv", "pl", "uk"];
+    for (const lang of targetLanguages) {
+      try {
+        const response = await fetch(
+          `https://translation.googleapis.com/language/translate/v2?key=${process.env.GOOGLE_TRANSLATE_API_KEY}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              q: content,
+              target: lang,
+              format: "text",
+            }),
+          }
+        );
 
-    // Lägg till kommentaren i början av arrayen
-    task.comments.unshift(newComment);
+        if (!response.ok) {
+          console.error(`Översättningsfel för ${lang}:`, await response.text());
+          continue;
+        }
 
-    // Spara uppgiften
+        const data = await response.json();
+        if (data.data?.translations?.[0]?.translatedText) {
+          translations[lang] = data.data.translations[0].translatedText;
+        }
+      } catch (error) {
+        console.error(`Fel vid översättning till ${lang}:`, error);
+      }
+    }
+
+    // Skapa och lägg till kommentaren med översättningar
+    const comment = {
+      content,
+      translations,
+      createdBy: req.user._id,
+    };
+
+    task.comments.push(comment);
     await task.save();
-    console.log("Server - Uppgift sparad med ny kommentar");
 
-    // Hämta den uppdaterade uppgiften med population
-    const updatedTask = await Task.findById(task._id)
-      .populate("assignedTo", "name email")
-      .populate("comments.createdBy", "name email");
+    // Populera användarinformation för den nya kommentaren
+    const updatedTask = await Task.findById(taskId)
+      .populate("comments.createdBy", "name email")
+      .populate("assignedTo", "name email");
 
-    console.log("Server - Skickar tillbaka uppdaterad uppgift");
-    // Returnera i rätt format för frontend
     res.json({ task: updatedTask });
   } catch (error) {
-    console.error("Server - Fel i addComment:", error);
-    res
-      .status(500)
-      .json({ message: "Error adding comment", error: error.message });
+    console.error("Fel vid tillägg av kommentar:", error);
+    res.status(500).json({ message: "Serverfel vid tillägg av kommentar" });
   }
 };
 

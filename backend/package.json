@@ -7,7 +7,8 @@
   "scripts": {
     "start": "bun run app.js",
     "dev": "bun --hot run app.js",
-    "migrate": "bun run migrations/setActiveStatus.js"
+    "migrate": "bun run migrations/setActiveStatus.js",
+    "translate-comments": "bun run migrations/translateComments.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

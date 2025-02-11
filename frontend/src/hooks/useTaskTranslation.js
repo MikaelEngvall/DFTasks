@@ -56,24 +56,27 @@ export const useTaskTranslation = () => {
     () => async (comments) => {
       if (!Array.isArray(comments)) return [];
 
-      return Promise.all(
-        comments.map(async (comment) => {
-          // Skippa översättning om kommentaren redan är översatt till rätt språk
-          if (
-            comment._translated &&
-            comment._translatedLang === i18n.language
-          ) {
-            return comment;
-          }
+      return comments.map((comment) => {
+        // Om kommentaren har översättningar för det aktuella språket, använd den
+        if (comment.translations && comment.translations[i18n.language]) {
           return {
             ...comment,
-            content: await translateContent(comment.content, i18n.language),
+            content: comment.translations[i18n.language],
             createdBy: comment.createdBy || { name: t("unassigned") },
             _translated: true,
             _translatedLang: i18n.language,
           };
-        })
-      );
+        }
+
+        // Fallback till originalinnehållet om ingen översättning finns
+        return {
+          ...comment,
+          content: comment.content,
+          createdBy: comment.createdBy || { name: t("unassigned") },
+          _translated: true,
+          _translatedLang: "en", // Anta att originalspråket är engelska
+        };
+      });
     },
     [i18n.language, t]
   );

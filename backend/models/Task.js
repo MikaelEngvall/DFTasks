@@ -9,6 +9,12 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    translations: {
+      sv: { type: String, trim: true },
+      en: { type: String, trim: true },
+      pl: { type: String, trim: true },
+      uk: { type: String, trim: true },
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
