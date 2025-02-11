@@ -86,32 +86,20 @@ function MonthView() {
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
-      if (selectedTask) {
-        try {
-          if (
-            !selectedTask._translated ||
-            selectedTask._translatedLang !== currentLanguage
-          ) {
-            const translatedTask = await translateTask(selectedTask);
-            setSelectedTask(translatedTask);
-          }
-        } catch (error) {
-          console.error("Error translating task comments:", error);
-        }
+      if (selectedTask && selectedTask.comments?.length > 0) {
+        const translatedTask = await translateTask(selectedTask);
+        setSelectedTask(translatedTask);
       }
     };
+
     updateSelectedTaskComments();
-  }, [currentLanguage, selectedTask, translateTask]);
+  }, [currentLanguage, selectedTask?._id]);
 
   const handleTaskClick = async (task) => {
     if (!task) return;
     try {
-      if (!task._translated || task._translatedLang !== currentLanguage) {
-        const translatedTask = await translateTask(task);
-        setSelectedTask(translatedTask);
-      } else {
-        setSelectedTask(task);
-      }
+      const translatedTask = await translateTask(task);
+      setSelectedTask(translatedTask);
     } catch (error) {
       console.error("Error translating task:", error);
       setSelectedTask(task);
