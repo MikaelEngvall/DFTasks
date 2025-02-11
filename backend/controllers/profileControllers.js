@@ -58,3 +58,37 @@ export const updateProfile = async (req, res) => {
       .json({ status: false, msg: "Internal Server Error" });
   }
 };
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ status: false, msg: "User not found" });
+    }
+
+    // Verifiera nuvarande lösenord
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({
+        status: false,
+        msg: "Current password is incorrect",
+      });
+    }
+
+    // Uppdatera lösenordet
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      status: true,
+      msg: "Password updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ status: false, msg: "Internal Server Error" });
+  }
+};
