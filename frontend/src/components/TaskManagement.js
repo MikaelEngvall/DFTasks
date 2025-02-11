@@ -142,6 +142,7 @@ function TaskManagement({ userRole, userId }) {
 
   const handleTaskSubmit = async (taskData) => {
     try {
+      setError(null);
       let response;
       if (selectedTask) {
         response = await axiosInstance.put(
@@ -161,13 +162,14 @@ function TaskManagement({ userRole, userId }) {
             )
           );
         } else {
-          setTasks([...tasks, translatedTask]);
+          setTasks([translatedTask, ...tasks]);
         }
         setShowTaskForm(false);
         setSelectedTask(null);
       }
     } catch (error) {
-      alert(t("errorSavingTask"));
+      console.error("Error saving task:", error);
+      setError(t("errorSavingTask"));
     }
   };
 
@@ -378,17 +380,43 @@ function TaskManagement({ userRole, userId }) {
       </div>
 
       {showTaskForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6">
-            <TaskForm
-              task={selectedTask}
-              users={users}
-              onSubmit={handleTaskSubmit}
-              onCancel={() => {
-                setShowTaskForm(false);
-                setSelectedTask(null);
-              }}
-            />
+        <div className="fixed inset-0 z-[70] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black/30"
+            onClick={() => setShowTaskForm(false)}
+          ></div>
+          <div className="relative min-h-screen flex items-center justify-center p-4">
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-df-primary dark:text-white">
+                  {selectedTask ? t("editTask") : t("newTask")}
+                </h3>
+                <button
+                  onClick={() => setShowTaskForm(false)}
+                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <span className="sr-only">{t("close")}</span>
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <TaskForm
+                onSubmit={handleTaskSubmit}
+                initialData={selectedTask}
+                users={users}
+              />
+            </div>
           </div>
         </div>
       )}

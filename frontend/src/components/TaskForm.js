@@ -1,107 +1,106 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "../hooks/useForm";
 import { useTranslation } from "react-i18next";
-import { format, isValid } from "date-fns";
-import { translateContent } from "../utils/translateContent";
+import { format } from "date-fns";
 
 const TaskForm = ({ onSubmit, initialData = {}, users = [] }) => {
-  const { t, i18n } = useTranslation();
-  const { formData, handleChange, handleSubmit } = useForm(
-    initialData,
-    onSubmit
-  );
-
+  const { t } = useTranslation();
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    status: "pending",
+    assignedTo: "",
+    dueDate: format(new Date(), "yyyy-MM-dd"),
+  });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      const translateTask = async () => {
-        const translatedTask = await translateContent(
-          initialData,
-          i18n.language
-        );
-        handleChange({
-          target: { name: "title", value: translatedTask.title || "" },
-        });
-        handleChange({
-          target: {
-            name: "description",
-            value: translatedTask.description || "",
-          },
-        });
-        handleChange({
-          target: { name: "status", value: translatedTask.status || "pending" },
-        });
-        handleChange({
-          target: {
-            name: "assignedTo",
-            value: translatedTask.assignedTo?._id || "",
-          },
-        });
-        handleChange({
-          target: {
-            name: "dueDate",
-            value: translatedTask.dueDate
-              ? isValid(new Date(translatedTask.dueDate))
-                ? format(new Date(translatedTask.dueDate), "yyyy-MM-dd")
-                : format(new Date(), "yyyy-MM-dd")
-              : format(new Date(), "yyyy-MM-dd"),
-          },
-        });
-      };
-      translateTask();
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData({
+        title: initialData.title || "",
+        description: initialData.description || "",
+        status: initialData.status || "pending",
+        assignedTo: initialData.assignedTo?._id || "",
+        dueDate: initialData.dueDate
+          ? format(new Date(initialData.dueDate), "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
+      });
     }
-  }, [initialData, i18n.language, handleChange]);
+  }, [initialData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      setError("");
+      await onSubmit(formData);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setError(t("errorSavingTask"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
+        <div className="bg-red-100 dark:bg-red-900/50 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {t("title")}
         </label>
         <input
           type="text"
           name="title"
-          value={formData.title || ""}
+          value={formData.title}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
+          disabled={isSubmitting}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {t("description")}
         </label>
         <textarea
           name="description"
-          value={formData.description || ""}
+          value={formData.description}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
+          disabled={isSubmitting}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {t("status")}
         </label>
         <select
           name="status"
-          value={formData.status || ""}
+          value={formData.status}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
+          disabled={isSubmitting}
         >
           <option value="pending">{t("pending")}</option>
           <option value="in progress">{t("inProgress")}</option>
@@ -111,15 +110,16 @@ const TaskForm = ({ onSubmit, initialData = {}, users = [] }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {t("assignedTo")}
         </label>
         <select
           name="assignedTo"
-          value={formData.assignedTo || ""}
+          value={formData.assignedTo}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
+          disabled={isSubmitting}
         >
           <option value="">{t("selectUser")}</option>
           {users.map((user) => (
@@ -131,25 +131,27 @@ const TaskForm = ({ onSubmit, initialData = {}, users = [] }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {t("dueDate")}
         </label>
         <input
           type="date"
           name="dueDate"
-          value={formData.dueDate || ""}
+          value={formData.dueDate}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
+          disabled={isSubmitting}
         />
       </div>
 
       <div>
         <button
           type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isSubmitting}
         >
-          {t("submit")}
+          {isSubmitting ? t("saving") : t("submit")}
         </button>
       </div>
     </form>
