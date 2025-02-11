@@ -22,16 +22,19 @@ function TaskModal({
   useEffect(() => {
     const updateTranslation = async () => {
       if (task) {
-        if (!task._translated || task._translatedLang !== currentLanguage) {
+        try {
           const translated = await translateTask(task);
-          setTranslatedTask(translated);
-        } else {
+          if (translated) {
+            setTranslatedTask(translated);
+          }
+        } catch (error) {
+          console.error("Error translating task:", error);
           setTranslatedTask(task);
         }
       }
     };
     updateTranslation();
-  }, [task, currentLanguage, translateTask]);
+  }, [currentLanguage, translateTask, task]);
 
   const handleStatusUpdate = () => {
     if (!editedStatus || editedStatus === translatedTask.status) return;

@@ -8,25 +8,25 @@ export const useTaskTranslation = () => {
     () => async (task) => {
       if (!task) return null;
 
-      // Använd lagrade översättningar för titel och beskrivning om de finns
+      // Hämta översättningar för titel och beskrivning
       const translatedTitle =
         task.translations?.[i18n.language]?.title || task.title;
       const translatedDesc =
         task.translations?.[i18n.language]?.description || task.description;
 
-      // Översätt kommentarer med lagrade översättningar
+      // Översätt kommentarer
       const translatedComments = (task.comments || []).map((comment) => ({
         ...comment,
         content: comment.translations?.[i18n.language] || comment.content,
         createdBy: comment.createdBy || { name: t("unassigned") },
       }));
 
+      // Returnera den översatta uppgiften
       return {
         ...task,
         title: translatedTitle,
         description: translatedDesc,
         comments: translatedComments,
-        _translated: true,
         _translatedLang: i18n.language,
       };
     },
