@@ -118,5 +118,9 @@
   "swedish": "Svenska",
   "polish": "Polska",
   "ukrainian": "Ukrainska",
-  "english": "Engelska"
+  "english": "Engelska",
+  "propertyManagement": "Fastighetsförvaltning",
+  "forgotPassword": "Glömt lösenord",
+  "enterEmail": "Ange e-postadress",
+  "enterPassword": "Ange lösenord"
 } 

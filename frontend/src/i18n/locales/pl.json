@@ -118,5 +118,9 @@
   "swedish": "Szwedzki",
   "polish": "Polski",
   "ukrainian": "Ukraiński",
-  "english": "Angielski"
+  "english": "Angielski",
+  "propertyManagement": "Zarządzanie nieruchomościami",
+  "forgotPassword": "Zapomniałeś hasła",
+  "enterEmail": "Wprowadź adres email",
+  "enterPassword": "Wprowadź hasło"
 } 

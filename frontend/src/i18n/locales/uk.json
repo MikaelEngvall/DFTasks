@@ -118,5 +118,9 @@
   "swedish": "Шведська",
   "polish": "Польська",
   "ukrainian": "Українська",
-  "english": "Англійська"
+  "english": "Англійська",
+  "propertyManagement": "Управління нерухомістю",
+  "forgotPassword": "Забули пароль",
+  "enterEmail": "Введіть електронну пошту",
+  "enterPassword": "Введіть пароль"
 } 

@@ -118,5 +118,9 @@
   "swedish": "Swedish",
   "polish": "Polish",
   "ukrainian": "Ukrainian",
-  "english": "English"
+  "english": "English",
+  "propertyManagement": "Property Management",
+  "forgotPassword": "Forgot Password",
+  "enterEmail": "Enter Email",
+  "enterPassword": "Enter Password"
 } 
