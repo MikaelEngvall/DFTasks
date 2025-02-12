@@ -12,6 +12,7 @@ import { tasksAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
 import { useTaskUtils } from "../utils/taskUtils";
+import { toast } from "react-hot-toast";
 
 function MonthView() {
   const { t } = useTranslation();
@@ -117,7 +118,6 @@ function MonthView() {
       const translatedTask = await translateTask(task);
       setSelectedTask(translatedTask);
     } catch (error) {
-      console.error("Error translating task:", error);
       setSelectedTask(task);
     }
   };
@@ -137,7 +137,6 @@ function MonthView() {
       setShowTaskForm(false);
       setSelectedDate(null);
     } catch (error) {
-      console.error("Error creating task:", error);
       throw error;
     }
   };
@@ -147,13 +146,42 @@ function MonthView() {
     setSelectedDate(null);
   };
 
-  const handleArchiveTask = async (taskId) => {
+  const handleArchiveTask = async (taskData) => {
     try {
-      await tasksAPI.toggleTaskStatus(taskId, true);
-      fetchTasks();
-      setSelectedTask(null);
+      const response = await tasksAPI.toggleTaskStatus(taskData._id);
+      if (response.data) {
+        await fetchTasks();
+        setSelectedTask(null);
+      }
     } catch (error) {
       console.error("Error archiving task:", error);
+      toast.error(t("errorTogglingTaskStatus"));
+    }
+  };
+
+  const handleStatusUpdate = async (task, newStatus) => {
+    try {
+      const response = await axiosInstance.patch(`/tasks/${task._id}/status`, {
+        status: newStatus,
+      });
+      if (response.data) {
+        await fetchTasks();
+      }
+    } catch (error) {
+      toast.error(t("errorUpdatingStatus"));
+    }
+  };
+
+  const handleAddComment = async (taskId, commentText) => {
+    try {
+      const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
+        content: commentText,
+      });
+      if (response.data) {
+        await fetchTasks();
+      }
+    } catch (error) {
+      toast.error(t("errorAddingComment"));
     }
   };
 
@@ -176,45 +204,6 @@ function MonthView() {
     currentMonth.getMonth(),
     1
   ).getDay();
-
-  const handleStatusUpdate = async (task, newStatus) => {
-    try {
-      console.log("Updating task status:", {
-        taskId: task._id,
-        currentStatus: task.status,
-        newStatus: newStatus,
-      });
-
-      const response = await tasksAPI.updateTaskStatus(task._id, newStatus);
-
-      if (response.data) {
-        const updatedTask = response.data;
-        setTasks(tasks.map((t) => (t._id === task._id ? updatedTask : t)));
-        setSelectedTask(updatedTask);
-      }
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      alert(t("errorSavingTask"));
-    }
-  };
-
-  const handleAddComment = async (taskId, commentText) => {
-    if (!commentText.trim()) return;
-    try {
-      const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
-        content: commentText,
-      });
-      if (response.data && response.data.task) {
-        const translatedTask = await translateTask(response.data.task);
-        setTasks(
-          tasks.map((task) => (task._id === taskId ? translatedTask : task))
-        );
-        setSelectedTask(translatedTask);
-      }
-    } catch (error) {
-      alert(t("errorAddingComment"));
-    }
-  };
 
   const getMonthName = (date) => {
     const monthIndex = date.getMonth();

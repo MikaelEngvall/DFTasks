@@ -18,7 +18,7 @@ export const tasksAPI = {
   updateTaskStatus: (taskId, status) =>
     axiosInstance.patch(`/tasks/${taskId}/status`, { status }),
   toggleTaskStatus: async (taskId) =>
-    axiosInstance.patch(`/tasks/${taskId}/toggle-status`),
+    axiosInstance.patch(`/tasks/${taskId}/toggle`),
   addComment: (taskId, content) =>
     axiosInstance.post(`/tasks/${taskId}/comments`, { content }),
   toggleCommentStatus: (taskId, commentId) =>

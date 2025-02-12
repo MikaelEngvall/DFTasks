@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import axiosInstance from "../utils/axios";
 import { toast } from "react-hot-toast";
+import { FaTimes } from "react-icons/fa";
 
 function TaskModal({
   task,
@@ -11,79 +12,53 @@ function TaskModal({
   onStatusUpdate,
   onAddComment,
   onArchive,
+  onToggleCommentStatus,
   userRole,
   userId,
   getStatusClass,
   renderStatus,
   users,
 }) {
-  const [comment, setComment] = useState("");
+  const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [editedTask, setEditedTask] = useState(null);
   const { t } = useTranslation();
   const { translateTask } = useTaskTranslation();
+  const [translatedTask, setTranslatedTask] = useState(task);
+
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
 
   useEffect(() => {
     const updateTranslation = async () => {
-      if (task) {
-        const translatedTask = await translateTask(task);
-        console.log("Task translated:", translatedTask);
-      }
+      const translated = await translateTask(task);
+      setTranslatedTask(translated);
     };
     updateTranslation();
-  }, [task]);
-
-  useEffect(() => {
-    if (task) {
-      setEditedTask({
-        ...task,
-        dueDate: format(new Date(task.dueDate), "yyyy-MM-dd"),
-      });
-    }
-  }, [task]);
+  }, [task, translateTask]);
 
   const handleEdit = async () => {
-    try {
-      const response = await axiosInstance.patch(`/tasks/${task._id}`, {
-        title: editedTask.title,
-        description: editedTask.description,
-        status: editedTask.status,
-        assignedTo: editedTask.assignedTo?._id,
-        dueDate: editedTask.dueDate,
-      });
-
-      if (response.data) {
-        onStatusUpdate(response.data.task);
-        setEditMode(false);
-      }
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
+    // Implementera redigering här
   };
 
   const handleArchive = async () => {
     try {
-      console.log("Toggling task status for task:", task._id);
       const response = await axiosInstance.patch(`/tasks/${task._id}/toggle`);
-
       if (response.data) {
-        console.log("Task status toggled successfully:", response.data);
         onArchive(response.data);
         onClose();
       }
     } catch (error) {
-      console.error("Error toggling task status:", error);
+      console.error("Error archiving task:", error);
       toast.error(t("errorTogglingTaskStatus"));
     }
   };
 
   const handleAddComment = () => {
-    if (!comment.trim()) return;
+    if (!newComment.trim()) return;
+
     setIsSubmitting(true);
-    onAddComment(task._id, comment)
+    onAddComment(task._id, newComment)
       .then(() => {
-        setComment("");
+        setNewComment("");
       })
       .catch((error) => {
         console.error("Error adding comment:", error);
@@ -93,233 +68,160 @@ function TaskModal({
       });
   };
 
-  if (!task || !editedTask) return null;
-
-  const canEdit =
-    userRole === "ADMIN" ||
-    userRole === "SUPERADMIN" ||
-    task.assignedTo?._id === userId;
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity">
-          <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
-        </div>
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>
-        &#8203;
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="sm:flex sm:items-start">
-              <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                {editMode ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t("title")}
-                      </label>
-                      <input
-                        type="text"
-                        value={editedTask.title}
-                        onChange={(e) =>
-                          setEditedTask({
-                            ...editedTask,
-                            title: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t("description")}
-                      </label>
-                      <textarea
-                        value={editedTask.description}
-                        onChange={(e) =>
-                          setEditedTask({
-                            ...editedTask,
-                            description: e.target.value,
-                          })
-                        }
-                        rows="3"
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t("status")}
-                      </label>
-                      <select
-                        value={editedTask.status}
-                        onChange={(e) =>
-                          setEditedTask({
-                            ...editedTask,
-                            status: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="pending">{t("pending")}</option>
-                        <option value="in progress">{t("inProgress")}</option>
-                        <option value="completed">{t("completed")}</option>
-                        <option value="cannot fix">{t("cannotFix")}</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t("assignedTo")}
-                      </label>
-                      <select
-                        value={editedTask.assignedTo?._id || ""}
-                        onChange={(e) =>
-                          setEditedTask({
-                            ...editedTask,
-                            assignedTo: { _id: e.target.value },
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="">{t("selectUser")}</option>
-                        {users?.map((user) => (
-                          <option key={user._id} value={user._id}>
-                            {user.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {t("dueDate")}
-                      </label>
-                      <input
-                        type="date"
-                        value={editedTask.dueDate}
-                        onChange={(e) =>
-                          setEditedTask({
-                            ...editedTask,
-                            dueDate: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                      {task.title}
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500 dark:text-gray-300">
-                        {task.description}
-                      </p>
-                      <div className="mt-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
-                            task.status
-                          )}`}
-                        >
-                          {renderStatus(task.status)}
-                        </span>
-                      </div>
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-300">
-                          {t("assignedTo")}:{" "}
-                          {task.assignedTo?.name || t("unassigned")}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-300">
-                          {t("dueDate")}:{" "}
-                          {format(new Date(task.dueDate), "yyyy-MM-dd")}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-bold text-df-primary dark:text-white">
+              {translatedTask.title}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <FaTimes />
+            </button>
+          </div>
 
-                <div className="mt-4">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">
-                    {t("comments")}
-                  </h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {task.comments && task.comments.length > 0 ? (
-                      task.comments.map((comment) => (
-                        <div
-                          key={comment._id}
-                          className="bg-gray-50 dark:bg-gray-700 p-2 rounded"
-                        >
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {comment.content}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {comment.createdBy?.name} -{" "}
+          <div className="space-y-4">
+            <div>
+              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                {translatedTask.description}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {t("status")}:{" "}
+                </span>
+                <span
+                  className={`inline-block px-2 py-1 text-sm rounded ${getStatusClass(
+                    task.status
+                  )}`}
+                >
+                  {renderStatus(task.status)}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {t("assignedTo")}:{" "}
+                </span>
+                <span className="text-df-primary dark:text-white">
+                  {task.assignedTo?.name || t("unassigned")}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {t("dueDate")}:{" "}
+                </span>
+                <span className="text-df-primary dark:text-white">
+                  {format(new Date(task.dueDate), "yyyy-MM-dd")}
+                </span>
+              </div>
+            </div>
+
+            {/* Status uppdatering */}
+            <div className="flex items-center space-x-4">
+              <select
+                value={task.status}
+                onChange={(e) => onStatusUpdate(task, e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-df-primary focus:border-df-primary sm:text-sm rounded-md dark:bg-gray-700 dark:text-white"
+              >
+                <option value="pending">{t("pending")}</option>
+                <option value="in progress">{t("inProgress")}</option>
+                <option value="completed">{t("completed")}</option>
+                <option value="cannot fix">{t("cannotFix")}</option>
+              </select>
+            </div>
+
+            {/* Kommentarer */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium text-df-primary dark:text-white mb-4">
+                {t("comments")}
+              </h3>
+              <div className="space-y-4">
+                {translatedTask.comments &&
+                translatedTask.comments.length > 0 ? (
+                  translatedTask.comments.map((comment) => (
+                    <div
+                      key={comment._id}
+                      className={`p-4 rounded-lg ${
+                        comment.isActive
+                          ? "bg-gray-50 dark:bg-gray-700"
+                          : "bg-red-50 dark:bg-red-900/20"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-start space-x-2">
+                          <span className="font-medium text-df-primary dark:text-white">
+                            {comment.createdBy?.name || t("unassigned")}
+                          </span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {format(
                               new Date(comment.createdAt),
                               "yyyy-MM-dd HH:mm"
                             )}
-                          </p>
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {t("noComments")}
+                        {isAdmin && (
+                          <button
+                            onClick={() =>
+                              onToggleCommentStatus(task._id, comment._id)
+                            }
+                            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          >
+                            {comment.isActive ? t("archive") : t("unarchive")}
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-2 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                        {comment.content}
                       </p>
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="shadow-sm focus:ring-df-primary focus:border-df-primary block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
-                      placeholder={t("writeComment")}
-                      rows="2"
-                    ></textarea>
-                    <button
-                      onClick={handleAddComment}
-                      disabled={isSubmitting || !comment.trim()}
-                      className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? t("sending") : t("send")}
-                    </button>
-                  </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {t("noComments")}
+                  </p>
+                )}
+              </div>
+
+              {/* Lägg till kommentar */}
+              <div className="mt-4">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={t("writeComment")}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-df-primary focus:border-df-primary dark:bg-gray-700 dark:text-white"
+                  rows={3}
+                />
+                <div className="mt-2 flex justify-end">
+                  <button
+                    onClick={handleAddComment}
+                    disabled={isSubmitting || !newComment.trim()}
+                    className="px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? t("sending") : t("send")}
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            {canEdit && (
-              <>
-                {editMode ? (
-                  <button
-                    onClick={handleEdit}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    {t("save")}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    {t("edit")}
-                  </button>
-                )}
-                {(userRole === "ADMIN" || userRole === "SUPERADMIN") && (
-                  <button
-                    onClick={handleArchive}
-                    className="px-4 py-2 text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
-                  >
-                    {task.isActive ? t("deactivate") : t("activate")}
-                  </button>
-                )}
-              </>
+
+            {/* Arkivera knapp - endast för admin */}
+            {isAdmin && (
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={handleArchive}
+                  className="px-4 py-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 focus:outline-none"
+                >
+                  {task.isActive ? t("archive") : t("unarchive")}
+                </button>
+              </div>
             )}
-            <button
-              onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:mt-0 sm:w-auto sm:text-sm"
-            >
-              {t("close")}
-            </button>
           </div>
         </div>
       </div>
