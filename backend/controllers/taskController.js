@@ -188,39 +188,29 @@ export const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 export const toggleTaskStatus = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Kontrollera behörighet
-    const canToggle =
-      req.user.role === "ADMIN" ||
-      req.user.role === "SUPERADMIN" ||
-      task.assignedTo?.toString() === req.user._id.toString();
-
-    if (!canToggle) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to toggle this task" });
+    // Om det är en toggle-status request
+    if (req.path.includes("toggle-status")) {
+      task.isActive = !task.isActive;
+    }
+    // Om det är en vanlig status update
+    else if (req.body.status) {
+      task.status = req.body.status;
     }
 
-    // Växla isActive-status
-    task.isActive = !task.isActive;
     const updatedTask = await task.save();
-
-    // Populera nödvändig information
-    await updatedTask.populate([
-      { path: "assignedTo", select: "name" },
-      { path: "createdBy", select: "name" },
-      { path: "comments.createdBy", select: "name" },
-    ]);
-
     res.json(updatedTask);
   } catch (error) {
-    console.error("Error in toggleTaskStatus:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error toggling task status:", error);
+    res.status(500).json({ message: "Error updating task status" });
   }
 };
 

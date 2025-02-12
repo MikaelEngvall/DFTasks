@@ -356,6 +356,7 @@ function MonthView() {
           userId={currentUser.id}
           getStatusClass={getStatusClass}
           renderStatus={renderStatus}
+          users={users}
         />
       )}
 

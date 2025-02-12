@@ -44,10 +44,14 @@ function TaskModal({
 
   const handleEdit = async () => {
     try {
-      const response = await axiosInstance.patch(
-        `/tasks/${task._id}`,
-        editedTask
-      );
+      const response = await axiosInstance.patch(`/api/tasks/${task._id}`, {
+        title: editedTask.title,
+        description: editedTask.description,
+        status: editedTask.status,
+        assignedTo: editedTask.assignedTo?._id,
+        dueDate: editedTask.dueDate,
+      });
+
       if (response.data) {
         onStatusUpdate(response.data.task);
         setEditMode(false);
@@ -64,7 +68,6 @@ function TaskModal({
       );
       if (response.data) {
         onArchive(response.data);
-        onClose();
       }
     } catch (error) {
       console.error("Error toggling task status:", error);
