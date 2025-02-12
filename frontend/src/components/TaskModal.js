@@ -8,6 +8,7 @@ function TaskModal({
   onClose,
   onStatusUpdate,
   onAddComment,
+  onArchive,
   userRole,
   userId,
   getStatusClass,
@@ -117,15 +118,14 @@ function TaskModal({
                         <option value="completed">{t("completed")}</option>
                         <option value="cannot fix">{t("cannotFix")}</option>
                       </select>
-                      {editedStatus &&
-                        editedStatus !== translatedTask.status && (
-                          <button
-                            onClick={handleStatusUpdate}
-                            className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
-                          >
-                            {t("save")}
-                          </button>
-                        )}
+                      {editedStatus !== translatedTask.status && (
+                        <button
+                          onClick={handleStatusUpdate}
+                          className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+                        >
+                          {t("save")}
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-1">
@@ -155,6 +155,16 @@ function TaskModal({
                     {format(new Date(translatedTask.dueDate), "PPP")}
                   </p>
                 </div>
+                {canEditTask() && (
+                  <div>
+                    <button
+                      onClick={() => onArchive(translatedTask._id)}
+                      className="w-full px-3 py-2 text-sm font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600 transition-colors duration-150"
+                    >
+                      {translatedTask.isActive ? t("archive") : t("unarchive")}
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <h4 className="text-sm font-medium text-df-primary dark:text-white mb-4">
@@ -187,25 +197,24 @@ function TaskModal({
                     </p>
                   )}
                 </div>
-                <div className="mt-4">
-                  {canEditTask() && (
-                    <div className="mt-4">
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder={t("writeComment")}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-df-primary focus:border-df-primary dark:bg-gray-700 dark:text-white"
-                        rows="3"
-                      />
-                      <button
-                        onClick={handleAddComment}
-                        className="mt-2 w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
-                      >
-                        {t("addComment")}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {canEditTask() && (
+                  <div className="mt-4">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder={t("writeComment")}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-df-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      rows="3"
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      className="mt-2 w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {t("addComment")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

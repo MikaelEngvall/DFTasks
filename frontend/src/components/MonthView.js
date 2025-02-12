@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import TaskModal from "./TaskModal";
+import TaskForm from "./TaskForm";
 import UserModal from "./UserModal";
 import { tasksAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -18,6 +19,9 @@ function MonthView() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [currentMonth] = useState(new Date());
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -63,27 +67,29 @@ function MonthView() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get("/tasks");
-        if (!Array.isArray(response.data.tasks)) {
-          setTasks([]);
-        } else {
-          const translatedTasks = await translateTasks(response.data.tasks);
-          setTasks(translatedTasks || []);
-        }
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(
+        `/tasks?showArchived=${showArchived}`
+      );
+      if (!Array.isArray(response.data.tasks)) {
         setTasks([]);
-      } finally {
-        setLoading(false);
+      } else {
+        const translatedTasks = await translateTasks(response.data.tasks);
+        setTasks(translatedTasks || []);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
@@ -104,6 +110,32 @@ function MonthView() {
     } catch (error) {
       console.error("Error translating task:", error);
       setSelectedTask(task);
+    }
+  };
+
+  const handleDayClick = (date) => {
+    if (!currentUser) return;
+    setSelectedDate(date);
+    setShowTaskForm(true);
+  };
+
+  const handleCreateTask = async (taskData) => {
+    try {
+      await tasksAPI.createTask(taskData);
+      fetchTasks();
+      setShowTaskForm(false);
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const handleArchiveTask = async (taskId) => {
+    try {
+      await tasksAPI.toggleTaskStatus(taskId, true);
+      fetchTasks();
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Error archiving task:", error);
     }
   };
 
@@ -222,84 +254,102 @@ function MonthView() {
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-          <div className="p-6">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
             <PageHeader title={t("tasks")} />
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-              <div className="flex justify-between items-center p-4">
-                <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                  {`${getMonthName(
-                    currentMonth
-                  )} ${currentMonth.getFullYear()}`}
-                </h2>
-              </div>
-              <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
-                {weekDays[i18n.language].map((day) => (
-                  <div key={day} className="bg-white dark:bg-gray-800 p-2">
-                    <h3 className="text-sm font-semibold text-df-primary dark:text-white">
-                      {day}
-                    </h3>
-                  </div>
-                ))}
-                {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
-                  <div
-                    key={`empty-${index}`}
-                    className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
-                  />
-                ))}
-                {Array.from({ length: daysInMonth }).map((_, index) => {
-                  const date = new Date(
-                    currentMonth.getFullYear(),
-                    currentMonth.getMonth(),
-                    index + 1
-                  );
-                  const dayTasks = tasks.filter(
-                    (task) =>
-                      format(new Date(task.dueDate), "yyyy-MM-dd") ===
-                      format(date, "yyyy-MM-dd")
-                  );
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary"
+                />
+                <span className="text-sm text-df-primary dark:text-white">
+                  {t("showArchived")}
+                </span>
+              </label>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="flex justify-between items-center p-4">
+              <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+                {`${getMonthName(currentMonth)} ${currentMonth.getFullYear()}`}
+              </h2>
+            </div>
+            <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
+              {weekDays[i18n.language].map((day) => (
+                <div key={day} className="bg-white dark:bg-gray-800 p-2">
+                  <h3 className="text-sm font-medium text-df-primary dark:text-white">
+                    {day}
+                  </h3>
+                </div>
+              ))}
+              {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
+                <div
+                  key={`empty-${index}`}
+                  className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
+                />
+              ))}
+              {Array.from({ length: daysInMonth }).map((_, index) => {
+                const date = new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth(),
+                  index + 1
+                );
+                const dayTasks = tasks.filter(
+                  (task) =>
+                    format(new Date(task.dueDate), "yyyy-MM-dd") ===
+                    format(date, "yyyy-MM-dd")
+                );
 
-                  return (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
-                    >
-                      <p className="text-sm text-df-primary/70 dark:text-gray-400">
-                        {index + 1}
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        {dayTasks.map((task) => (
-                          <div
-                            key={task._id}
-                            className={`p-2 rounded-lg ${
-                              canEditTask(task)
-                                ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
-                                : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            } cursor-pointer transition-colors duration-150`}
-                            onClick={() => handleTaskClick(task)}
-                          >
-                            <div className="text-sm font-medium text-df-primary dark:text-white truncate">
-                              {task.title}
-                            </div>
-                            <div className="mt-1 flex items-center justify-between">
-                              <span
-                                className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
-                                  task.status
-                                )}`}
-                              >
-                                {renderStatus(task.status)}
-                              </span>
-                              <span className="text-xs text-df-primary/70 dark:text-gray-400">
-                                {task.assignedTo?.name || t("unassigned")}
-                              </span>
-                            </div>
+                return (
+                  <div
+                    key={index}
+                    className="bg-white dark:bg-gray-800 p-4 min-h-[120px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) {
+                        handleDayClick(date);
+                      }
+                    }}
+                  >
+                    <p className="text-sm text-df-primary/70 dark:text-gray-400">
+                      {index + 1}
+                    </p>
+                    <div className="space-y-2">
+                      {dayTasks.map((task) => (
+                        <div
+                          key={task._id}
+                          className={`p-2 rounded-lg ${
+                            canEditTask(task)
+                              ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
+                              : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          } cursor-pointer transition-colors duration-150 ${
+                            !task.isActive ? "opacity-50" : ""
+                          }`}
+                          onClick={() => handleTaskClick(task)}
+                        >
+                          <div className="text-sm font-medium text-df-primary dark:text-white truncate">
+                            {task.title}
                           </div>
-                        ))}
-                      </div>
+                          <div className="mt-1 flex items-center justify-between">
+                            <span
+                              className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
+                                task.status
+                              )}`}
+                            >
+                              {renderStatus(task.status)}
+                            </span>
+                            <span className="text-xs text-df-primary/70 dark:text-gray-400">
+                              {task.assignedTo?.name || t("unassigned")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -311,11 +361,32 @@ function MonthView() {
           onClose={() => setSelectedTask(null)}
           onStatusUpdate={handleStatusUpdate}
           onAddComment={handleAddComment}
+          onArchive={handleArchiveTask}
           userRole={currentUser.role}
           userId={currentUser.id}
           getStatusClass={getStatusClass}
           renderStatus={renderStatus}
         />
+      )}
+
+      {showTaskForm && (
+        <div className="fixed inset-0 z-[55] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black/30"
+            onClick={() => setShowTaskForm(false)}
+          ></div>
+          <div className="relative min-h-screen flex items-center justify-center p-4">
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
+              <h2 className="text-lg font-medium text-df-primary dark:text-white mb-4">
+                {t("newTask")}
+              </h2>
+              <TaskForm
+                onSubmit={handleCreateTask}
+                initialData={{ dueDate: format(selectedDate, "yyyy-MM-dd") }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {showUserModal && (
