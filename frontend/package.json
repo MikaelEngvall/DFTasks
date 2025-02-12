@@ -23,8 +23,9 @@
     "tailwindcss": "^3.4.17"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
+    "start": "bun run dev",
+    "dev": "bun --hot run dev.js",
+    "build": "bun build ./src/index.js --outdir=build"
   },
   "eslintConfig": {
     "extends": [
@@ -42,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "bun-types": "^1.2.2"
   }
 }
