@@ -6,30 +6,35 @@ import { validateObjectId } from "../utils/validation.js";
 export const getTasks = async (req, res) => {
   try {
     const { showArchived } = req.query;
-    console.log("showArchived parameter:", showArchived); // För debugging
+    console.log("showArchived parameter:", showArchived);
 
-    // Grundläggande query för att hämta användarens uppgifter
-    const query = {
+    let query = {
       $or: [{ assignedTo: req.user._id }, { createdBy: req.user._id }],
     };
 
-    // Lägg till isActive-filter om showArchived inte är 'true'
-    if (showArchived !== "true") {
+    // Endast admin/superadmin kan se inaktiva uppgifter om de väljer det
+    if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
+      if (showArchived === "true") {
+        // Visa alla uppgifter för admin när showArchived är true
+        delete query.isActive;
+      } else {
+        // Visa endast aktiva uppgifter när showArchived är false
+        query.isActive = true;
+      }
+    } else {
+      // Vanliga användare kan endast se aktiva uppgifter
       query.isActive = true;
     }
 
-    console.log("Final query:", JSON.stringify(query)); // För debugging
+    console.log("Final query:", JSON.stringify(query));
 
     const tasks = await Task.find(query)
-      .populate("assignedTo", "name")
-      .populate("createdBy", "name")
-      .populate({
-        path: "comments.createdBy",
-        select: "name",
-      })
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email")
       .sort({ createdAt: -1 });
 
-    console.log(`Found ${tasks.length} tasks`); // För debugging
+    console.log(`Found ${tasks.length} tasks`);
     res.json(tasks);
   } catch (error) {
     console.error("Error in getTasks:", error);
@@ -185,18 +190,24 @@ export const deleteTask = async (req, res) => {
   }
 };
 
-// Växla uppgiftsstatus
+// Växla uppgiftsstatus (aktivera/inaktivera)
 export const toggleTaskStatus = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    // Kontrollera om användaren är admin eller superadmin
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
+    const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    // Uppdatera isActive status
     task.isActive = !task.isActive;
     await task.save();
 
+    // Hämta den uppdaterade uppgiften med alla relationer
     const updatedTask = await Task.findById(req.params.id)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")

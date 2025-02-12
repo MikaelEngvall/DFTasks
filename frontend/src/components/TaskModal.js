@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
 import axiosInstance from "../utils/axios";
+import { toast } from "react-hot-toast";
 
 function TaskModal({
   task,
@@ -44,7 +45,7 @@ function TaskModal({
 
   const handleEdit = async () => {
     try {
-      const response = await axiosInstance.patch(`/api/tasks/${task._id}`, {
+      const response = await axiosInstance.patch(`/tasks/${task._id}`, {
         title: editedTask.title,
         description: editedTask.description,
         status: editedTask.status,
@@ -63,13 +64,17 @@ function TaskModal({
 
   const handleArchive = async () => {
     try {
+      console.log("Toggling task status for task:", task._id);
       const response = await axiosInstance.patch(`/tasks/${task._id}/toggle`);
 
       if (response.data) {
+        console.log("Task status toggled successfully:", response.data);
         onArchive(response.data);
+        onClose();
       }
     } catch (error) {
       console.error("Error toggling task status:", error);
+      toast.error(t("errorTogglingTaskStatus"));
     }
   };
 
@@ -299,12 +304,14 @@ function TaskModal({
                     {t("edit")}
                   </button>
                 )}
-                <button
-                  onClick={handleArchive}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {task.isActive ? t("archive") : t("unarchive")}
-                </button>
+                {(userRole === "ADMIN" || userRole === "SUPERADMIN") && (
+                  <button
+                    onClick={handleArchive}
+                    className="px-4 py-2 text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+                  >
+                    {task.isActive ? t("deactivate") : t("activate")}
+                  </button>
+                )}
               </>
             )}
             <button

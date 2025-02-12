@@ -128,5 +128,6 @@
   "unarchive": "Återaktivera",
   "selectUser": "Välj användare",
   "markCompleted": "Markera som klar",
-  "markPending": "Markera som väntande"
+  "markPending": "Markera som väntande",
+  "errorTogglingTaskStatus": "Kunde inte ändra uppgiftsstatus"
 } 

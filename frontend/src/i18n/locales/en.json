@@ -125,5 +125,6 @@
   "enterEmail": "Enter Email",
   "enterPassword": "Enter Password",
   "archive": "Archive",
-  "unarchive": "Unarchive"
+  "unarchive": "Unarchive",
+  "errorTogglingTaskStatus": "Could not toggle task status"
 } 

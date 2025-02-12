@@ -125,5 +125,6 @@
   "enterEmail": "Введіть електронну пошту",
   "enterPassword": "Введіть пароль",
   "archive": "Архівувати",
-  "unarchive": "Розархівувати"
+  "unarchive": "Розархівувати",
+  "errorTogglingTaskStatus": "Не вдалося змінити статус завдання"
 } 

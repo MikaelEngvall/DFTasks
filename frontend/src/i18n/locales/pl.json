@@ -125,5 +125,6 @@
   "enterEmail": "Wprowadź adres email",
   "enterPassword": "Wprowadź hasło",
   "archive": "Archiwizuj",
-  "unarchive": "Przywróć"
+  "unarchive": "Przywróć",
+  "errorTogglingTaskStatus": "Nie można zmienić statusu zadania"
 } 
