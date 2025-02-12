@@ -117,8 +117,42 @@ function UserManagement() {
     }
   };
 
+  const canToggleUserStatus = (targetUser) => {
+    // Användare (USER) kan inte ändra status på någon
+    if (currentUser?.role === "USER") return false;
+
+    // Man kan inte ändra sin egen status
+    if (targetUser._id === currentUser?.id) return false;
+
+    // SUPERADMIN kan ändra status på alla utom sig själv
+    if (currentUser?.role === "SUPERADMIN") return true;
+
+    // ADMIN kan ändra status på alla utom SUPERADMIN och sig själv
+    if (currentUser?.role === "ADMIN") {
+      return targetUser.displayRole !== "SUPERADMIN";
+    }
+
+    return false;
+  };
+
   const handleUserClick = (user) => {
-    setSelectedUser(user);
+    // Alla kan uppdatera sin egen profil
+    if (user._id === currentUser?.id) {
+      setSelectedUser(user);
+      return;
+    }
+
+    // SUPERADMIN kan redigera alla utom sig själv
+    if (currentUser?.role === "SUPERADMIN") {
+      setSelectedUser(user);
+      return;
+    }
+
+    // ADMIN kan redigera alla utom SUPERADMIN
+    if (currentUser?.role === "ADMIN" && user.displayRole !== "SUPERADMIN") {
+      setSelectedUser(user);
+      return;
+    }
   };
 
   const handleCreate = async (userData) => {
@@ -146,6 +180,18 @@ function UserManagement() {
       <div className="max-w-7xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <PageHeader title={t("users")} />
+
+          <div className="mb-4 flex items-center">
+            <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="rounded border-gray-300 text-df-primary focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
+              />
+              <span>{t("showInactive")}</span>
+            </label>
+          </div>
 
           {error ? (
             <div className="p-4 bg-red-100 dark:bg-red-900/50 border border-red-400 text-red-700 dark:text-red-200 rounded relative">
@@ -188,14 +234,12 @@ function UserManagement() {
                       <tr
                         key={user._id}
                         onClick={() =>
-                          currentUser?.role === "SUPERADMIN" ||
-                          user.role !== "SUPERADMIN"
+                          canToggleUserStatus(user)
                             ? handleUserClick(user)
                             : null
                         }
                         className={`${!user.isActive ? "opacity-50" : ""} ${
-                          currentUser?.role === "SUPERADMIN" ||
-                          user.role !== "SUPERADMIN"
+                          canToggleUserStatus(user)
                             ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                             : "cursor-default"
                         }`}
@@ -233,7 +277,7 @@ function UserManagement() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {user._id !== currentUser?.id && (
+                          {canToggleUserStatus(user) && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
