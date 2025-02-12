@@ -108,6 +108,7 @@
   "errorSavingTask": "Kunde inte spara uppgiften",
   "noDate": "Inget datum satt",
   "errorTogglingCommentStatus": "Kunde inte ändra kommentarstatus",
+  "showArchived": "Visa arkiverade",
   "showInactive": "Visa inaktiva",
   "newTask": "Ny uppgift",
   "pending.tasks": "Väntande uppgifter",

@@ -108,6 +108,7 @@
   "errorSavingTask": "Could not save task",
   "noDate": "No date set",
   "errorTogglingCommentStatus": "Could not toggle comment status",
+  "showArchived": "Show Archived",
   "showInactive": "Show Inactive",
   "newTask": "New Task",
   "pending.tasks": "Pending Tasks",

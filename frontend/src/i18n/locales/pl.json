@@ -108,6 +108,7 @@
   "errorSavingTask": "Nie można zapisać zadania",
   "noDate": "Nie ustawiono daty",
   "errorTogglingCommentStatus": "Nie można zmienić statusu komentarza",
+  "showArchived": "Pokaż zarchiwizowane",
   "showInactive": "Pokaż nieaktywne",
   "newTask": "Nowe zadanie",
   "pending.tasks": "Oczekujące zadania",

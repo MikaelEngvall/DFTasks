@@ -108,6 +108,7 @@
   "errorSavingTask": "Не вдалося зберегти завдання",
   "noDate": "Дата не встановлена",
   "errorTogglingCommentStatus": "Не вдалося змінити статус коментаря",
+  "showArchived": "Показати архівовані",
   "showInactive": "Показати неактивні",
   "newTask": "Нове завдання",
   "pending.tasks": "Очікуючі завдання",
