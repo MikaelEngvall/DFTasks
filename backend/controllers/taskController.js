@@ -211,10 +211,11 @@ export const toggleTaskStatus = async (req, res) => {
     const updatedTask = await task.save();
 
     // Populera nödvändig information
-    await updatedTask
-      .populate("assignedTo", "name")
-      .populate("createdBy", "name")
-      .populate("comments.createdBy", "name");
+    await updatedTask.populate([
+      { path: "assignedTo", select: "name" },
+      { path: "createdBy", select: "name" },
+      { path: "comments.createdBy", select: "name" },
+    ]);
 
     res.json(updatedTask);
   } catch (error) {

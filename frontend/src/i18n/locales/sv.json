@@ -123,5 +123,10 @@
   "propertyManagement": "Fastighetsförvaltning",
   "forgotPassword": "Glömt lösenord",
   "enterEmail": "Ange e-postadress",
-  "enterPassword": "Ange lösenord"
+  "enterPassword": "Ange lösenord",
+  "archive": "Arkivera",
+  "unarchive": "Återaktivera",
+  "selectUser": "Välj användare",
+  "markCompleted": "Markera som klar",
+  "markPending": "Markera som väntande"
 } 

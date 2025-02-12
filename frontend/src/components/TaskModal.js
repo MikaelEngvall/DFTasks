@@ -14,9 +14,12 @@ function TaskModal({
   userId,
   getStatusClass,
   renderStatus,
+  users,
 }) {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedTask, setEditedTask] = useState(null);
   const { t } = useTranslation();
   const { translateTask } = useTaskTranslation();
 
@@ -30,14 +33,35 @@ function TaskModal({
     updateTranslation();
   }, [task]);
 
-  const handleStatusUpdate = () => {
-    const newStatus = task.status === "completed" ? "pending" : "completed";
-    onStatusUpdate(task, newStatus);
+  useEffect(() => {
+    if (task) {
+      setEditedTask({
+        ...task,
+        dueDate: format(new Date(task.dueDate), "yyyy-MM-dd"),
+      });
+    }
+  }, [task]);
+
+  const handleEdit = async () => {
+    try {
+      const response = await axiosInstance.patch(
+        `/tasks/${task._id}`,
+        editedTask
+      );
+      if (response.data) {
+        onStatusUpdate(response.data.task);
+        setEditMode(false);
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
   const handleArchive = async () => {
     try {
-      const response = await axiosInstance.patch(`/tasks/${task._id}/status`);
+      const response = await axiosInstance.patch(
+        `/tasks/${task._id}/toggle-status`
+      );
       if (response.data) {
         onArchive(response.data);
         onClose();
@@ -62,7 +86,7 @@ function TaskModal({
       });
   };
 
-  if (!task) return null;
+  if (!task || !editedTask) return null;
 
   const canEdit =
     userRole === "ADMIN" ||
@@ -81,33 +105,130 @@ function TaskModal({
           <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="sm:flex sm:items-start">
               <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                  {task.title}
-                </h3>
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500 dark:text-gray-300">
-                    {task.description}
-                  </p>
-                  <div className="mt-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
-                        task.status
-                      )}`}
-                    >
-                      {renderStatus(task.status)}
-                    </span>
+                {editMode ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("title")}
+                      </label>
+                      <input
+                        type="text"
+                        value={editedTask.title}
+                        onChange={(e) =>
+                          setEditedTask({
+                            ...editedTask,
+                            title: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("description")}
+                      </label>
+                      <textarea
+                        value={editedTask.description}
+                        onChange={(e) =>
+                          setEditedTask({
+                            ...editedTask,
+                            description: e.target.value,
+                          })
+                        }
+                        rows="3"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("status")}
+                      </label>
+                      <select
+                        value={editedTask.status}
+                        onChange={(e) =>
+                          setEditedTask({
+                            ...editedTask,
+                            status: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="pending">{t("pending")}</option>
+                        <option value="in progress">{t("inProgress")}</option>
+                        <option value="completed">{t("completed")}</option>
+                        <option value="cannot fix">{t("cannotFix")}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("assignedTo")}
+                      </label>
+                      <select
+                        value={editedTask.assignedTo?._id || ""}
+                        onChange={(e) =>
+                          setEditedTask({
+                            ...editedTask,
+                            assignedTo: { _id: e.target.value },
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">{t("selectUser")}</option>
+                        {users?.map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t("dueDate")}
+                      </label>
+                      <input
+                        type="date"
+                        value={editedTask.dueDate}
+                        onChange={(e) =>
+                          setEditedTask({
+                            ...editedTask,
+                            dueDate: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-300">
-                      {t("assignedTo")}:{" "}
-                      {task.assignedTo?.name || t("unassigned")}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-300">
-                      {t("dueDate")}:{" "}
-                      {format(new Date(task.dueDate), "yyyy-MM-dd")}
-                    </p>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                      {task.title}
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
+                        {task.description}
+                      </p>
+                      <div className="mt-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
+                            task.status
+                          )}`}
+                        >
+                          {renderStatus(task.status)}
+                        </span>
+                      </div>
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">
+                          {t("assignedTo")}:{" "}
+                          {task.assignedTo?.name || t("unassigned")}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">
+                          {t("dueDate")}:{" "}
+                          {format(new Date(task.dueDate), "yyyy-MM-dd")}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="mt-4">
                   <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">
@@ -161,14 +282,21 @@ function TaskModal({
           <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             {canEdit && (
               <>
-                <button
-                  onClick={handleStatusUpdate}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {task.status === "completed"
-                    ? t("markPending")
-                    : t("markCompleted")}
-                </button>
+                {editMode ? (
+                  <button
+                    onClick={handleEdit}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    {t("save")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setEditMode(true)}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    {t("edit")}
+                  </button>
+                )}
                 <button
                   onClick={handleArchive}
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
