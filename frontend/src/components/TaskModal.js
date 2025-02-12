@@ -69,7 +69,7 @@ function TaskModal({
       }
 
       const response = await axiosInstance.patch(
-        `/api/tasks/${task._id}/toggle-status`
+        `/tasks/${task._id}/toggle-status`
       );
       if (response.data) {
         onArchive(response.data);
