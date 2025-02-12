@@ -123,5 +123,7 @@
   "propertyManagement": "Управління нерухомістю",
   "forgotPassword": "Забули пароль",
   "enterEmail": "Введіть електронну пошту",
-  "enterPassword": "Введіть пароль"
+  "enterPassword": "Введіть пароль",
+  "archive": "Архівувати",
+  "unarchive": "Розархівувати"
 } 

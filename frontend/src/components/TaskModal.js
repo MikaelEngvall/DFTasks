@@ -63,14 +63,8 @@ function TaskModal({
 
   const handleArchive = async () => {
     try {
-      if (!task || !task._id) {
-        console.error("Invalid task or task ID");
-        return;
-      }
+      const response = await axiosInstance.patch(`/tasks/${task._id}/toggle`);
 
-      const response = await axiosInstance.patch(
-        `/tasks/${task._id}/toggle-status`
-      );
       if (response.data) {
         onArchive(response.data);
       }

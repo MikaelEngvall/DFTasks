@@ -123,5 +123,7 @@
   "propertyManagement": "Zarządzanie nieruchomościami",
   "forgotPassword": "Zapomniałeś hasła",
   "enterEmail": "Wprowadź adres email",
-  "enterPassword": "Wprowadź hasło"
+  "enterPassword": "Wprowadź hasło",
+  "archive": "Archiwizuj",
+  "unarchive": "Przywróć"
 } 

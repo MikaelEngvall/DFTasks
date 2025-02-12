@@ -188,29 +188,24 @@ export const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 export const toggleTaskStatus = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id)
-      .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
-      .populate("comments.createdBy", "name email");
+    const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Om det är en toggle-status request
-    if (req.path.includes("toggle-status")) {
-      task.isActive = !task.isActive;
-    }
-    // Om det är en vanlig status update
-    else if (req.body.status) {
-      task.status = req.body.status;
-    }
+    task.isActive = !task.isActive;
+    await task.save();
 
-    const updatedTask = await task.save();
+    const updatedTask = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("comments.createdBy", "name email");
+
     res.json(updatedTask);
   } catch (error) {
     console.error("Error toggling task status:", error);
-    res.status(500).json({ message: "Error updating task status" });
+    res.status(500).json({ message: "Error toggling task status" });
   }
 };
 

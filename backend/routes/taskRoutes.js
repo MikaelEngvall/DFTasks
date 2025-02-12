@@ -22,7 +22,7 @@ router.use(protect);
 
 // Status update route - tillåt både admin och tilldelade användare
 router.patch("/:id/status", toggleTaskStatus);
-router.patch("/:id/toggle-status", toggleTaskStatus);
+router.patch("/:id/toggle", toggleTaskStatus);
 
 // Pending task routes
 router.route("/pending").get(admin, getPendingTasks);

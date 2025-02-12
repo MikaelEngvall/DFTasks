@@ -123,5 +123,7 @@
   "propertyManagement": "Property Management",
   "forgotPassword": "Forgot Password",
   "enterEmail": "Enter Email",
-  "enterPassword": "Enter Password"
+  "enterPassword": "Enter Password",
+  "archive": "Archive",
+  "unarchive": "Unarchive"
 } 
