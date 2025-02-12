@@ -1,23 +1,30 @@
-import { serve } from "bun";
-import path from "path";
+import { join } from "path";
+import { statSync } from "fs";
 
-const PROJECT_ROOT = import.meta.dir;
-const PUBLIC_DIR = path.resolve(PROJECT_ROOT, "public");
-const BUILD_DIR = path.resolve(PROJECT_ROOT, "build");
+const PROJECT_ROOT = process.cwd();
+const PUBLIC_DIR = join(PROJECT_ROOT, "public");
+const SRC_DIR = join(PROJECT_ROOT, "src");
 
 export default {
+  root: PROJECT_ROOT,
   port: 3000,
   hostname: "localhost",
   development: true,
-  serve(req) {
-    const url = new URL(req.url);
-
-    // Serve static files from public directory
-    if (url.pathname.startsWith("/static")) {
-      return new Response(Bun.file(path.join(PUBLIC_DIR, url.pathname)));
-    }
-
-    // Serve index.html for all other routes (for client-side routing)
-    return new Response(Bun.file(path.join(PUBLIC_DIR, "index.html")));
+  entrypoints: ["./src/index.js"],
+  publicDir: PUBLIC_DIR,
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(
+      process.env.NODE_ENV || "development"
+    ),
   },
+  plugins: [
+    {
+      name: "react-refresh",
+      setup(build) {
+        build.onEnd(() => {
+          console.log("Build completed!");
+        });
+      },
+    },
+  ],
 };

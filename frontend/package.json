@@ -25,7 +25,7 @@
   "scripts": {
     "start": "bun run dev",
     "dev": "bun --hot run dev.js",
-    "build": "bun build ./src/index.js --outdir=build"
+    "build": "bun build ./src/index.js --outdir=build --minify"
   },
   "eslintConfig": {
     "extends": [
@@ -45,6 +45,9 @@
     ]
   },
   "devDependencies": {
-    "bun-types": "^1.2.2"
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "bun-types": "^1.2.2",
+    "react-refresh": "^0.16.0"
   }
 }
