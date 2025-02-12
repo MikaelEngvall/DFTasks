@@ -23,9 +23,10 @@
     "tailwindcss": "^3.4.17"
   },
   "scripts": {
-    "start": "bun run dev",
-    "dev": "bun --hot run dev.js",
-    "build": "bun build ./src/index.js --outdir=build --minify"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

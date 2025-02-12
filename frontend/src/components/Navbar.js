@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -13,12 +13,32 @@ import {
 } from "react-icons/fa";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
+import axiosInstance from "../utils/axios";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [pendingTasksCount, setPendingTasksCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingTasksCount = async () => {
+      if (user?.role === "ADMIN" || user?.role === "SUPERADMIN") {
+        try {
+          const response = await axiosInstance.get("/tasks/pending");
+          setPendingTasksCount(response.data.pendingTasks?.length || 0);
+        } catch (error) {
+          console.error("Error fetching pending tasks count:", error);
+        }
+      }
+    };
+
+    fetchPendingTasksCount();
+    // Uppdatera var 30:e sekund
+    const interval = setInterval(fetchPendingTasksCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -60,7 +80,14 @@ const Navbar = () => {
                   className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title={t("pending.tasks")}
                 >
-                  <FaClipboardList className="text-xl" />
+                  <div className="relative">
+                    <FaClipboardList className="text-xl" />
+                    {pendingTasksCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {pendingTasksCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                     {t("pending.tasks")}
                   </span>
