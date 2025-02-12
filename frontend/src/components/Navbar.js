@@ -47,24 +47,33 @@ const Navbar = () => {
               <div className="flex space-x-2 sm:space-x-6">
                 <Link
                   to="/dftasks/month-view"
-                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title={t("tasks")}
                 >
                   <FaTasks className="text-xl" />
+                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {t("tasks")}
+                  </span>
                 </Link>
                 <Link
                   to="/dftasks/pending-tasks"
-                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title={t("pending.tasks")}
                 >
                   <FaClipboardList className="text-xl" />
+                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {t("pending.tasks")}
+                  </span>
                 </Link>
                 <Link
                   to="/dftasks/users"
-                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title={t("users")}
                 >
                   <FaUsers className="text-xl" />
+                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {t("users")}
+                  </span>
                 </Link>
               </div>
             )}
@@ -73,7 +82,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="group relative p-2 rounded-lg text-df-primary dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               title={darkMode ? t("light.mode") : t("dark.mode")}
             >
               {darkMode ? (
@@ -81,6 +90,9 @@ const Navbar = () => {
               ) : (
                 <FaMoon className="text-xl" />
               )}
+              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                {darkMode ? t("light.mode") : t("dark.mode")}
+              </span>
             </button>
 
             {user && (
@@ -97,10 +109,13 @@ const Navbar = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   title={t("logout")}
                 >
                   <FaSignOutAlt className="text-xl" />
+                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {t("logout")}
+                  </span>
                 </button>
               </>
             )}
