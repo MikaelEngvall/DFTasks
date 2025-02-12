@@ -84,6 +84,7 @@ const taskSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+      index: true,
     },
     // Reporter information
     reporterName: {

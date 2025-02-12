@@ -30,15 +30,22 @@ const migrateData = async () => {
 
     // Uppdatera alla kommentarer i uppgifter
     const tasks = await Task.find({ "comments.isActive": { $exists: false } });
+    let commentCount = 0;
+
     for (const task of tasks) {
+      let updated = false;
       task.comments.forEach((comment) => {
-        if (!comment.isActive) {
+        if (comment.isActive === undefined) {
           comment.isActive = true;
+          commentCount++;
+          updated = true;
         }
       });
-      await task.save();
+      if (updated) {
+        await task.save();
+      }
     }
-    console.log(`Updated comments in ${tasks.length} tasks`);
+    console.log(`Updated ${commentCount} comments in ${tasks.length} tasks`);
 
     console.log("Migration completed successfully");
     process.exit(0);

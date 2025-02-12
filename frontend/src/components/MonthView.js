@@ -11,6 +11,7 @@ import UserModal from "./UserModal";
 import { tasksAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
+import { useTaskUtils } from "../utils/taskUtils";
 
 function MonthView() {
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ function MonthView() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
+  const { getStatusClass, renderStatus } = useTaskUtils();
 
   const { translateTask, translateTasks, currentLanguage } =
     useTaskTranslation();
@@ -74,12 +76,8 @@ function MonthView() {
       const response = await axiosInstance.get(
         `/tasks?showArchived=${showArchived}`
       );
-      if (!Array.isArray(response.data.tasks)) {
-        setTasks([]);
-      } else {
-        const translatedTasks = await translateTasks(response.data.tasks);
-        setTasks(translatedTasks || []);
-      }
+      const translatedTasks = await translateTasks(response.data);
+      setTasks(translatedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setTasks([]);
@@ -168,19 +166,6 @@ function MonthView() {
     );
   };
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100";
-      case "in progress":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
-      case "cannot fix":
-        return "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100";
-      default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100";
-    }
-  };
-
   const daysInMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth() + 1,
@@ -210,19 +195,6 @@ function MonthView() {
     } catch (error) {
       console.error("Error updating task status:", error);
       alert(t("errorSavingTask"));
-    }
-  };
-
-  const renderStatus = (status) => {
-    switch (status) {
-      case "completed":
-        return t("completed");
-      case "in progress":
-        return t("inProgress");
-      case "cannot fix":
-        return t("cannotFix");
-      default:
-        return t("pending");
     }
   };
 
@@ -278,16 +250,14 @@ function MonthView() {
           <div className="flex justify-between items-center mb-6">
             <PageHeader title={t("tasks")} />
             <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
+              <label className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={showArchived}
                   onChange={(e) => setShowArchived(e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary"
+                  className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
                 />
-                <span className="text-sm text-df-primary dark:text-white">
-                  {t("showArchived")}
-                </span>
+                <span>{t("showInactive")}</span>
               </label>
             </div>
           </div>

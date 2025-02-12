@@ -28,16 +28,23 @@ router.route("/pending").get(admin, getPendingTasks);
 router.route("/pending/:taskId/approve").post(admin, approvePendingTask);
 
 // CRUD routes - tillåt både admin och superadmin
-router.route("/").get(getTasks).post(admin, createTask);
+router
+  .route("/")
+  .get(getTasks) // Denna route hanterar nu showArchived-parametern
+  .post(admin, createTask);
+
 router.route("/all").get(admin, getAllTasks);
+
 router
   .route("/:id")
   .get(getTask)
   .patch(admin, updateTask)
   .delete(admin, deleteTask);
+
 router
   .route("/:taskId/comments/:commentId/toggle")
   .patch(admin, toggleCommentStatus);
+
 router.route("/:id/comments").post(addComment);
 
 export default router;

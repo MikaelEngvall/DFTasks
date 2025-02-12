@@ -5,24 +5,32 @@ import { validateObjectId } from "../utils/validation.js";
 // Hämta alla uppgifter (för inloggad användare eller admin)
 export const getTasks = async (req, res) => {
   try {
-    let tasks;
-    // Om användaren är admin eller superadmin, hämta alla aktiva uppgifter
-    if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
-      tasks = await Task.find({ isActive: true })
-        .populate("assignedTo", "name email")
-        .populate("createdBy", "name email")
-        .populate("comments.createdBy", "name email");
-    } else {
-      // För vanliga användare, hämta bara deras tilldelade uppgifter
-      tasks = await Task.find({
-        isActive: true,
-        assignedTo: req.user._id,
-      })
-        .populate("assignedTo", "name email")
-        .populate("createdBy", "name email")
-        .populate("comments.createdBy", "name email");
+    const { showArchived } = req.query;
+    console.log("showArchived parameter:", showArchived); // För debugging
+
+    // Grundläggande query för att hämta användarens uppgifter
+    const query = {
+      $or: [{ assignedTo: req.user._id }, { createdBy: req.user._id }],
+    };
+
+    // Lägg till isActive-filter om showArchived inte är 'true'
+    if (showArchived !== "true") {
+      query.isActive = true;
     }
-    res.json({ tasks });
+
+    console.log("Final query:", JSON.stringify(query)); // För debugging
+
+    const tasks = await Task.find(query)
+      .populate("assignedTo", "name")
+      .populate("createdBy", "name")
+      .populate({
+        path: "comments.createdBy",
+        select: "name",
+      })
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${tasks.length} tasks`); // För debugging
+    res.json(tasks);
   } catch (error) {
     console.error("Error in getTasks:", error);
     res.status(500).json({ message: "Server error" });
@@ -180,51 +188,38 @@ export const deleteTask = async (req, res) => {
 // Växla uppgiftsstatus
 export const toggleTaskStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status, isActive } = req.body;
-
-    const task = await Task.findById(id)
-      .populate("assignedTo", "name email role")
-      .populate("createdBy", "name email role")
-      .populate("comments.createdBy", "name email role");
+    const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Kontrollera behörighet - endast admin eller tilldelad användare kan ändra status
-    if (
-      req.user.role !== "ADMIN" &&
-      req.user.role !== "SUPERADMIN" &&
-      (!task.assignedTo || task.assignedTo._id.toString() !== req.user.id)
-    ) {
+    // Kontrollera behörighet
+    const canToggle =
+      req.user.role === "ADMIN" ||
+      req.user.role === "SUPERADMIN" ||
+      task.assignedTo?.toString() === req.user._id.toString();
+
+    if (!canToggle) {
       return res
         .status(403)
-        .json({ message: "Not authorized to update this task" });
+        .json({ message: "Not authorized to toggle this task" });
     }
 
-    // Uppdatera status om det skickades med
-    if (status) {
-      task.status = status;
-    }
+    // Växla isActive-status
+    task.isActive = !task.isActive;
+    const updatedTask = await task.save();
 
-    // Uppdatera isActive om det skickades med
-    if (typeof isActive === "boolean") {
-      task.isActive = isActive;
-    }
-
-    await task.save();
-
-    // Hämta den uppdaterade uppgiften med alla populerade fält
-    const updatedTask = await Task.findById(id)
-      .populate("assignedTo", "name email role")
-      .populate("createdBy", "name email role")
-      .populate("comments.createdBy", "name email role");
+    // Populera nödvändig information
+    await updatedTask
+      .populate("assignedTo", "name")
+      .populate("createdBy", "name")
+      .populate("comments.createdBy", "name");
 
     res.json(updatedTask);
   } catch (error) {
     console.error("Error in toggleTaskStatus:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

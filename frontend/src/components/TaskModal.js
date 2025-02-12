@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
+import axiosInstance from "../utils/axios";
 
 function TaskModal({
   task,
@@ -14,209 +15,174 @@ function TaskModal({
   getStatusClass,
   renderStatus,
 }) {
-  const [editedStatus, setEditedStatus] = useState(null);
-  const [newComment, setNewComment] = useState("");
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useTranslation();
-  const { translateTask, currentLanguage } = useTaskTranslation();
-  const [translatedTask, setTranslatedTask] = useState(task);
+  const { translateTask } = useTaskTranslation();
 
   useEffect(() => {
     const updateTranslation = async () => {
       if (task) {
-        try {
-          const translated = await translateTask(task);
-          if (translated) {
-            setTranslatedTask(translated);
-          }
-        } catch (error) {
-          console.error("Error translating task:", error);
-          setTranslatedTask(task);
-        }
+        const translatedTask = await translateTask(task);
+        console.log("Task translated:", translatedTask);
       }
     };
     updateTranslation();
-  }, [currentLanguage, translateTask, task]);
+  }, [task]);
 
   const handleStatusUpdate = () => {
-    if (!editedStatus || editedStatus === translatedTask.status) return;
-    onStatusUpdate(translatedTask, editedStatus);
-    setEditedStatus(null);
+    const newStatus = task.status === "completed" ? "pending" : "completed";
+    onStatusUpdate(task, newStatus);
   };
 
-  const canEditTask = () => {
-    if (!userRole || !userId || !translatedTask) return false;
-    return (
-      userRole === "ADMIN" ||
-      userRole === "SUPERADMIN" ||
-      translatedTask.assignedTo?._id === userId
-    );
-  };
-
-  const handleAddComment = () => {
-    if (!newComment.trim() || !translatedTask?._id) return;
-    if (typeof onAddComment === "function") {
-      onAddComment(translatedTask._id, newComment);
-      setNewComment("");
+  const handleArchive = async () => {
+    try {
+      const response = await axiosInstance.patch(`/tasks/${task._id}/status`);
+      if (response.data) {
+        onArchive(response.data);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error toggling task status:", error);
     }
   };
 
+  const handleAddComment = () => {
+    if (!comment.trim()) return;
+    setIsSubmitting(true);
+    onAddComment(task._id, comment)
+      .then(() => {
+        setComment("");
+      })
+      .catch((error) => {
+        console.error("Error adding comment:", error);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  };
+
+  if (!task) return null;
+
+  const canEdit =
+    userRole === "ADMIN" ||
+    userRole === "SUPERADMIN" ||
+    task.assignedTo?._id === userId;
+
   return (
-    <div className="fixed inset-0 z-[55] overflow-y-auto">
-      <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
-      <div className="relative min-h-screen flex items-start justify-center p-4 pt-16">
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl">
-          <div className="sticky top-0 z-[56] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 rounded-t-lg">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-df-primary dark:text-white pr-8">
-                {translatedTask.title}
-              </h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 absolute top-4 right-4"
-              >
-                <span className="sr-only">{t("close")}</span>
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("description")}
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {translatedTask.description}
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity">
+          <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+        </div>
+        <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>
+        &#8203;
+        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="sm:flex sm:items-start">
+              <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                  {task.title}
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-300">
+                    {task.description}
                   </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("status")}
-                  </h4>
-                  {canEditTask() ? (
-                    <div className="space-y-2">
-                      <select
-                        value={editedStatus || translatedTask.status}
-                        onChange={(e) => setEditedStatus(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring focus:ring-df-primary focus:ring-opacity-50 bg-white dark:bg-gray-700 text-df-primary dark:text-white"
-                      >
-                        <option value="pending">{t("pending")}</option>
-                        <option value="in progress">{t("inProgress")}</option>
-                        <option value="completed">{t("completed")}</option>
-                        <option value="cannot fix">{t("cannotFix")}</option>
-                      </select>
-                      {editedStatus !== translatedTask.status && (
-                        <button
-                          onClick={handleStatusUpdate}
-                          className="w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150"
-                        >
-                          {t("save")}
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="mt-1">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                          translatedTask.status
-                        )}`}
-                      >
-                        {renderStatus(translatedTask.status)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("assignedTo")}
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {translatedTask.assignedTo?.name || t("unassigned")}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-df-primary dark:text-white">
-                    {t("deadline")}
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {format(new Date(translatedTask.dueDate), "PPP")}
-                  </p>
-                </div>
-                {canEditTask() && (
-                  <div>
-                    <button
-                      onClick={() => onArchive(translatedTask._id)}
-                      className="w-full px-3 py-2 text-sm font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600 transition-colors duration-150"
+                  <div className="mt-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
+                        task.status
+                      )}`}
                     >
-                      {translatedTask.isActive ? t("archive") : t("unarchive")}
-                    </button>
+                      {renderStatus(task.status)}
+                    </span>
                   </div>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-df-primary dark:text-white mb-4">
-                  {t("comments")}
-                </h4>
-                <div className="space-y-4">
-                  {translatedTask.comments?.length > 0 ? (
-                    translatedTask.comments.map((comment) => (
-                      <div
-                        key={comment._id}
-                        className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"
-                      >
-                        <div className="flex justify-between items-start">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-300">
+                      {t("assignedTo")}:{" "}
+                      {task.assignedTo?.name || t("unassigned")}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">
+                      {t("dueDate")}:{" "}
+                      {format(new Date(task.dueDate), "yyyy-MM-dd")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">
+                    {t("comments")}
+                  </h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {task.comments && task.comments.length > 0 ? (
+                      task.comments.map((comment) => (
+                        <div
+                          key={comment._id}
+                          className="bg-gray-50 dark:bg-gray-700 p-2 rounded"
+                        >
+                          <p className="text-sm text-gray-900 dark:text-white">
                             {comment.content}
                           </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {comment.createdBy?.name} -{" "}
+                            {format(
+                              new Date(comment.createdAt),
+                              "yyyy-MM-dd HH:mm"
+                            )}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {comment.createdBy?.name} -{" "}
-                          {format(
-                            new Date(comment.createdAt),
-                            "yyyy-MM-dd HH:mm"
-                          )}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {t("noComments")}
-                    </p>
-                  )}
-                </div>
-                {canEditTask() && (
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {t("noComments")}
+                      </p>
+                    )}
+                  </div>
                   <div className="mt-4">
                     <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className="shadow-sm focus:ring-df-primary focus:border-df-primary block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
                       placeholder={t("writeComment")}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-df-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      rows="3"
-                    />
+                      rows="2"
+                    ></textarea>
                     <button
                       onClick={handleAddComment}
-                      disabled={!newComment.trim()}
-                      className="mt-2 w-full px-3 py-2 text-sm font-medium text-white bg-df-primary rounded-md hover:bg-df-primary/90 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSubmitting || !comment.trim()}
+                      className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {t("addComment")}
+                      {isSubmitting ? t("sending") : t("send")}
                     </button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            {canEdit && (
+              <>
+                <button
+                  onClick={handleStatusUpdate}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-df-primary text-base font-medium text-white hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  {task.status === "completed"
+                    ? t("markPending")
+                    : t("markCompleted")}
+                </button>
+                <button
+                  onClick={handleArchive}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  {task.isActive ? t("archive") : t("unarchive")}
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary sm:mt-0 sm:w-auto sm:text-sm"
+            >
+              {t("close")}
+            </button>
           </div>
         </div>
       </div>
