@@ -9,6 +9,7 @@ import {
   FaClipboardList,
   FaUsers,
   FaSignOutAlt,
+  FaUser,
 } from "react-icons/fa";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
@@ -83,13 +84,25 @@ const Navbar = () => {
             </button>
 
             {user && (
-              <button
-                onClick={handleLogout}
-                className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title={t("logout")}
-              >
-                <FaSignOutAlt className="text-xl" />
-              </button>
+              <>
+                <Link
+                  to="/dftasks/profile"
+                  className="group relative p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={t("profile")}
+                >
+                  <FaUser className="text-xl" />
+                  <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {user.name}
+                  </span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-df-primary dark:text-white hover:text-df-primary/80 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={t("logout")}
+                >
+                  <FaSignOutAlt className="text-xl" />
+                </button>
+              </>
             )}
           </div>
         </div>

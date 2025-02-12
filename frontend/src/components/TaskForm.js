@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 
-const TaskForm = ({ onSubmit, initialData = {}, users = [] }) => {
+const TaskForm = ({ onSubmit, onCancel, initialData = {}, users = [] }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: "",
@@ -145,13 +145,20 @@ const TaskForm = ({ onSubmit, initialData = {}, users = [] }) => {
         />
       </div>
 
-      <div>
+      <div className="flex space-x-4">
         <button
           type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
           {isSubmitting ? t("saving") : t("submit")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+        >
+          {t("cancel")}
         </button>
       </div>
     </form>

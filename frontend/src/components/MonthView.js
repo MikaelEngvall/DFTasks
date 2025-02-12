@@ -13,7 +13,9 @@ import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
 
 function MonthView() {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -22,7 +24,6 @@ function MonthView() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
-  const { t } = useTranslation();
   const { user } = useAuth();
 
   const { translateTask, translateTasks, currentLanguage } =
@@ -87,8 +88,18 @@ function MonthView() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const response = await axiosInstance.get("/users");
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
+    fetchUsers();
   }, [showArchived]);
 
   useEffect(() => {
@@ -114,19 +125,28 @@ function MonthView() {
   };
 
   const handleDayClick = (date) => {
-    if (!currentUser) return;
     setSelectedDate(date);
     setShowTaskForm(true);
   };
 
   const handleCreateTask = async (taskData) => {
     try {
-      await tasksAPI.createTask(taskData);
-      fetchTasks();
+      await axiosInstance.post("/tasks", {
+        ...taskData,
+        dueDate: selectedDate,
+      });
+      await fetchTasks();
       setShowTaskForm(false);
+      setSelectedDate(null);
     } catch (error) {
       console.error("Error creating task:", error);
+      throw error;
     }
+  };
+
+  const handleCancelTaskForm = () => {
+    setShowTaskForm(false);
+    setSelectedDate(null);
   };
 
   const handleArchiveTask = async (taskId) => {
@@ -370,21 +390,16 @@ function MonthView() {
       )}
 
       {showTaskForm && (
-        <div className="fixed inset-0 z-[55] overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black/30"
-            onClick={() => setShowTaskForm(false)}
-          ></div>
-          <div className="relative min-h-screen flex items-center justify-center p-4">
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
-              <h2 className="text-lg font-medium text-df-primary dark:text-white mb-4">
-                {t("newTask")}
-              </h2>
-              <TaskForm
-                onSubmit={handleCreateTask}
-                initialData={{ dueDate: format(selectedDate, "yyyy-MM-dd") }}
-              />
-            </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-bold text-df-primary dark:text-white mb-4">
+              {t("newTask")}
+            </h2>
+            <TaskForm
+              onSubmit={handleCreateTask}
+              onCancel={handleCancelTaskForm}
+              users={users}
+            />
           </div>
         </div>
       )}
