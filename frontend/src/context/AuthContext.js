@@ -6,6 +6,7 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Funktion för att sätta språk baserat på användarens preferens
   const setUserLanguage = (userData) => {
@@ -21,19 +22,32 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Kontrollera token vid sidladdning
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const decoded = jwtDecode(token);
-        setUser(decoded);
-        setUserLanguage(decoded);
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const decoded = jwtDecode(token);
+          // Kontrollera om token har gått ut
+          if (decoded.exp * 1000 > Date.now()) {
+            setUser(decoded);
+            setUserLanguage(decoded);
+          } else {
+            localStorage.removeItem("token");
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        localStorage.removeItem("token");
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error parsing token:", error);
-      localStorage.removeItem("token");
-      setUser(null);
-    }
+    };
+
+    checkAuth();
   }, []);
 
   const login = (token) => {
@@ -62,6 +76,10 @@ export function AuthProvider({ children }) {
       setUserLanguage(updatedUser);
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser }}>

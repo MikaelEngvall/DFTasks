@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axiosInstance from "../utils/axios";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,13 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dftasks/month-view", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,13 +30,17 @@ function Login() {
         password,
       });
       login(response.data.token);
-      navigate("/dftasks/month-view");
+      navigate("/dftasks/month-view", { replace: true });
     } catch (error) {
       setError(error.response?.data?.message || t("error"));
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-df-light dark:bg-dark px-4 sm:px-6 lg:px-8">

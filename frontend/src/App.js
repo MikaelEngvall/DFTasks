@@ -1,120 +1,60 @@
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { Suspense } from "react";
-import { ThemeProvider } from "./context/ThemeContext";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import MonthView from "./components/MonthView";
-import PendingTasksManagement from "./components/PendingTasksManagement";
-import UserManagement from "./components/UserManagement";
+import { useAuth } from "./context/AuthContext";
 import Login from "./components/Login";
-import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./components/ResetPassword";
+import MonthView from "./components/MonthView";
 import Profile from "./components/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
-import ErrorBoundary from "./components/ErrorBoundary";
 
-// Skapa en separat komponent för routes för att kunna använda useAuth
-const AppRoutes = () => {
+function AppRoutes() {
   const { user } = useAuth();
 
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/dftasks/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/dftasks/login" replace />} />
+      </Routes>
+    );
+  }
+
   return (
-    <Routes>
-      <Route path="/dftasks/login" element={<Login />} />
-      <Route path="/dftasks/forgot-password" element={<ForgotPassword />} />
-      <Route
-        path="/dftasks/reset-password/:token"
-        element={<ResetPassword />}
-      />
-      <Route
-        path="/dftasks/month-view"
-        element={
-          <ProtectedRoute>
-            <MonthView />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dftasks/pending-tasks"
-        element={
-          <ProtectedRoute adminOnly>
-            <PendingTasksManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dftasks/users"
-        element={
-          <ProtectedRoute adminOnly>
-            <UserManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dftasks/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dftasks"
-        element={
-          user ? (
-            <Navigate to="/dftasks/month-view" replace />
-          ) : (
-            <Navigate to="/dftasks/login" replace />
-          )
-        }
-      />
-      <Route
-        path="/"
-        element={
-          user ? (
-            <Navigate to="/dftasks/month-view" replace />
-          ) : (
-            <Navigate to="/dftasks/login" replace />
-          )
-        }
-      />
-      <Route
-        path="*"
-        element={
-          user ? (
-            <Navigate to="/dftasks/month-view" replace />
-          ) : (
-            <Navigate to="/dftasks/login" replace />
-          )
-        }
-      />
-    </Routes>
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/dftasks/month-view" element={<MonthView />} />
+        <Route path="/dftasks/profile" element={<Profile />} />
+        <Route
+          path="/dftasks/login"
+          element={<Navigate to="/dftasks/month-view" replace />}
+        />
+        <Route
+          path="/dftasks"
+          element={<Navigate to="/dftasks/month-view" replace />}
+        />
+        <Route
+          path="/"
+          element={<Navigate to="/dftasks/month-view" replace />}
+        />
+        <Route
+          path="*"
+          element={<Navigate to="/dftasks/month-view" replace />}
+        />
+      </Routes>
+    </>
   );
-};
+}
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Router
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <ErrorBoundary>
-            <Navbar />
-            <Suspense fallback="Loading...">
-              <AppRoutes />
-            </Suspense>
-          </ErrorBoundary>
-        </Router>
-      </ThemeProvider>
-    </AuthProvider>
+    <Router>
+      <AppRoutes />
+    </Router>
   );
 }
 
