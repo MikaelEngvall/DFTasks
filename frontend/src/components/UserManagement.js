@@ -167,6 +167,10 @@ function UserManagement() {
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers, showInactive]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -233,16 +237,10 @@ function UserManagement() {
                     users.map((user) => (
                       <tr
                         key={user._id}
-                        onClick={() =>
-                          canToggleUserStatus(user)
-                            ? handleUserClick(user)
-                            : null
-                        }
-                        className={`${!user.isActive ? "opacity-50" : ""} ${
-                          canToggleUserStatus(user)
-                            ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                            : "cursor-default"
-                        }`}
+                        onClick={() => handleUserClick(user)}
+                        className={`${
+                          !user.isActive ? "opacity-50" : ""
+                        } hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-df-primary dark:text-white">
