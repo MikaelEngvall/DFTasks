@@ -232,25 +232,18 @@ function UserManagement() {
                             {user.isActive ? t("active") : t("inactive")}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUserClick(user);
-                            }}
-                            className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-2"
-                          >
-                            {t("edit")}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleStatus(user._id);
-                            }}
-                            className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                          >
-                            {user.isActive ? t("deactivate") : t("activate")}
-                          </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          {user._id !== currentUser?.id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleStatus(user._id);
+                              }}
+                              className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
+                            >
+                              {user.isActive ? t("deactivate") : t("activate")}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
