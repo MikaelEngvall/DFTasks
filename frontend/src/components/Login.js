@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axios";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
+import LanguageSelector from "./LanguageSelector";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -29,10 +30,16 @@ function Login() {
         email,
         password,
       });
-      login(response.data.token);
-      navigate("/dftasks/month-view", { replace: true });
+
+      if (response.data && response.data.token) {
+        login(response.data.token);
+        navigate("/dftasks/month-view", { replace: true });
+      } else {
+        setError(t("loginError"));
+      }
     } catch (error) {
-      setError(error.response?.data?.message || t("error"));
+      console.error("Login error:", error);
+      setError(error.response?.data?.message || t("loginError"));
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +51,10 @@ function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-df-light dark:bg-dark px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
+
       <div className="w-full max-w-md space-y-6 -mt-20">
         <div className="flex flex-col items-center">
           <img
@@ -105,17 +116,6 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
               />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end">
-            <div className="text-sm">
-              <Link
-                to="/dftasks/forgot-password"
-                className="font-medium text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-              >
-                {t("forgotPassword")}
-              </Link>
             </div>
           </div>
 
