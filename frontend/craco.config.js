@@ -2,10 +2,16 @@ const path = require("path");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const CompressionPlugin = require("compression-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
+const { InjectManifest } = require("workbox-webpack-plugin");
 
 module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
+      // Ta bort default service worker plugin
+      webpackConfig.plugins = webpackConfig.plugins.filter(
+        (plugin) => plugin.constructor.name !== "InjectManifest"
+      );
+
       // Optimera chunk-storlekar
       webpackConfig.optimization.splitChunks = {
         chunks: "all",
@@ -77,6 +83,12 @@ module.exports = {
             analyzerMode: "disabled",
             generateStatsFile: true,
             statsFilename: "bundle-stats.json",
+          }),
+          new InjectManifest({
+            swSrc: "./src/service-worker.ts",
+            swDest: "service-worker.js",
+            exclude: [/\.map$/, /asset-manifest\.json$/, /LICENSE/],
+            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           })
         );
       }
