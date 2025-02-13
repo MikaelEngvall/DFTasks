@@ -5,6 +5,7 @@
   "homepage": "/dftasks",
   "proxy": "http://localhost:5000",
   "dependencies": {
+    "@reduxjs/toolkit": "^2.5.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
     "date-fns": "^2.30.0",
@@ -17,9 +18,11 @@
     "react-hot-toast": "^2.5.1",
     "react-i18next": "^14.1.0",
     "react-icons": "^4.12.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^6.22.3",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.3",
+    "redux-persist": "^6.0.0",
     "tailwindcss": "^3.4.17"
   },
   "scripts": {

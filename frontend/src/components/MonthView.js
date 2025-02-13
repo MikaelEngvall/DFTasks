@@ -13,22 +13,36 @@ import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
 import { useTaskUtils } from "../utils/taskUtils";
 import { toast } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchTasks,
+  createTask,
+  updateTaskStatus,
+  toggleTaskStatus,
+  addComment,
+  setSelectedTask,
+  optimisticUpdateTask,
+  optimisticAddComment,
+} from "../store/slices/tasksSlice";
 
 function MonthView() {
-  const { t } = useTranslation();
-  const [tasks, setTasks] = useState([]);
+  const dispatch = useDispatch();
+  const {
+    items: tasks,
+    loading,
+    error,
+    selectedTask,
+  } = useSelector((state) => state.tasks);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [currentMonth] = useState(new Date());
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { getStatusClass, renderStatus } = useTaskUtils();
-
   const { translateTask, translateTasks, currentLanguage } =
     useTaskTranslation();
 
@@ -71,41 +85,15 @@ function MonthView() {
     }
   }, []);
 
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get(
-        `/tasks?showArchived=${showArchived}`
-      );
-      const translatedTasks = await translateTasks(response.data);
-      setTasks(translatedTasks);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get("/users");
-      setUsers(response.data);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchTasks();
-    fetchUsers();
-  }, [showArchived]);
+    dispatch(fetchTasks({ showInactive: showArchived }));
+  }, [dispatch, showArchived]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
       if (selectedTask && selectedTask.comments?.length > 0) {
         const translatedTask = await translateTask(selectedTask);
-        setSelectedTask(translatedTask);
+        dispatch(setSelectedTask(translatedTask));
       }
     };
 
@@ -116,25 +104,23 @@ function MonthView() {
     if (!task) return;
     try {
       const translatedTask = await translateTask(task);
-      setSelectedTask(translatedTask);
+      dispatch(setSelectedTask(translatedTask));
     } catch (error) {
-      setSelectedTask(task);
+      dispatch(setSelectedTask(task));
     }
   };
 
   const handleDayClick = (date) => {
-    if (!isAdmin) return;
+    if (!user || !user.role === "ADMIN") return;
     setSelectedDate(date);
     setShowTaskForm(true);
   };
 
   const handleCreateTask = async (taskData) => {
     try {
-      await axiosInstance.post("/tasks", {
-        ...taskData,
-        dueDate: selectedDate,
-      });
-      await fetchTasks();
+      await dispatch(
+        createTask({ ...taskData, dueDate: selectedDate })
+      ).unwrap();
       setShowTaskForm(false);
       setSelectedDate(null);
     } catch (error) {
@@ -149,41 +135,67 @@ function MonthView() {
 
   const handleArchiveTask = async (taskData) => {
     try {
-      const response = await tasksAPI.toggleTaskStatus(taskData._id);
-      if (response.data) {
-        await fetchTasks();
-        setSelectedTask(null);
-        toast.success(
-          taskData.isActive ? t("taskArchived") : t("taskUnarchived")
-        );
-      }
+      dispatch(
+        optimisticUpdateTask({
+          ...taskData,
+          isActive: !taskData.isActive,
+        })
+      );
+
+      await dispatch(toggleTaskStatus(taskData._id)).unwrap();
+      dispatch(setSelectedTask(null));
     } catch (error) {
-      console.error("Error archiving task:", error);
+      dispatch(
+        optimisticUpdateTask({
+          ...taskData,
+          isActive: taskData.isActive,
+        })
+      );
       toast.error(t("errorTogglingTaskStatus"));
     }
   };
 
   const handleStatusUpdate = async (task, newStatus) => {
     try {
-      const response = await axiosInstance.patch(`/tasks/${task._id}/status`, {
-        status: newStatus,
-      });
-      if (response.data) {
-        await fetchTasks();
-      }
+      dispatch(
+        optimisticUpdateTask({
+          ...task,
+          status: newStatus,
+        })
+      );
+
+      await dispatch(
+        updateTaskStatus({ taskId: task._id, status: newStatus })
+      ).unwrap();
     } catch (error) {
+      dispatch(
+        optimisticUpdateTask({
+          ...task,
+          status: task.status,
+        })
+      );
       toast.error(t("errorUpdatingStatus"));
     }
   };
 
   const handleAddComment = async (taskId, commentText) => {
     try {
-      const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
+      const tempComment = {
+        _id: Date.now().toString(),
         content: commentText,
-      });
-      if (response.data) {
-        await fetchTasks();
-      }
+        createdBy: user,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      dispatch(
+        optimisticAddComment({
+          taskId,
+          comment: tempComment,
+        })
+      );
+
+      await dispatch(addComment({ taskId, content: commentText })).unwrap();
     } catch (error) {
       toast.error(t("errorAddingComment"));
     }
@@ -192,7 +204,7 @@ function MonthView() {
   const handleEdit = async (taskData) => {
     try {
       await axiosInstance.patch(`/tasks/${taskData._id}`, taskData);
-      await fetchTasks();
+      dispatch(fetchTasks({ showInactive: showArchived }));
       toast.success(t("taskUpdated"));
     } catch (error) {
       console.error("Error updating task:", error);
@@ -201,11 +213,11 @@ function MonthView() {
   };
 
   const canEditTask = (task) => {
-    if (!currentUser || !task) return false;
+    if (!user || !task) return false;
     return (
-      currentUser.role === "ADMIN" ||
-      currentUser.role === "SUPERADMIN" ||
-      task.assignedTo?._id === currentUser.id
+      user.role === "ADMIN" ||
+      user.role === "SUPERADMIN" ||
+      task.assignedTo?._id === user._id
     );
   };
 
@@ -360,7 +372,7 @@ function MonthView() {
       {selectedTask && (
         <TaskModal
           task={selectedTask}
-          onClose={() => setSelectedTask(null)}
+          onClose={() => dispatch(setSelectedTask(null))}
           onStatusUpdate={handleStatusUpdate}
           onAddComment={handleAddComment}
           onArchive={handleArchiveTask}
