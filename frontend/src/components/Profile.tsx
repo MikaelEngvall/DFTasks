@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { updateProfile, changePassword } from "../utils/api";
 import toast from "react-hot-toast";
+import { IoClose } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileFormData {
   name: string;
@@ -19,6 +21,7 @@ interface PasswordFormData {
 const Profile: React.FC = () => {
   const { t } = useTranslation();
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<ProfileFormData>({
     name: user?.name || "",
     email: user?.email || "",
@@ -70,10 +73,22 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleClose = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 relative">
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-150 z-10"
+            aria-label={t("close")}
+          >
+            <IoClose size={24} />
+          </button>
+          
           <h2 className="text-2xl font-bold text-df-primary dark:text-white mb-6">
             {t("profile.settings")}
           </h2>

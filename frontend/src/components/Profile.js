@@ -1,173 +1,236 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { updateProfile, changePassword } from "../utils/api";
-import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
+import { IoClose } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [preferredLanguage, setPreferredLanguage] = useState("");
-  const [message, setMessage] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || "");
-      setEmail(user.email || "");
-      setPreferredLanguage(user.preferredLanguage || "en");
-    }
-  }, [user]);
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    preferredLanguage: user?.preferredLanguage || "en",
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await updateProfile({
-        name,
-        email,
-        preferredLanguage,
-      });
-
-      if (response.status) {
-        updateUser(response.user);
-        setMessage(t("profileUpdated"));
-      }
+      const response = await updateProfile(formData);
+      updateUser(response.user);
+      toast.success(t("profileUpdated"));
     } catch (error) {
-      setMessage(t("errorUpdatingProfile"));
+      console.error("Error updating profile:", error);
+      toast.error(error.response?.data?.message || t("errorUpdatingProfile"));
     }
   };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage(t("passwordsDoNotMatch"));
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error(t("passwordsDoNotMatch"));
       return;
     }
-    try {
-      const response = await changePassword({
-        currentPassword,
-        newPassword,
-      });
 
-      if (response.status) {
-        setPasswordMessage(t("passwordUpdated"));
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      }
+    try {
+      await changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      toast.success(t("passwordUpdated"));
     } catch (error) {
-      setPasswordMessage(t("errorUpdatingPassword"));
+      console.error("Error changing password:", error);
+      toast.error(error.response?.data?.message || t("errorUpdatingPassword"));
     }
+  };
+
+  const handleClose = () => {
+    navigate(-1);
   };
 
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-df-primary dark:text-white mb-6">
-            {t("profile")}
-          </h2>
-          {message && (
-            <div className="mb-6 p-3 rounded-lg bg-df-primary/10 dark:bg-df-primary/20 text-df-primary dark:text-white">
-              {message}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                {t("name")}
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                {t("email")}
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
-                {t("preferredLanguage")}
-              </label>
-              <select
-                value={preferredLanguage}
-                onChange={(e) => setPreferredLanguage(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
-              >
-                <option value="sv">{t("swedish")}</option>
-                <option value="pl">{t("polish")}</option>
-                <option value="uk">{t("ukrainian")}</option>
-                <option value="en">{t("english")}</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2 px-4 rounded-md bg-df-primary hover:bg-df-primary/90 text-white font-medium transition-colors duration-150"
-            >
-              {t("updateProfile")}
-            </button>
-          </form>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 relative">
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-150 z-10"
+            aria-label={t("close")}
+          >
+            <IoClose size={24} />
+          </button>
 
-          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-df-primary dark:text-white mb-6">
-              {t("changePassword")}
-            </h3>
-            {passwordMessage && (
-              <div className="mb-6 p-3 rounded-lg bg-df-primary/10 dark:bg-df-primary/20 text-df-primary dark:text-white">
-                {passwordMessage}
-              </div>
-            )}
-            <form onSubmit={handlePasswordChange} className="space-y-6">
+          <h2 className="text-2xl font-bold text-df-primary dark:text-white mb-6">
+            {t("profile.settings")}
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Profile Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <h3 className="text-lg font-medium text-df-primary dark:text-white">
+                {t("updateProfile")}
+              </h3>
+
               <div>
-                <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
+                  {t("name")}
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
+                  {t("email")}
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="preferredLanguage"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
+                  {t("preferredLanguage")}
+                </label>
+                <select
+                  id="preferredLanguage"
+                  name="preferredLanguage"
+                  value={formData.preferredLanguage}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      preferredLanguage: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="sv">{t("swedish")}</option>
+                  <option value="en">{t("english")}</option>
+                  <option value="pl">{t("polish")}</option>
+                  <option value="uk">{t("ukrainian")}</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+              >
+                {t("save")}
+              </button>
+            </form>
+
+            {/* Password Change Form */}
+            <form onSubmit={handlePasswordChange} className="space-y-6">
+              <h3 className="text-lg font-medium text-df-primary dark:text-white">
+                {t("changePassword")}
+              </h3>
+
+              <div>
+                <label
+                  htmlFor="currentPassword"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
                   {t("currentPassword")}
                 </label>
                 <input
                   type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
                   {t("newPassword")}
                 </label>
                 <input
                   type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
+                  id="newPassword"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-df-primary dark:text-white mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-df-primary dark:text-white"
+                >
                   {t("confirmNewPassword")}
                 </label>
                 <input
                   type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-df-primary dark:text-white focus:ring-df-primary focus:border-df-primary"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary sm:text-sm dark:bg-gray-700 dark:text-white"
                 />
               </div>
+
               <button
                 type="submit"
-                className="w-full py-2 px-4 rounded-md bg-df-primary hover:bg-df-primary/90 text-white font-medium transition-colors duration-150"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-df-primary hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
               >
                 {t("updatePassword")}
               </button>

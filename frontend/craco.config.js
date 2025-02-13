@@ -2,14 +2,16 @@ const path = require("path");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const CompressionPlugin = require("compression-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const { InjectManifest } = require("workbox-webpack-plugin");
+const { GenerateSW } = require("workbox-webpack-plugin");
 
 module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
       // Ta bort default service worker plugin
       webpackConfig.plugins = webpackConfig.plugins.filter(
-        (plugin) => plugin.constructor.name !== "InjectManifest"
+        (plugin) =>
+          plugin.constructor.name !== "GenerateSW" &&
+          plugin.constructor.name !== "InjectManifest"
       );
 
       // Optimera chunk-storlekar
@@ -84,11 +86,34 @@ module.exports = {
             generateStatsFile: true,
             statsFilename: "bundle-stats.json",
           }),
-          new InjectManifest({
-            swSrc: "./src/service-worker.ts",
-            swDest: "service-worker.js",
-            exclude: [/\.map$/, /asset-manifest\.json$/, /LICENSE/],
+          new GenerateSW({
+            clientsClaim: true,
+            skipWaiting: true,
             maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+            runtimeCaching: [
+              {
+                urlPattern: /^https:\/\/api\./,
+                handler: "StaleWhileRevalidate",
+                options: {
+                  cacheName: "api-cache",
+                  expiration: {
+                    maxEntries: 50,
+                    maxAgeSeconds: 5 * 60, // 5 minuter
+                  },
+                },
+              },
+              {
+                urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "images",
+                  expiration: {
+                    maxEntries: 60,
+                    maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dagar
+                  },
+                },
+              },
+            ],
           })
         );
       }
