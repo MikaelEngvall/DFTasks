@@ -205,7 +205,11 @@ export const toggleTaskStatus = async (req, res) => {
 
     // Uppdatera isActive status
     task.isActive = !task.isActive;
-    await task.save();
+    const savedTask = await task.save();
+
+    if (!savedTask) {
+      throw new Error("Failed to save task");
+    }
 
     // Hämta den uppdaterade uppgiften med alla relationer
     const updatedTask = await Task.findById(req.params.id)

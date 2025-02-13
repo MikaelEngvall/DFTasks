@@ -152,6 +152,9 @@ function MonthView() {
       if (response.data) {
         await fetchTasks();
         setSelectedTask(null);
+        toast.success(
+          taskData.isActive ? t("taskArchived") : t("taskUnarchived")
+        );
       }
     } catch (error) {
       console.error("Error archiving task:", error);
@@ -182,6 +185,17 @@ function MonthView() {
       }
     } catch (error) {
       toast.error(t("errorAddingComment"));
+    }
+  };
+
+  const handleEdit = async (taskData) => {
+    try {
+      await axiosInstance.patch(`/tasks/${taskData._id}`, taskData);
+      await fetchTasks();
+      toast.success(t("taskUpdated"));
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error(t("errorUpdatingTask"));
     }
   };
 
@@ -341,8 +355,9 @@ function MonthView() {
           onStatusUpdate={handleStatusUpdate}
           onAddComment={handleAddComment}
           onArchive={handleArchiveTask}
-          userRole={currentUser.role}
-          userId={currentUser.id}
+          onEdit={handleEdit}
+          userRole={user?.role}
+          userId={user?._id}
           getStatusClass={getStatusClass}
           renderStatus={renderStatus}
           users={users}
