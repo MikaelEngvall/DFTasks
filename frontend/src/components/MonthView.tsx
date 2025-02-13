@@ -24,16 +24,17 @@ import { selectUser } from "../store/slices/authSlice";
 import { Task, User } from "../types/task";
 import { AppDispatch } from "../store";
 import toast from "react-hot-toast";
+import { tasksAPI } from "../services/api";
 
 // Lazy load modaler
 const TaskModal = lazy(() => import("./TaskModal"));
 const TaskForm = lazy(() => import("./TaskForm"));
 
 interface MonthViewProps {
-  users: User[];
+  users?: User[];
 }
 
-const MonthView: React.FC<MonthViewProps> = ({ users }) => {
+const MonthView: React.FC<MonthViewProps> = ({ users = [] }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const { getStatusClass, renderStatus } = useTaskUtils();

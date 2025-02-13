@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,9 +12,27 @@ import Profile from "./components/Profile";
 import Navbar from "./components/Navbar";
 import PendingTasksManagement from "./components/PendingTasksManagement";
 import UserManagement from "./components/UserManagement";
+import { usersAPI } from "./services/api";
+import { User } from "./types/task";
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await usersAPI.getUsers();
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Fel vid hämtning av användare:", error);
+      }
+    };
+
+    if (user) {
+      fetchUsers();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -29,7 +47,7 @@ const AppRoutes: React.FC = () => {
     <>
       <Navbar />
       <Routes>
-        <Route path="/dftasks/month-view" element={<MonthView />} />
+        <Route path="/dftasks/month-view" element={<MonthView users={users} />} />
         <Route path="/dftasks/profile" element={<Profile />} />
         <Route
           path="/dftasks/pending-tasks"
