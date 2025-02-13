@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,14 +6,28 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import Login from "./components/Login";
-import MonthView from "./components/MonthView";
-import Profile from "./components/Profile";
-import Navbar from "./components/Navbar";
-import PendingTasksManagement from "./components/PendingTasksManagement";
-import UserManagement from "./components/UserManagement";
 import { usersAPI } from "./services/api";
 import { User } from "./types/task";
+
+// Lazy load alla komponenter
+const Navbar = lazy(() => import("./components/Navbar"));
+const Login = lazy(() => import("./components/Login"));
+const MonthView = lazy(() => import("./components/MonthView"));
+const Profile = lazy(() => import("./components/Profile"));
+const PendingTasksManagement = lazy(() => import("./components/PendingTasksManagement"));
+const UserManagement = lazy(() => import("./components/UserManagement"));
+const TaskModal = lazy(() => import("./components/TaskModal"));
+const TaskForm = lazy(() => import("./components/TaskForm"));
+const UserForm = lazy(() => import("./components/UserForm"));
+const ForgotPassword = lazy(() => import("./components/ForgotPassword"));
+const ResetPassword = lazy(() => import("./components/ResetPassword"));
+
+// Loading fallback
+const LoadingFallback = () => (
+  <div className="flex justify-center items-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-df-primary"></div>
+  </div>
+);
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
@@ -36,15 +50,19 @@ const AppRoutes: React.FC = () => {
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/dftasks/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/dftasks/login" replace />} />
-      </Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/dftasks/login" element={<Login />} />
+          <Route path="/dftasks/forgot-password" element={<ForgotPassword />} />
+          <Route path="/dftasks/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<Navigate to="/dftasks/login" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   return (
-    <>
+    <Suspense fallback={<LoadingFallback />}>
       <Navbar />
       <Routes>
         <Route path="/dftasks/month-view" element={<MonthView users={users} />} />
@@ -71,7 +89,7 @@ const AppRoutes: React.FC = () => {
           element={<Navigate to="/dftasks/month-view" replace />}
         />
       </Routes>
-    </>
+    </Suspense>
   );
 };
 
