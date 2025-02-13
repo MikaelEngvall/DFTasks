@@ -9,24 +9,32 @@ import {
 } from "../types/task";
 
 // Auth API
-interface LoginCredentials {
+export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
   token: string;
-  user: User;
 }
 
-interface ResetPasswordData {
+export interface ResetPasswordData {
   token: string;
   password: string;
 }
 
 export const authAPI = {
-  login: (credentials: LoginCredentials): Promise<APIResponse<LoginResponse>> => 
+  login: (credentials: LoginCredentials): Promise<APIResponse<LoginResponse>> =>
     axiosInstance.post("/auth/login", credentials),
+  
+  logout: (): Promise<APIResponse<void>> =>
+    axiosInstance.post("/auth/logout"),
   
   forgotPassword: (email: string): Promise<APIResponse<void>> =>
     axiosInstance.post("/auth/forgot-password", { email }),
@@ -37,26 +45,26 @@ export const authAPI = {
 
 // Tasks API
 export const tasksAPI = {
-  getTasks: (showInactive: boolean = false): Promise<APIResponse<Task[]>> => 
-    axiosInstance.get(`/tasks?showInactive=${showInactive}`),
+  getTasks: (showInactive?: boolean): Promise<APIResponse<Task[]>> =>
+    axiosInstance.get("/tasks", { params: { showInactive } }),
   
-  getAllTasks: (): Promise<APIResponse<Task[]>> => 
+  getAllTasks: (): Promise<APIResponse<Task[]>> =>
     axiosInstance.get("/tasks/all"),
   
-  getTask: (id: string): Promise<APIResponse<Task>> => 
+  getTask: (id: string): Promise<APIResponse<Task>> =>
     axiosInstance.get(`/tasks/${id}`),
   
-  createTask: (taskData: Partial<Task>): Promise<APIResponse<Task>> => 
-    axiosInstance.post("/tasks", taskData),
+  createTask: (task: Partial<Task>): Promise<APIResponse<Task>> =>
+    axiosInstance.post("/tasks", task),
   
   updateTaskStatus: (taskId: string, status: Task["status"]): Promise<APIResponse<Task>> =>
     axiosInstance.patch(`/tasks/${taskId}/status`, { status }),
   
-  toggleTaskStatus: (taskId: string): Promise<APIResponse<Task>> =>
-    axiosInstance.patch(`/tasks/${taskId}/toggle`),
-  
   addComment: (taskId: string, content: string): Promise<APIResponse<Task>> =>
     axiosInstance.post(`/tasks/${taskId}/comments`, { content }),
+  
+  archiveTask: (taskId: string): Promise<APIResponse<Task>> =>
+    axiosInstance.patch(`/tasks/${taskId}/archive`),
   
   toggleCommentStatus: (taskId: string, commentId: string): Promise<APIResponse<Task>> =>
     axiosInstance.patch(`/tasks/${taskId}/comments/${commentId}/toggle`),

@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
 
 const axiosInstance: AxiosInstance = axios.create({
