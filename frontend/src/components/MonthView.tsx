@@ -6,9 +6,7 @@ import { sv } from "date-fns/locale";
 import { AutoSizer, List } from 'react-virtualized';
 import TaskList from "./TaskList";
 import { useTaskUtils } from "../utils/taskUtils";
-// Lazy load modaler
-const TaskModal = lazy(() => import("./TaskModal"));
-const TaskForm = lazy(() => import("./TaskForm"));
+import OptimizedImage from "./OptimizedImage";
 import {
   fetchTasks,
   createTask,
@@ -26,6 +24,10 @@ import { selectUser } from "../store/slices/authSlice";
 import { Task, User } from "../types/task";
 import { AppDispatch } from "../store";
 import toast from "react-hot-toast";
+
+// Lazy load modaler
+const TaskModal = lazy(() => import("./TaskModal"));
+const TaskForm = lazy(() => import("./TaskForm"));
 
 interface MonthViewProps {
   users: User[];
@@ -146,7 +148,7 @@ const MonthView: React.FC<MonthViewProps> = ({ users }) => {
   const CELL_HEIGHT = 200;
   const rowCount = Math.ceil(daysInMonth.length / GRID_COLUMNS);
 
-  const renderRow = ({ index, key, style }: any) => {
+  const renderRow = ({ index, key, style }: { index: number; key: string; style: React.CSSProperties }) => {
     const startIndex = index * GRID_COLUMNS;
     const daysInRow = daysInMonth.slice(startIndex, startIndex + GRID_COLUMNS);
 
@@ -196,12 +198,28 @@ const MonthView: React.FC<MonthViewProps> = ({ users }) => {
             →
           </button>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-df-primary border border-transparent rounded-md shadow-sm hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
-        >
-          {t("createTask")}
-        </button>
+        <div className="flex items-center space-x-4">
+          <OptimizedImage
+            src="/dftasks/dark_logo.png"
+            alt="DFTasks Logo"
+            className="hidden dark:block w-auto h-12"
+            sizes="(max-width: 640px) 48px, 96px"
+            loading="eager"
+          />
+          <OptimizedImage
+            src="/dftasks/light_logo.png"
+            alt="DFTasks Logo"
+            className="dark:hidden w-auto h-12"
+            sizes="(max-width: 640px) 48px, 96px"
+            loading="eager"
+          />
+          <button
+            onClick={() => setIsCreating(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-df-primary border border-transparent rounded-md shadow-sm hover:bg-df-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-df-primary"
+          >
+            {t("createTask")}
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -218,7 +236,7 @@ const MonthView: React.FC<MonthViewProps> = ({ users }) => {
 
       <div className="h-[calc(100vh-200px)]">
         <AutoSizer>
-          {({ width, height }) => (
+          {({ width, height }: { width: number; height: number }) => (
             <List
               width={width}
               height={height}

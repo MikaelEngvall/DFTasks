@@ -31,7 +31,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "optimize-images": "node scripts/optimizeImages.js"
   },
   "eslintConfig": {
     "extends": [
@@ -54,6 +55,7 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "bun-types": "^1.2.2",
-    "react-refresh": "^0.16.0"
+    "react-refresh": "^0.16.0",
+    "sharp": "^0.33.2"
   }
 }
