@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axios";
 import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import UserModal from "./UserModal";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
 

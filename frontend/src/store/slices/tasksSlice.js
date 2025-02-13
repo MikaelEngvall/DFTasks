@@ -70,17 +70,42 @@ export const addComment = createAsyncThunk(
   }
 );
 
+const initialState = {
+  items: [],
+  loading: false,
+  error: null,
+  selectedTask: null,
+};
+
 const tasksSlice = createSlice({
   name: "tasks",
-  initialState: {
-    items: [],
-    loading: false,
-    error: null,
-    selectedTask: null,
-  },
+  initialState,
   reducers: {
+    setTasks: (state, action) => {
+      state.items = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+    },
     setSelectedTask: (state, action) => {
       state.selectedTask = action.payload;
+    },
+    addTask: (state, action) => {
+      state.items.push(action.payload);
+    },
+    updateTask: (state, action) => {
+      const index = state.items.findIndex(
+        (task) => task._id === action.payload._id
+      );
+      if (index !== -1) {
+        state.items[index] = action.payload;
+      }
+    },
+    removeTask: (state, action) => {
+      state.items = state.items.filter((task) => task._id !== action.payload);
     },
     optimisticUpdateTask: (state, action) => {
       const updatedTask = action.payload;
@@ -165,7 +190,21 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setSelectedTask, optimisticUpdateTask, optimisticAddComment } =
-  tasksSlice.actions;
+export const {
+  setTasks,
+  setLoading,
+  setError,
+  setSelectedTask,
+  addTask,
+  updateTask,
+  removeTask,
+  optimisticUpdateTask,
+  optimisticAddComment,
+} = tasksSlice.actions;
+
+export const selectTasks = (state) => state.tasks.items;
+export const selectLoading = (state) => state.tasks.loading;
+export const selectError = (state) => state.tasks.error;
+export const selectSelectedTask = (state) => state.tasks.selectedTask;
 
 export default tasksSlice.reducer;

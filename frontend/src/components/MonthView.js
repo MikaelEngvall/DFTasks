@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axios";
 import { format } from "date-fns";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { useTaskTranslation } from "../hooks/useTaskTranslation";
