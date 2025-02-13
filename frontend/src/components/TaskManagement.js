@@ -10,6 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import TaskModal from "./TaskModal";
 import { useTaskUtils } from "../utils/taskUtils";
 import { tasksAPI } from "../services/api";
+import TaskList from "./TaskList";
 
 function TaskManagement({ userRole, userId }) {
   const [tasks, setTasks] = useState([]);
@@ -287,139 +288,15 @@ function TaskManagement({ userRole, userId }) {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("title")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("description")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("status")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("assignedTo")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("deadline")}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {t("actions")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {tasks.map((task) => (
-              <tr
-                key={task._id}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
-                  !task.isActive ? "opacity-50" : ""
-                }`}
-                onClick={() => handleTaskClick(task)}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center text-sm font-medium text-df-primary dark:text-white">
-                    {task.title}
-                    {task.comments?.length > 0 && (
-                      <FaComments className="ml-2 text-df-primary/60 dark:text-gray-400" />
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 dark:text-gray-300 max-w-xs truncate">
-                    {task.description}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                      task.status
-                    )}`}
-                  >
-                    {renderStatus(task.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {getUserName(task.assignedTo)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {formatDate(task.dueDate)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {isAdmin && (
-                    <>
-                      <button
-                        onClick={(e) =>
-                          handleToggleTaskStatus(task._id, task.isActive, e)
-                        }
-                        className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                      >
-                        {task.isActive ? t("deactivate") : t("activate")}
-                      </button>
-                      <button
-                        onClick={(e) => handleEdit(task, e)}
-                        className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
-                        title={t("edit")}
-                      >
-                        <FaEdit className="inline-block" />
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {showTaskForm && (
-        <div className="fixed inset-0 z-[70] overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black/30"
-            onClick={() => setShowTaskForm(false)}
-          ></div>
-          <div className="relative min-h-screen flex items-center justify-center p-4">
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-df-primary dark:text-white">
-                  {selectedTask ? t("editTask") : t("newTask")}
-                </h3>
-                <button
-                  onClick={() => setShowTaskForm(false)}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                >
-                  <span className="sr-only">{t("close")}</span>
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <TaskForm
-                onSubmit={handleTaskSubmit}
-                initialData={selectedTask}
-                users={users}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <TaskList
+        tasks={tasks}
+        onTaskClick={handleTaskClick}
+        onEdit={handleEdit}
+        onToggleStatus={handleToggleTaskStatus}
+        showActions={true}
+        isAdmin={isAdmin}
+        getUserName={getUserName}
+      />
 
       {selectedTask && (
         <TaskModal
@@ -427,11 +304,33 @@ function TaskManagement({ userRole, userId }) {
           onClose={() => setSelectedTask(null)}
           onStatusUpdate={handleStatusUpdate}
           onAddComment={handleAddComment}
+          onToggleStatus={handleToggleTaskStatus}
+          onEdit={handleEdit}
           userRole={userRole}
           userId={userId}
           getStatusClass={getStatusClass}
           renderStatus={renderStatus}
+          users={users}
         />
+      )}
+
+      {showTaskForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-bold text-df-primary dark:text-white mb-4">
+              {selectedTask ? t("edit") : t("newTask")}
+            </h2>
+            <TaskForm
+              onSubmit={handleTaskSubmit}
+              onCancel={() => {
+                setShowTaskForm(false);
+                setSelectedTask(null);
+              }}
+              initialData={selectedTask}
+              users={users}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

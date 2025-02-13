@@ -123,6 +123,7 @@ function MonthView() {
   };
 
   const handleDayClick = (date) => {
+    if (!isAdmin) return;
     setSelectedDate(date);
     setShowTaskForm(true);
   };
@@ -303,9 +304,13 @@ function MonthView() {
                 return (
                   <div
                     key={index}
-                    className="bg-white dark:bg-gray-800 p-4 min-h-[120px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className={`bg-white dark:bg-gray-800 p-4 min-h-[120px] ${
+                      isAdmin
+                        ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        : ""
+                    }`}
                     onClick={(e) => {
-                      if (e.target === e.currentTarget) {
+                      if (e.target === e.currentTarget && isAdmin) {
                         handleDayClick(date);
                       }
                     }}
