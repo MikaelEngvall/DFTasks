@@ -96,37 +96,91 @@ export const getTask = async (req, res) => {
 // Skapa ny uppgift
 export const createTask = async (req, res) => {
   try {
-    // Kontrollera om användaren är admin eller superadmin
-    if (req.user.role !== "ADMIN" && req.user.role !== "SUPERADMIN") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    const {
+      title,
+      description,
+      status,
+      assignedTo,
+      dueDate,
+      reporterName,
+      reporterEmail,
+      reporterPhone,
+      address,
+      apartmentNumber,
+    } = req.body;
 
-    // Validera nödvändiga fält
-    const { title, description, assignedTo, dueDate } = req.body;
-    if (!title || !description || !dueDate) {
-      return res.status(400).json({ message: "Required fields are missing" });
+    // Översätt titel och beskrivning till alla språk
+    const languages = ["sv", "en", "pl", "uk"];
+    const translations = {};
+
+    for (const lang of languages) {
+      try {
+        const [titleResponse, descResponse] = await Promise.all([
+          fetch(
+            `https://translation.googleapis.com/language/translate/v2?key=${process.env.GOOGLE_TRANSLATE_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                q: title,
+                target: lang,
+                format: "text",
+              }),
+            }
+          ),
+          fetch(
+            `https://translation.googleapis.com/language/translate/v2?key=${process.env.GOOGLE_TRANSLATE_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                q: description,
+                target: lang,
+                format: "text",
+              }),
+            }
+          ),
+        ]);
+
+        const [titleData, descData] = await Promise.all([
+          titleResponse.json(),
+          descResponse.json(),
+        ]);
+
+        translations[lang] = {
+          title: titleData.data?.translations?.[0]?.translatedText || title,
+          description:
+            descData.data?.translations?.[0]?.translatedText || description,
+        };
+      } catch (error) {
+        console.error(`Error translating to ${lang}:`, error);
+        translations[lang] = {
+          title: title,
+          description: description,
+        };
+      }
     }
 
     const task = new Task({
       title,
       description,
-      assignedTo: assignedTo || null,
+      translations,
+      status,
+      assignedTo,
       dueDate,
       createdBy: req.user._id,
-      status: "pending",
-      isActive: true,
-      comments: [],
+      reporterName,
+      reporterEmail,
+      reporterPhone,
+      address,
+      apartmentNumber,
     });
 
-    const savedTask = await task.save();
-    const populatedTask = await Task.findById(savedTask._id)
-      .populate("assignedTo", "name email")
-      .populate("createdBy", "name email");
-
-    res.status(201).json({ task: populatedTask });
+    await task.save();
+    res.status(201).json(task);
   } catch (error) {
-    console.error("Error in createTask:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error creating task:", error);
+    res.status(500).json({ message: "Could not create task" });
   }
 };
 
