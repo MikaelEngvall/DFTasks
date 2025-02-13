@@ -238,6 +238,8 @@ function MonthView() {
     return t(months[monthIndex]);
   };
 
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -253,15 +255,17 @@ function MonthView() {
           <div className="flex justify-between items-center mb-6">
             <PageHeader title={t("tasks")} />
             <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={showArchived}
-                  onChange={(e) => setShowArchived(e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
-                />
-                <span>{t("showInactive")}</span>
-              </label>
+              {isAdmin && (
+                <label className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
+                  />
+                  <span>{t("showInactive")}</span>
+                </label>
+              )}
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
