@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, ToastContainerProps } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
@@ -19,6 +19,17 @@ import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 const container = document.getElementById("root");
 const root = createRoot(container!);
 
+const toastConfig: ToastContainerProps = {
+  position: "top-right",
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  theme: "light",
+  style: { fontFamily: "Roboto" }
+};
+
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -27,7 +38,7 @@ root.render(
           <I18nextProvider i18n={i18n}>
             <AuthProvider>
               <ThemeProvider>
-                <ToastContainer bodyStyle={{ fontFamily: "Roboto" }} />
+                <ToastContainer {...toastConfig} />
                 <App />
                 <ReactQueryDevtools initialIsOpen={false} />
               </ThemeProvider>
