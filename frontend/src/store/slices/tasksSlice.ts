@@ -1,88 +1,102 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { tasksAPI } from "../../services/api";
 import { toast } from "react-hot-toast";
+import {
+  Task,
+  TasksState,
+  FetchTasksParams,
+  UpdateTaskStatusParams,
+  AddCommentParams,
+  OptimisticAddCommentParams,
+  APIResponse,
+} from "../../types/task";
 
 // Async thunks
-export const fetchTasks = createAsyncThunk(
-  "tasks/fetchTasks",
-  async ({ showInactive = false }, { rejectWithValue }) => {
-    try {
-      const response = await tasksAPI.getTasks(showInactive);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Kunde inte hämta uppgifter"
-      );
-    }
+export const fetchTasks = createAsyncThunk<
+  Task[],
+  FetchTasksParams,
+  { rejectValue: string }
+>("tasks/fetchTasks", async ({ showInactive = false }, { rejectWithValue }) => {
+  try {
+    const response = await tasksAPI.getTasks(showInactive);
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data || "Kunde inte hämta uppgifter");
   }
-);
+});
 
-export const createTask = createAsyncThunk(
-  "tasks/createTask",
-  async (taskData, { rejectWithValue }) => {
-    try {
-      const response = await tasksAPI.createTask(taskData);
-      toast.success("Uppgift skapad");
-      return response.data;
-    } catch (error) {
-      toast.error("Kunde inte skapa uppgift");
-      return rejectWithValue(error.response?.data);
-    }
+export const createTask = createAsyncThunk<
+  Task,
+  Partial<Task>,
+  { rejectValue: string }
+>("tasks/createTask", async (taskData, { rejectWithValue }) => {
+  try {
+    const response = await tasksAPI.createTask(taskData);
+    toast.success("Uppgift skapad");
+    return response.data;
+  } catch (error: any) {
+    toast.error("Kunde inte skapa uppgift");
+    return rejectWithValue(error.response?.data);
   }
-);
+});
 
-export const updateTaskStatus = createAsyncThunk(
-  "tasks/updateStatus",
-  async ({ taskId, status }, { rejectWithValue }) => {
-    try {
-      const response = await tasksAPI.updateTaskStatus(taskId, status);
-      return response.data;
-    } catch (error) {
-      toast.error("Kunde inte uppdatera status");
-      return rejectWithValue(error.response?.data);
-    }
+export const updateTaskStatus = createAsyncThunk<
+  Task,
+  UpdateTaskStatusParams,
+  { rejectValue: string }
+>("tasks/updateStatus", async ({ taskId, status }, { rejectWithValue }) => {
+  try {
+    const response = await tasksAPI.updateTaskStatus(taskId, status);
+    return response.data;
+  } catch (error: any) {
+    toast.error("Kunde inte uppdatera status");
+    return rejectWithValue(error.response?.data);
   }
-);
+});
 
-export const toggleTaskStatus = createAsyncThunk(
-  "tasks/toggleStatus",
-  async (taskId, { rejectWithValue }) => {
-    try {
-      const response = await tasksAPI.toggleTaskStatus(taskId);
-      return response.data;
-    } catch (error) {
-      toast.error("Kunde inte ändra uppgiftsstatus");
-      return rejectWithValue(error.response?.data);
-    }
+export const toggleTaskStatus = createAsyncThunk<
+  Task,
+  string,
+  { rejectValue: string }
+>("tasks/toggleStatus", async (taskId, { rejectWithValue }) => {
+  try {
+    const response = await tasksAPI.toggleTaskStatus(taskId);
+    return response.data;
+  } catch (error: any) {
+    toast.error("Kunde inte ändra uppgiftsstatus");
+    return rejectWithValue(error.response?.data);
   }
-);
+});
 
-export const addComment = createAsyncThunk(
-  "tasks/addComment",
-  async ({ taskId, content }, { rejectWithValue }) => {
-    try {
-      const response = await tasksAPI.addComment(taskId, content);
-      return response.data;
-    } catch (error) {
-      toast.error("Kunde inte lägga till kommentar");
-      return rejectWithValue(error.response?.data);
-    }
+export const addComment = createAsyncThunk<
+  Task,
+  AddCommentParams,
+  { rejectValue: string }
+>("tasks/addComment", async ({ taskId, content }, { rejectWithValue }) => {
+  try {
+    const response = await tasksAPI.addComment(taskId, content);
+    return response.data;
+  } catch (error: any) {
+    toast.error("Kunde inte lägga till kommentar");
+    return rejectWithValue(error.response?.data);
   }
-);
+});
+
+const initialState: TasksState = {
+  items: [],
+  loading: false,
+  error: null,
+  selectedTask: null,
+};
 
 const tasksSlice = createSlice({
   name: "tasks",
-  initialState: {
-    items: [],
-    loading: false,
-    error: null,
-    selectedTask: null,
-  },
+  initialState,
   reducers: {
-    setSelectedTask: (state, action) => {
+    setSelectedTask: (state, action: PayloadAction<Task | null>) => {
       state.selectedTask = action.payload;
     },
-    optimisticUpdateTask: (state, action) => {
+    optimisticUpdateTask: (state, action: PayloadAction<Partial<Task>>) => {
       const updatedTask = action.payload;
       const index = state.items.findIndex(
         (task) => task._id === updatedTask._id
@@ -91,7 +105,10 @@ const tasksSlice = createSlice({
         state.items[index] = { ...state.items[index], ...updatedTask };
       }
     },
-    optimisticAddComment: (state, action) => {
+    optimisticAddComment: (
+      state,
+      action: PayloadAction<OptimisticAddCommentParams>
+    ) => {
       const { taskId, comment } = action.payload;
       const task = state.items.find((task) => task._id === taskId);
       if (task) {
@@ -117,7 +134,7 @@ const tasksSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Ett fel uppstod";
       })
       // createTask
       .addCase(createTask.fulfilled, (state, action) => {
@@ -168,4 +185,4 @@ const tasksSlice = createSlice({
 export const { setSelectedTask, optimisticUpdateTask, optimisticAddComment } =
   tasksSlice.actions;
 
-export default tasksSlice.reducer;
+export default tasksSlice.reducer; 
