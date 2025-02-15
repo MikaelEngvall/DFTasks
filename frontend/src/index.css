@@ -11,3 +11,33 @@ body {
 * {
     font-family: 'Cinzel', serif;
 }
+
+@layer components {
+  .page-container {
+    @apply px-6 mx-auto w-full mt-6;
+  }
+  
+  .content-section {
+    @apply space-y-6;
+  }
+
+  .nav-container {
+    @apply px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .calendar-grid {
+    @apply grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700;
+  }
+
+  .calendar-day {
+    @apply bg-white dark:bg-gray-800 p-4 min-h-[120px] relative;
+  }
+
+  .content-card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm;
+  }
+}
+
+.main-content {
+  @apply min-h-screen bg-gray-50 dark:bg-gray-900;
+}
