@@ -42,7 +42,8 @@
     "workbox-precaching": "^6.5.4",
     "workbox-routing": "^6.5.4",
     "workbox-strategies": "^6.5.4",
-    "workbox-window": "^6.5.4"
+    "workbox-window": "^6.5.4",
+    "zod": "^3.24.2"
   },
   "scripts": {
     "start": "craco start",
@@ -112,5 +113,8 @@
     "stream": false,
     "util": false,
     "process": false
+  },
+  "resolutions": {
+    "process": "0.11.10"
   }
 }

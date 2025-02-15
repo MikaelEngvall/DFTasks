@@ -1,57 +1,49 @@
-import { z } from 'zod';
+// Ta bort zod import
+// import { z } from 'zod';
 
-// Validation schemas
-const emailSchema = z.string().email({
-  message: "Ogiltig e-postadress"
-});
-
-const passwordSchema = z.string()
-  .min(8, "Lösenordet måste vara minst 8 tecken")
-  .regex(/[A-Z]/, "Lösenordet måste innehålla minst en versal")
-  .regex(/[a-z]/, "Lösenordet måste innehålla minst en gemen")
-  .regex(/[0-9]/, "Lösenordet måste innehålla minst en siffra");
+// Ta bort zod schemas
+// const emailSchema = z.string()...
+// const passwordSchema = z.string()...
 
 export const validateEmail = (email) => {
-  try {
-    emailSchema.parse(email);
-    return { isValid: true };
-  } catch (error) {
-    return { 
-      isValid: false, 
-      error: error.errors[0]?.message 
-    };
+  const emailRegex = /\S+@\S+\.\S+/;
+  if (!email) {
+    return { isValid: false, error: 'E-post krävs' };
   }
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Ogiltig e-postadress' };
+  }
+  return { isValid: true };
 };
 
 export const validatePassword = (password) => {
-  try {
-    passwordSchema.parse(password);
-    return { isValid: true };
-  } catch (error) {
-    return { 
-      isValid: false, 
-      error: error.errors[0]?.message 
-    };
+  if (!password) {
+    return { isValid: false, error: 'Lösenord krävs' };
   }
+  if (password.length < 8) {
+    return { isValid: false, error: 'Lösenordet måste vara minst 8 tecken' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { isValid: false, error: 'Lösenordet måste innehålla minst en versal' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { isValid: false, error: 'Lösenordet måste innehålla minst en gemen' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { isValid: false, error: 'Lösenordet måste innehålla minst en siffra' };
+  }
+  return { isValid: true };
 };
 
 export const validateAuthInput = (email, password) => {
-  const errors = {};
-
-  if (!email) {
-    errors.email = 'E-post krävs';
-  } else if (!/\S+@\S+\.\S+/.test(email)) {
-    errors.email = 'Ogiltig e-postadress';
-  }
-
-  if (!password) {
-    errors.password = 'Lösenord krävs';
-  } else if (password.length < 6) {
-    errors.password = 'Lösenordet måste vara minst 6 tecken';
-  }
+  const emailValidation = validateEmail(email);
+  const passwordValidation = validatePassword(password);
 
   return {
-    isValid: Object.keys(errors).length === 0,
-    errors
+    isValid: emailValidation.isValid && passwordValidation.isValid,
+    errors: {
+      email: emailValidation.error,
+      password: passwordValidation.error
+    }
   };
 }; 

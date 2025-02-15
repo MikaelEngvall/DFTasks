@@ -62,20 +62,6 @@ class AuthController {
     }
   }
 
-  generateToken(user) {
-    return jwt.sign(
-      {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        preferredLanguage: user.preferredLanguage,
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
-  }
-
   sanitizeUser(user) {
     return {
       id: user._id,
@@ -117,6 +103,10 @@ class AuthController {
     } catch {
       return null;
     }
+  }
+
+  generateToken(user) {
+    return this.tokenService.generateToken(user);
   }
 }
 
