@@ -1,22 +1,53 @@
-import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit';
 import { tasksAPI } from "../../services/api";
 import { toast } from "react-hot-toast";
-import TaskService from "../../services/TaskService";
-import { normalize, schema } from 'normalizr';
+import { TaskService } from '../../services/TaskService';
+import { ErrorHandler } from '../../utils/errorHandler';
 
-// Normalizr schemas
-const taskSchema = new schema.Entity('tasks');
-const taskListSchema = [taskSchema];
+// Skapa en entity adapter för normaliserad state
+const tasksAdapter = createEntityAdapter({
+  selectId: (task) => task.id,
+  sortComparer: (a, b) => b.createdAt.localeCompare(a.createdAt),
+});
+
+// Initial state med adapter
+const initialState = tasksAdapter.getInitialState({
+  loading: 'idle',
+  error: null,
+  filters: {
+    status: 'all',
+    search: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  },
+  selectedTaskId: null,
+  cache: {
+    timestamp: null,
+    ttl: 5 * 60 * 1000, // 5 minuter
+  },
+});
 
 // Async thunks
 export const fetchTasks = createAsyncThunk(
-  "tasks/fetchTasks",
-  async (filters, { rejectWithValue }) => {
+  'tasks/fetchTasks',
+  async (filters, { getState, rejectWithValue }) => {
     try {
+      const state = getState().tasks;
+      const now = Date.now();
+
+      // Kontrollera cache
+      if (
+        state.cache.timestamp &&
+        now - state.cache.timestamp < state.cache.ttl &&
+        !filters?.forceRefresh
+      ) {
+        return null; // Använd cachad data
+      }
+
       const tasks = await TaskService.getTasks(filters);
-      return normalize(tasks, taskListSchema);
+      return tasks;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(ErrorHandler.handle(error));
     }
   }
 );
@@ -35,19 +66,19 @@ export const createTask = createAsyncThunk(
   }
 );
 
-export const updateTaskStatus = createAsyncThunk(
-  "tasks/updateStatus",
-  async ({ id, status }, { dispatch, rejectWithValue }) => {
+export const updateTask = createAsyncThunk(
+  'tasks/updateTask',
+  async ({ id, changes }, { dispatch, rejectWithValue }) => {
     try {
       // Optimistisk uppdatering
-      dispatch(optimisticUpdateStatus({ id, status }));
-      
-      const updatedTask = await TaskService.updateStatus(id, status);
-      return normalize(updatedTask, taskSchema);
+      dispatch(tasksSlice.actions.updateOneOptimistic({ id, changes }));
+
+      const updatedTask = await TaskService.updateTask(id, changes);
+      return updatedTask;
     } catch (error) {
       // Återställ vid fel
-      dispatch(optimisticUpdateStatus({ id, status: error.originalStatus }));
-      return rejectWithValue(error.message);
+      dispatch(tasksSlice.actions.undoOptimisticUpdate({ id }));
+      return rejectWithValue(ErrorHandler.handle(error));
     }
   }
 );
@@ -78,147 +109,122 @@ export const addComment = createAsyncThunk(
   }
 );
 
-const initialState = {
-  entities: {},
-  ids: [],
-  loading: 'idle',
-  error: null,
-  filters: {
-    status: 'all',
-    search: '',
-    sortBy: 'dueDate',
-    sortOrder: 'asc'
-  },
-  selectedTaskId: null,
-  cache: {
-    timestamp: null,
-    ttl: 5 * 60 * 1000 // 5 minuter
-  }
-};
-
 const tasksSlice = createSlice({
-  name: "tasks",
+  name: 'tasks',
   initialState,
   reducers: {
+    updateOneOptimistic: tasksAdapter.updateOne,
+    undoOptimisticUpdate: (state, action) => {
+      const { id } = action.payload;
+      const original = state.backup?.[id];
+      if (original) {
+        tasksAdapter.updateOne(state, { id, changes: original });
+        delete state.backup[id];
+      }
+    },
     setFilters: (state, action) => {
       state.filters = { ...state.filters, ...action.payload };
-    },
-    optimisticUpdateStatus: (state, action) => {
-      const { id, status } = action.payload;
-      if (state.entities[id]) {
-        state.entities[id].status = status;
-      }
     },
     selectTask: (state, action) => {
       state.selectedTaskId = action.payload;
     },
     invalidateCache: (state) => {
       state.cache.timestamp = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
-      // fetchTasks
       .addCase(fetchTasks.pending, (state) => {
         state.loading = 'pending';
         state.error = null;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
+        if (action.payload) {
+          tasksAdapter.setAll(state, action.payload);
+          state.cache.timestamp = Date.now();
+        }
         state.loading = 'idle';
-        state.entities = action.payload.entities.tasks;
-        state.ids = action.payload.result;
-        state.cache.timestamp = Date.now();
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = 'idle';
         state.error = action.payload;
       })
-      // createTask
       .addCase(createTask.fulfilled, (state, action) => {
-        state.entities[action.payload._id] = action.payload;
+        tasksAdapter.addOne(state, action.payload);
       })
-      // updateTaskStatus
-      .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        const { tasks } = action.payload.entities;
-        Object.assign(state.entities, tasks);
+      .addCase(updateTask.pending, (state, action) => {
+        const { id, changes } = action.meta.arg;
+        // Spara original för eventuell återställning
+        state.backup = state.backup || {};
+        state.backup[id] = state.entities[id];
       })
-      // toggleTaskStatus
       .addCase(toggleTaskStatus.fulfilled, (state, action) => {
         const updatedTask = action.payload;
-        state.entities[updatedTask._id] = updatedTask;
+        tasksAdapter.updateOne(state, { id: updatedTask._id, changes: updatedTask });
       })
-      // addComment
       .addCase(addComment.fulfilled, (state, action) => {
         const updatedTask = action.payload;
-        state.entities[updatedTask._id] = updatedTask;
+        tasksAdapter.updateOne(state, { id: updatedTask._id, changes: updatedTask });
       });
   },
 });
 
 // Selectors
-export const selectTasksState = (state) => state.tasks;
+export const {
+  selectAll: selectAllTasks,
+  selectById: selectTaskById,
+  selectIds: selectTaskIds,
+} = tasksAdapter.getSelectors((state) => state.tasks);
 
-export const selectAllTasks = createSelector(
-  [selectTasksState],
-  (tasksState) => tasksState.ids.map(id => tasksState.entities[id])
-);
-
+// Memoized selectors
 export const selectFilteredTasks = createSelector(
   [selectAllTasks, (state) => state.tasks.filters],
   (tasks, filters) => {
     let result = [...tasks];
-    
+
     // Filtrera efter status
     if (filters.status !== 'all') {
-      result = result.filter(task => task.status === filters.status);
+      result = result.filter((task) => task.status === filters.status);
     }
-    
+
     // Sök
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      result = result.filter(task => 
-        task.title.toLowerCase().includes(searchLower) ||
-        task.description.toLowerCase().includes(searchLower)
+      result = result.filter(
+        (task) =>
+          task.title.toLowerCase().includes(searchLower) ||
+          task.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     // Sortering
     result.sort((a, b) => {
       const aValue = a[filters.sortBy];
       const bValue = b[filters.sortBy];
-      
-      if (filters.sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
+      return filters.sortOrder === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
     });
-    
+
     return result;
   }
 );
 
 export const selectSelectedTask = createSelector(
-  [selectTasksState],
-  (tasksState) => tasksState.selectedTaskId ? 
-    tasksState.entities[tasksState.selectedTaskId] : 
-    null
+  [selectTaskById, (state) => state.tasks.selectedTaskId],
+  (tasks, selectedId) => selectedId ? tasks[selectedId] : null
 );
 
 export const selectShouldFetchTasks = createSelector(
-  [selectTasksState],
-  (tasksState) => {
-    if (!tasksState.cache.timestamp) return true;
+  [selectTaskById, (state) => state.tasks.cache],
+  (tasks, cache) => {
+    if (!cache.timestamp) return true;
     
     const now = Date.now();
-    return now - tasksState.cache.timestamp > tasksState.cache.ttl;
+    return now - cache.timestamp > cache.ttl;
   }
 );
 
-export const { 
-  setFilters, 
-  optimisticUpdateStatus, 
-  selectTask,
-  invalidateCache 
-} = tasksSlice.actions;
+export const { setFilters, selectTask, invalidateCache } = tasksSlice.actions;
 
 export default tasksSlice.reducer;
