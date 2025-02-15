@@ -129,5 +129,6 @@
   "selectUser": "Välj användare",
   "markCompleted": "Markera som klar",
   "markPending": "Markera som väntande",
-  "errorTogglingTaskStatus": "Kunde inte ändra uppgiftsstatus"
+  "errorTogglingTaskStatus": "Kunde inte ändra uppgiftsstatus",
+  "create.user": "Skapa användare"
 } 

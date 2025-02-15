@@ -126,5 +126,6 @@
   "enterPassword": "Введіть пароль",
   "archive": "Архівувати",
   "unarchive": "Розархівувати",
-  "errorTogglingTaskStatus": "Не вдалося змінити статус завдання"
+  "errorTogglingTaskStatus": "Не вдалося змінити статус завдання",
+  "create.user": "Створити Користувача"
 } 

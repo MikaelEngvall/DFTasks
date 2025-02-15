@@ -126,5 +126,6 @@
   "enterPassword": "Wprowadź hasło",
   "archive": "Archiwizuj",
   "unarchive": "Przywróć",
-  "errorTogglingTaskStatus": "Nie można zmienić statusu zadania"
+  "errorTogglingTaskStatus": "Nie można zmienić statusu zadania",
+  "create.user": "Utwórz Użytkownika"
 } 

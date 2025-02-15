@@ -39,7 +39,11 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.response?.data?.message || t("loginError"));
+      const errorMessage = error.response?.data?.message;
+      setError(t(errorMessage) || t("loginError"));
+      
+      console.log("Server response:", error.response?.data);
+      console.log("Status code:", error.response?.status);
     } finally {
       setIsLoading(false);
     }

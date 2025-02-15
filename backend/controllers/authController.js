@@ -13,16 +13,31 @@ export const login = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email });
+    // Hitta användaren och kontrollera att den är aktiv
+    const user = await User.findOne({ email, isActive: true });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Verifiera lösenordet med matchPassword-metoden från User-modellen
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      // Öka räknaren för misslyckade inloggningsförsök
+      await user.incrementLoginAttempts();
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Kontrollera om kontot är låst
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      return res.status(401).json({ 
+        message: "Account is locked. Please try again later" 
+      });
+    }
+
+    // Återställ misslyckade inloggningsförsök vid lyckad inloggning
+    await user.resetLoginAttempts();
+
+    // Skapa JWT token
     const token = jwt.sign(
       {
         id: user._id,
@@ -35,6 +50,7 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Skicka tillbaka token och användarinfo (utan lösenord)
     res.json({
       token,
       user: {

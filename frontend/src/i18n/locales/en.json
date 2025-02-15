@@ -126,5 +126,6 @@
   "enterPassword": "Enter Password",
   "archive": "Archive",
   "unarchive": "Unarchive",
-  "errorTogglingTaskStatus": "Could not toggle task status"
+  "errorTogglingTaskStatus": "Could not toggle task status",
+  "create.user": "Create User"
 } 

@@ -6,6 +6,7 @@ import UserModal from "./UserModal";
 import jwtDecode from "jwt-decode";
 import { useAuth } from "../context/AuthContext";
 import PageHeader from "./PageHeader";
+import CreateUserModal from "./CreateUserModal";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -14,6 +15,7 @@ function UserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { t } = useTranslation();
   const { user: currentUser } = useAuth();
 
@@ -183,7 +185,15 @@ function UserManagement() {
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <PageHeader title={t("users")} />
+          <div className="flex justify-between items-center mb-6">
+            <PageHeader title={t("users")} />
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+            >
+              {t("create.user")}
+            </button>
+          </div>
 
           <div className="mb-4 flex items-center">
             <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
@@ -305,6 +315,13 @@ function UserManagement() {
               onEdit={handleEdit}
               onSubmit={handleCreate}
               isCreating={isCreating}
+            />
+          )}
+
+          {showCreateModal && (
+            <CreateUserModal
+              onClose={() => setShowCreateModal(false)}
+              onSubmit={handleCreate}
             />
           )}
         </div>
