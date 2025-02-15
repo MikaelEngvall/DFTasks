@@ -131,6 +131,24 @@ const tasksSlice = createSlice({
     invalidateCache: (state) => {
       state.cache.timestamp = null;
     },
+    setSelectedTask: (state, action) => {
+      state.selectedTaskId = action.payload;
+    },
+    optimisticUpdateTask: (state, action) => {
+      const { id, changes } = action.payload;
+      if (state.entities[id]) {
+        state.entities[id] = { ...state.entities[id], ...changes };
+      }
+    },
+    optimisticAddComment: (state, action) => {
+      const { taskId, comment } = action.payload;
+      if (state.entities[taskId]) {
+        state.entities[taskId].comments = [
+          ...(state.entities[taskId].comments || []),
+          comment
+        ];
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -225,6 +243,13 @@ export const selectShouldFetchTasks = createSelector(
   }
 );
 
-export const { setFilters, selectTask, invalidateCache } = tasksSlice.actions;
+export const {
+  setFilters,
+  selectTask,
+  invalidateCache,
+  setSelectedTask,
+  optimisticUpdateTask,
+  optimisticAddComment,
+} = tasksSlice.actions;
 
 export default tasksSlice.reducer;
