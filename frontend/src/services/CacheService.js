@@ -77,4 +77,5 @@ export class CacheService {
   }
 }
 
-export default new CacheService(); 
+const cacheServiceInstance = new CacheService();
+export default cacheServiceInstance; 

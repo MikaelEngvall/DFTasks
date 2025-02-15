@@ -110,6 +110,7 @@
   "browser": {
     "crypto": false,
     "stream": false,
-    "util": false
+    "util": false,
+    "process": false
   }
 }

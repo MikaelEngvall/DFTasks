@@ -10,12 +10,15 @@ module.exports = {
           util: require.resolve('util/'),
           buffer: require.resolve('buffer/'),
           vm: false,
-          process: require.resolve('process/browser'),
+          process: false
         },
+        alias: {
+          process: false
+        }
       },
       plugins: [
         new webpack.ProvidePlugin({
-          process: 'process/browser',
+          process: false,
           Buffer: ['buffer', 'Buffer'],
         }),
       ],

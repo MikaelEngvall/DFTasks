@@ -115,4 +115,5 @@ class OfflineManager {
   }
 }
 
-export default new OfflineManager(); 
+const offlineManagerInstance = new OfflineManager();
+export default offlineManagerInstance; 

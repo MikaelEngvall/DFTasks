@@ -1,12 +1,8 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import nodemailer from "nodemailer";
-import { validateEmail, validatePassword, validateAuthInput } from "../utils/validation.js";
+import { validateAuthInput } from "../utils/validation.js";
 import { ErrorHandler } from '../utils/errorHandler';
 import { TokenService } from '../services/TokenService';
 import { UserService } from '../services/UserService';
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 class AuthController {
   constructor() {
@@ -124,4 +120,5 @@ class AuthController {
   }
 }
 
-export default new AuthController(); 
+const authControllerInstance = new AuthController();
+export default authControllerInstance; 

@@ -36,14 +36,22 @@ export const validatePassword = (password) => {
 };
 
 export const validateAuthInput = (email, password) => {
-  const emailValidation = validateEmail(email);
-  const passwordValidation = validatePassword(password);
+  const errors = {};
+
+  if (!email) {
+    errors.email = 'E-post krävs';
+  } else if (!/\S+@\S+\.\S+/.test(email)) {
+    errors.email = 'Ogiltig e-postadress';
+  }
+
+  if (!password) {
+    errors.password = 'Lösenord krävs';
+  } else if (password.length < 6) {
+    errors.password = 'Lösenordet måste vara minst 6 tecken';
+  }
 
   return {
-    isValid: emailValidation.isValid && passwordValidation.isValid,
-    errors: {
-      email: emailValidation.error,
-      password: passwordValidation.error
-    }
+    isValid: Object.keys(errors).length === 0,
+    errors
   };
 }; 
