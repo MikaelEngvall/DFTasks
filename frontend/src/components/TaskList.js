@@ -1,5 +1,6 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
+import React, { useCallback } from 'react';
+import VirtualList from './common/VirtualList';
+import { useTranslation } from 'react-i18next';
 import { FaEdit, FaComments } from "react-icons/fa";
 import { format, isValid } from "date-fns";
 import { useTaskUtils } from "../utils/taskUtils";
@@ -29,117 +30,59 @@ const TaskList = ({
     }
   };
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {t("title")}
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {t("description")}
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {t("status")}
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {t("assignedTo")}
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              {t("dueDate")}
-            </th>
-            {showActions && (
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                {t("actions")}
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {tasks.length === 0 ? (
-            <tr>
-              <td
-                colSpan={showActions ? 6 : 5}
-                className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-              >
-                {t("noTasks")}
-              </td>
-            </tr>
-          ) : (
-            tasks.map((task) => (
-              <tr
-                key={task._id}
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
-                  !task.isActive ? "opacity-50" : ""
-                }`}
-                onClick={() => onTaskClick(task)}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center text-sm font-medium text-df-primary dark:text-white">
-                    {task.title}
-                    {task.comments?.length > 0 && (
-                      <FaComments className="ml-2 text-df-primary/60 dark:text-gray-400" />
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 dark:text-gray-300 max-w-xs truncate">
-                    {task.description}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                      task.status
-                    )}`}
-                  >
-                    {renderStatus(task.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {getUserName(task.assignedTo)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-gray-300">
-                    {formatDate(task.dueDate)}
-                  </div>
-                </td>
-                {showActions && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={(e) =>
-                            onToggleStatus(task._id, task.isActive, e)
-                          }
-                          className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                        >
-                          {task.isActive ? t("deactivate") : t("activate")}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(task);
-                          }}
-                          className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80 mr-3"
-                          title={t("edit")}
-                        >
-                          <FaEdit className="inline-block" />
-                        </button>
-                      </>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))
+  const renderTask = useCallback((task) => (
+    <div 
+      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+        !task.isActive ? 'opacity-50' : ''
+      }`}
+      onClick={() => onTaskClick(task)}
+    >
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+            {task.title}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {task.description}
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <span className={`px-2 py-1 text-xs rounded-full ${getStatusClass(task.status)}`}>
+            {renderStatus(task.status)}
+          </span>
+          {showActions && isAdmin && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(task);
+              }}
+              className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+            >
+              Redigera
+            </button>
           )}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
+  ), [onTaskClick, onEdit, getStatusClass, renderStatus, showActions, isAdmin]);
+
+  if (!tasks.length) {
+    return (
+      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        {t('noTasks')}
+      </div>
+    );
+  }
+
+  return (
+    <VirtualList
+      items={tasks}
+      renderItem={renderTask}
+      itemHeight={80}
+      containerHeight={600}
+      className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+    />
   );
 };
 
-export default TaskList;
+export default React.memo(TaskList);
