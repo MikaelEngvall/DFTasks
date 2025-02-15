@@ -1,18 +1,22 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import { tasksAPI } from "../../services/api";
 import { toast } from "react-hot-toast";
+import TaskService from "../../services/TaskService";
+import { normalize, schema } from 'normalizr';
+
+// Normalizr schemas
+const taskSchema = new schema.Entity('tasks');
+const taskListSchema = [taskSchema];
 
 // Async thunks
 export const fetchTasks = createAsyncThunk(
   "tasks/fetchTasks",
-  async ({ showInactive = false }, { rejectWithValue }) => {
+  async (filters, { rejectWithValue }) => {
     try {
-      const response = await tasksAPI.getTasks(showInactive);
-      return response.data;
+      const tasks = await TaskService.getTasks(filters);
+      return normalize(tasks, taskListSchema);
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Kunde inte hämta uppgifter"
-      );
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -33,13 +37,17 @@ export const createTask = createAsyncThunk(
 
 export const updateTaskStatus = createAsyncThunk(
   "tasks/updateStatus",
-  async ({ taskId, status }, { rejectWithValue }) => {
+  async ({ id, status }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await tasksAPI.updateTaskStatus(taskId, status);
-      return response.data;
+      // Optimistisk uppdatering
+      dispatch(optimisticUpdateStatus({ id, status }));
+      
+      const updatedTask = await TaskService.updateStatus(id, status);
+      return normalize(updatedTask, taskSchema);
     } catch (error) {
-      toast.error("Kunde inte uppdatera status");
-      return rejectWithValue(error.response?.data);
+      // Återställ vid fel
+      dispatch(optimisticUpdateStatus({ id, status: error.originalStatus }));
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -71,140 +79,146 @@ export const addComment = createAsyncThunk(
 );
 
 const initialState = {
-  items: [],
-  loading: false,
+  entities: {},
+  ids: [],
+  loading: 'idle',
   error: null,
-  selectedTask: null,
+  filters: {
+    status: 'all',
+    search: '',
+    sortBy: 'dueDate',
+    sortOrder: 'asc'
+  },
+  selectedTaskId: null,
+  cache: {
+    timestamp: null,
+    ttl: 5 * 60 * 1000 // 5 minuter
+  }
 };
 
 const tasksSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
-    setTasks: (state, action) => {
-      state.items = action.payload;
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
     },
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    setSelectedTask: (state, action) => {
-      state.selectedTask = action.payload;
-    },
-    addTask: (state, action) => {
-      state.items.push(action.payload);
-    },
-    updateTask: (state, action) => {
-      const index = state.items.findIndex(
-        (task) => task._id === action.payload._id
-      );
-      if (index !== -1) {
-        state.items[index] = action.payload;
+    optimisticUpdateStatus: (state, action) => {
+      const { id, status } = action.payload;
+      if (state.entities[id]) {
+        state.entities[id].status = status;
       }
     },
-    removeTask: (state, action) => {
-      state.items = state.items.filter((task) => task._id !== action.payload);
+    selectTask: (state, action) => {
+      state.selectedTaskId = action.payload;
     },
-    optimisticUpdateTask: (state, action) => {
-      const updatedTask = action.payload;
-      const index = state.items.findIndex(
-        (task) => task._id === updatedTask._id
-      );
-      if (index !== -1) {
-        state.items[index] = { ...state.items[index], ...updatedTask };
-      }
-    },
-    optimisticAddComment: (state, action) => {
-      const { taskId, comment } = action.payload;
-      const task = state.items.find((task) => task._id === taskId);
-      if (task) {
-        if (!task.comments) task.comments = [];
-        task.comments.unshift(comment);
-      }
-      if (state.selectedTask?._id === taskId) {
-        if (!state.selectedTask.comments) state.selectedTask.comments = [];
-        state.selectedTask.comments.unshift(comment);
-      }
-    },
+    invalidateCache: (state) => {
+      state.cache.timestamp = null;
+    }
   },
   extraReducers: (builder) => {
     builder
       // fetchTasks
       .addCase(fetchTasks.pending, (state) => {
-        state.loading = true;
+        state.loading = 'pending';
         state.error = null;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
+        state.loading = 'idle';
+        state.entities = action.payload.entities.tasks;
+        state.ids = action.payload.result;
+        state.cache.timestamp = Date.now();
       })
       .addCase(fetchTasks.rejected, (state, action) => {
-        state.loading = false;
+        state.loading = 'idle';
         state.error = action.payload;
       })
       // createTask
       .addCase(createTask.fulfilled, (state, action) => {
-        state.items.push(action.payload);
+        state.entities[action.payload._id] = action.payload;
       })
       // updateTaskStatus
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        const updatedTask = action.payload;
-        const index = state.items.findIndex(
-          (task) => task._id === updatedTask._id
-        );
-        if (index !== -1) {
-          state.items[index] = updatedTask;
-        }
-        if (state.selectedTask?._id === updatedTask._id) {
-          state.selectedTask = updatedTask;
-        }
+        const { tasks } = action.payload.entities;
+        Object.assign(state.entities, tasks);
       })
       // toggleTaskStatus
       .addCase(toggleTaskStatus.fulfilled, (state, action) => {
         const updatedTask = action.payload;
-        const index = state.items.findIndex(
-          (task) => task._id === updatedTask._id
-        );
-        if (index !== -1) {
-          state.items[index] = updatedTask;
-        }
-        if (state.selectedTask?._id === updatedTask._id) {
-          state.selectedTask = updatedTask;
-        }
+        state.entities[updatedTask._id] = updatedTask;
       })
       // addComment
       .addCase(addComment.fulfilled, (state, action) => {
         const updatedTask = action.payload;
-        const index = state.items.findIndex(
-          (task) => task._id === updatedTask._id
-        );
-        if (index !== -1) {
-          state.items[index] = updatedTask;
-        }
-        if (state.selectedTask?._id === updatedTask._id) {
-          state.selectedTask = updatedTask;
-        }
+        state.entities[updatedTask._id] = updatedTask;
       });
   },
 });
 
-export const {
-  setTasks,
-  setLoading,
-  setError,
-  setSelectedTask,
-  addTask,
-  updateTask,
-  removeTask,
-  optimisticUpdateTask,
-  optimisticAddComment,
-} = tasksSlice.actions;
+// Selectors
+export const selectTasksState = (state) => state.tasks;
 
-export const selectTasks = (state) => state.tasks.items;
-export const selectLoading = (state) => state.tasks.loading;
-export const selectError = (state) => state.tasks.error;
-export const selectSelectedTask = (state) => state.tasks.selectedTask;
+export const selectAllTasks = createSelector(
+  [selectTasksState],
+  (tasksState) => tasksState.ids.map(id => tasksState.entities[id])
+);
+
+export const selectFilteredTasks = createSelector(
+  [selectAllTasks, (state) => state.tasks.filters],
+  (tasks, filters) => {
+    let result = [...tasks];
+    
+    // Filtrera efter status
+    if (filters.status !== 'all') {
+      result = result.filter(task => task.status === filters.status);
+    }
+    
+    // Sök
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      result = result.filter(task => 
+        task.title.toLowerCase().includes(searchLower) ||
+        task.description.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Sortering
+    result.sort((a, b) => {
+      const aValue = a[filters.sortBy];
+      const bValue = b[filters.sortBy];
+      
+      if (filters.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      }
+      return aValue < bValue ? 1 : -1;
+    });
+    
+    return result;
+  }
+);
+
+export const selectSelectedTask = createSelector(
+  [selectTasksState],
+  (tasksState) => tasksState.selectedTaskId ? 
+    tasksState.entities[tasksState.selectedTaskId] : 
+    null
+);
+
+export const selectShouldFetchTasks = createSelector(
+  [selectTasksState],
+  (tasksState) => {
+    if (!tasksState.cache.timestamp) return true;
+    
+    const now = Date.now();
+    return now - tasksState.cache.timestamp > tasksState.cache.ttl;
+  }
+);
+
+export const { 
+  setFilters, 
+  optimisticUpdateStatus, 
+  selectTask,
+  invalidateCache 
+} = tasksSlice.actions;
 
 export default tasksSlice.reducer;
