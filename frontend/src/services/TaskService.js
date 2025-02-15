@@ -2,24 +2,42 @@
 import { BaseService } from './BaseService';
 import { TaskModel } from "../models/TaskModel";
 import DataService from './DataService';
+import OfflineManager from '../utils/OfflineManager';
 
 export class TaskService extends BaseService {
   constructor() {
     super('/api/tasks');
     this.dataService = DataService;
+    this.offlineManager = OfflineManager;
   }
 
   async getTasks(filters = {}) {
     const cacheKey = `tasks_${JSON.stringify(filters)}`;
     
-    return this.dataService.fetchWithCache(
-      cacheKey,
-      async () => {
-        const response = await this.api.get('', { params: filters });
-        return response.data.map(task => new TaskModel(task));
-      },
-      { ttl: 5 * 60 * 1000 } // 5 minuter
-    );
+    try {
+      if (!this.offlineManager.isOnline()) {
+        const cachedData = await this.offlineManager.getCachedData(cacheKey);
+        if (cachedData) {
+          return cachedData.data.map(task => new TaskModel(task));
+        }
+      }
+
+      const response = await this.api.get('', { params: filters });
+      const tasks = response.data.map(task => new TaskModel(task));
+      
+      // Cache för offline-användning
+      await this.offlineManager.cacheData(cacheKey, response.data);
+      
+      return tasks;
+    } catch (error) {
+      if (!this.offlineManager.isOnline()) {
+        const cachedData = await this.offlineManager.getCachedData(cacheKey);
+        if (cachedData) {
+          return cachedData.data.map(task => new TaskModel(task));
+        }
+      }
+      throw error;
+    }
   }
 
   async getTask(id) {
@@ -32,12 +50,26 @@ export class TaskService extends BaseService {
   }
 
   async createTask(taskData) {
-    try {
-      const response = await this.api.post('', taskData);
-      return new TaskModel(response.data);
-    } catch (error) {
-      return this.handleError(error, 'error.task.create');
+    const action = {
+      type: 'CREATE_TASK',
+      payload: taskData,
+      execute: async () => {
+        const response = await this.api.post('', taskData);
+        return new TaskModel(response.data);
+      }
+    };
+
+    if (!this.offlineManager.isOnline()) {
+      await this.offlineManager.saveOfflineAction(action);
+      // Returnera en temporär version för UI
+      return new TaskModel({
+        ...taskData,
+        id: `temp_${Date.now()}`,
+        status: 'pending_sync'
+      });
     }
+
+    return action.execute();
   }
 
   async updateTask(id, taskData) {
