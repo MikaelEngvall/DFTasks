@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../utils/axios";
 import { FaEdit, FaTrash, FaPlus, FaComments } from "react-icons/fa";
 import TaskForm from "./TaskForm";
@@ -42,10 +42,43 @@ function TaskManagement({ userRole, userId }) {
     return assignedTo.name || t("unassigned");
   };
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get("/users");
+      console.log("Raw user response:", response.data); // Debug
+      let userData = [];
+      if (response.data && Array.isArray(response.data)) {
+        userData = response.data;
+      } else if (response.data && Array.isArray(response.data.users)) {
+        userData = response.data.users;
+      }
+      const activeUsers = userData.filter(user => user.isActive);
+      console.log("Active users:", activeUsers); // Debug
+      setUsers(activeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsers([]);
+    }
+  }, []);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await (showInactive ? tasksAPI.getAllTasks() : tasksAPI.getTasks());
+      const translatedTasks = await translateTasks(response.data);
+      setTasks(translatedTasks);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setError(t("errorFetchingTasks"));
+      setLoading(false);
+    }
+  }, [showInactive, translateTasks, t]);
+
   useEffect(() => {
     fetchTasks();
-    fetchUsers();
-  }, [currentLanguage, showInactive]);
+    fetchUsers(); // Hämta användare när komponenten laddas
+  }, [fetchTasks, fetchUsers]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
@@ -57,43 +90,6 @@ function TaskManagement({ userRole, userId }) {
 
     updateSelectedTaskComments();
   }, [currentLanguage, selectedTask?._id]);
-
-  const fetchTasks = async () => {
-    try {
-      setError(null);
-      const response = await (showInactive
-        ? tasksAPI.getAllTasks()
-        : tasksAPI.getTasks());
-
-      let taskData = [];
-      if (response.data && Array.isArray(response.data.tasks)) {
-        taskData = response.data.tasks;
-      } else if (response.data && Array.isArray(response.data)) {
-        taskData = response.data;
-      }
-
-      const translatedTasks = await translateTasks(taskData);
-      setTasks(translatedTasks || []);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      setError(t("errorFetchingTasks"));
-      setTasks([]);
-      setLoading(false);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosInstance.get("/users");
-      if (response.data) {
-        setUsers(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsers([]);
-    }
-  };
 
   const handleDelete = async (taskId, e) => {
     e?.stopPropagation();
@@ -143,31 +139,15 @@ function TaskManagement({ userRole, userId }) {
 
   const handleTaskSubmit = async (taskData) => {
     try {
-      setError(null);
       let response;
       if (selectedTask) {
-        response = await axiosInstance.put(
-          `/tasks/${selectedTask._id}`,
-          taskData
-        );
+        response = await axiosInstance.put(`/tasks/${selectedTask._id}`, taskData);
       } else {
         response = await axiosInstance.post("/tasks", taskData);
       }
-
-      if (response.data) {
-        const translatedTask = await translateTask(response.data.task);
-        if (selectedTask) {
-          setTasks(
-            tasks.map((task) =>
-              task._id === selectedTask._id ? translatedTask : task
-            )
-          );
-        } else {
-          setTasks([translatedTask, ...tasks]);
-        }
-        setShowTaskForm(false);
-        setSelectedTask(null);
-      }
+      await fetchTasks(); // Uppdatera listan efter ändring
+      setShowTaskForm(false);
+      setSelectedTask(null);
     } catch (error) {
       console.error("Error saving task:", error);
       setError(t("errorSavingTask"));
@@ -184,58 +164,11 @@ function TaskManagement({ userRole, userId }) {
       const response = await axiosInstance.post(`/tasks/${taskId}/comments`, {
         content: commentText,
       });
-      console.log("TaskManagement - Svar från servern:", response.data);
-      if (response.data && response.data.task) {
-        const translatedTask = await translateTask(response.data.task);
-        setTasks(
-          tasks.map((task) => (task._id === taskId ? translatedTask : task))
-        );
-        setSelectedTask(translatedTask);
+      if (response.data) {
+        setSelectedTask(response.data.task);
       }
     } catch (error) {
-      console.error(
-        "TaskManagement - Fel vid tillägg av kommentar:",
-        error.response || error
-      );
-      alert(t("errorAddingComment"));
-    }
-  };
-
-  const formatDate = (dateString, formatStr = "yyyy-MM-dd") => {
-    if (!dateString || dateString === "00.00.000Z") return t("noDate");
-    try {
-      const date = new Date(dateString);
-      if (!isValid(date)) {
-        return t("noDate");
-      }
-      return format(date, formatStr);
-    } catch (error) {
-      return t("noDate");
-    }
-  };
-
-  const handleToggleTaskStatus = async (taskId, currentStatus, e) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    try {
-      await tasksAPI.toggleTaskStatus(taskId, currentStatus);
-      await fetchTasks();
-    } catch (error) {
-      console.error("Error toggling task status:", error);
-    }
-  };
-
-  const handleToggleCommentStatus = async (taskId, commentId) => {
-    try {
-      await axiosInstance.put(`/tasks/${taskId}/comments/${commentId}/toggle`);
-      await fetchTasks();
-      const updatedTask = tasks.find((t) => t._id === taskId);
-      if (updatedTask) {
-        setSelectedTask(updatedTask);
-      }
-    } catch (error) {
-      alert(t("errorTogglingCommentStatus"));
+      console.error("Error adding comment:", error);
     }
   };
 
@@ -249,24 +182,17 @@ function TaskManagement({ userRole, userId }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-            {t("tasks")}
-          </h2>
-          {isAdmin && (
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={showInactive}
-                onChange={(e) => setShowInactive(e.target.checked)}
-                className="form-checkbox h-4 w-4 text-df-primary"
-              />
-              <span className="text-sm text-df-primary dark:text-white">
-                {t("showInactive")}
-              </span>
-            </label>
-          )}
+          <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="rounded border-gray-300 text-df-primary focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
+            />
+            <span>{t("showArchived")}</span>
+          </label>
         </div>
         {isAdmin && (
           <button
@@ -290,35 +216,25 @@ function TaskManagement({ userRole, userId }) {
 
       <TaskList
         tasks={tasks}
-        onTaskClick={handleTaskClick}
-        onEdit={handleEdit}
-        onToggleStatus={handleToggleTaskStatus}
+        onTaskClick={(task) => setSelectedTask(task)}
+        onEdit={(task) => {
+          setSelectedTask(task);
+          setShowTaskForm(true);
+        }}
         showActions={true}
         isAdmin={isAdmin}
-        getUserName={getUserName}
+        getUserName={(assignedTo) => {
+          if (!assignedTo) return t("unassigned");
+          const user = users.find(u => u._id === assignedTo);
+          return user ? user.name : t("unassigned");
+        }}
       />
-
-      {selectedTask && (
-        <TaskModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onStatusUpdate={handleStatusUpdate}
-          onAddComment={handleAddComment}
-          onToggleStatus={handleToggleTaskStatus}
-          onEdit={handleEdit}
-          userRole={userRole}
-          userId={userId}
-          getStatusClass={getStatusClass}
-          renderStatus={renderStatus}
-          users={users}
-        />
-      )}
 
       {showTaskForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
             <h2 className="text-xl font-bold text-df-primary dark:text-white mb-4">
-              {selectedTask ? t("edit") : t("newTask")}
+              {selectedTask ? t("edit.task") : t("newTask")}
             </h2>
             <TaskForm
               onSubmit={handleTaskSubmit}
@@ -331,6 +247,19 @@ function TaskManagement({ userRole, userId }) {
             />
           </div>
         </div>
+      )}
+
+      {selectedTask && (
+        <TaskModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onEdit={handleTaskSubmit}
+          userRole={userRole}
+          userId={userId}
+          getStatusClass={getStatusClass}
+          renderStatus={renderStatus}
+          users={users}
+        />
       )}
     </div>
   );

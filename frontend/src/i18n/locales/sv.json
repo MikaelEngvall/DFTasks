@@ -130,5 +130,6 @@
   "markCompleted": "Markera som klar",
   "markPending": "Markera som väntande",
   "errorTogglingTaskStatus": "Kunde inte ändra uppgiftsstatus",
-  "create.user": "Skapa användare"
+  "create.user": "Skapa användare",
+  "edit.task": "Redigera uppgift"
 } 

@@ -42,9 +42,8 @@ function TaskModal({
     if (task) {
       setEditedTask({
         ...task,
-        dueDate: task.dueDate
-          ? format(new Date(task.dueDate), "yyyy-MM-dd")
-          : "",
+        assignedTo: task.assignedTo?._id || task.assignedTo,
+        dueDate: task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "",
       });
     }
   }, [task]);
@@ -95,7 +94,7 @@ function TaskModal({
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
             <h2 className="text-xl font-bold text-df-primary dark:text-white">
-              {editMode ? t("editTask") : translatedTask.title}
+              {t("edit.task")}
             </h2>
             <button
               onClick={onClose}
@@ -149,17 +148,20 @@ function TaskModal({
                 </label>
                 <select
                   name="assignedTo"
-                  value={editedTask?.assignedTo?._id || ""}
+                  value={editedTask?.assignedTo || ""}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="">{t("selectUser")}</option>
-                  {users.map((user) => (
+                  {Array.isArray(users) && users.map((user) => (
                     <option key={user._id} value={user._id}>
                       {user.name}
                     </option>
                   ))}
                 </select>
+                <div className="text-xs text-gray-500 mt-1">
+                  {`Debug - Available users: ${users?.length || 0}`}
+                </div>
               </div>
               <div className="flex justify-end space-x-2 mt-4">
                 <button

@@ -127,5 +127,6 @@
   "archive": "Archiwizuj",
   "unarchive": "Przywróć",
   "errorTogglingTaskStatus": "Nie można zmienić statusu zadania",
-  "create.user": "Utwórz Użytkownika"
+  "create.user": "Utwórz Użytkownika",
+  "edit.task": "Edytuj zadanie"
 } 

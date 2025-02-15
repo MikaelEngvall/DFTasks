@@ -127,5 +127,6 @@
   "archive": "Archive",
   "unarchive": "Unarchive",
   "errorTogglingTaskStatus": "Could not toggle task status",
-  "create.user": "Create User"
+  "create.user": "Create User",
+  "edit.task": "Edit Task"
 } 

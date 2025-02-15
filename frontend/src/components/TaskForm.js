@@ -119,15 +119,21 @@ const TaskForm = ({ onSubmit, onCancel, initialData = {}, users = [] }) => {
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-df-primary focus:ring-df-primary dark:bg-gray-700 dark:text-white"
           required
-          disabled={isSubmitting}
         >
           <option value="">{t("selectUser")}</option>
-          {users.map((user) => (
-            <option key={user._id} value={user._id}>
-              {user.name}
-            </option>
-          ))}
+          {Array.isArray(users) && users.length > 0 ? (
+            users.map((user) => (
+              <option key={user._id} value={user._id}>
+                {user.name}
+              </option>
+            ))
+          ) : (
+            <option disabled>{t("noUsers")}</option>
+          )}
         </select>
+        <div className="text-xs text-gray-500 mt-1">
+          {`Debug - Available users: ${users?.length || 0}`}
+        </div>
       </div>
 
       <div>

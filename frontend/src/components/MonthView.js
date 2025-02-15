@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../utils/axios";
 import { format } from "date-fns";
 import jwtDecode from "jwt-decode";
@@ -24,6 +24,7 @@ import {
   optimisticUpdateTask,
   optimisticAddComment,
 } from "../store/slices/tasksSlice";
+import { FaPlus } from "react-icons/fa";
 
 function MonthView() {
   const dispatch = useDispatch();
@@ -77,6 +78,24 @@ function MonthView() {
     ],
   };
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get("/users");
+      let userData = [];
+      if (response.data && Array.isArray(response.data)) {
+        userData = response.data;
+      } else if (response.data && Array.isArray(response.data.users)) {
+        userData = response.data.users;
+      }
+      const activeUsers = userData.filter(user => user.isActive);
+      console.log("Fetched active users:", activeUsers);
+      setUsers(activeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsers([]);
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -87,7 +106,8 @@ function MonthView() {
 
   useEffect(() => {
     dispatch(fetchTasks({ showInactive: showArchived }));
-  }, [dispatch, showArchived]);
+    fetchUsers();
+  }, [dispatch, showArchived, fetchUsers]);
 
   useEffect(() => {
     const updateSelectedTaskComments = async () => {
@@ -264,106 +284,124 @@ function MonthView() {
   return (
     <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <PageHeader title={t("tasks")} />
-            <div className="flex items-center space-x-4">
-              {isAdmin && (
-                <label className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={showArchived}
-                    onChange={(e) => setShowArchived(e.target.checked)}
-                    className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
-                  />
-                  <span>{t("showInactive")}</span>
-                </label>
-              )}
-            </div>
+            {user?.role === "ADMIN" || user?.role === "SUPERADMIN" ? (
+              <button
+                onClick={() => {
+                  setSelectedTask(null);
+                  setShowTaskForm(true);
+                }}
+                className="flex items-center px-4 py-2 bg-df-primary text-white rounded-md hover:bg-df-primary/90 transition-colors duration-150"
+              >
+                <FaPlus className="mr-2" />
+                {t("newTask")}
+              </button>
+            ) : null}
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-            <div className="flex justify-between items-center p-4">
-              <h2 className="text-xl font-semibold text-df-primary dark:text-white">
-                {`${getMonthName(currentMonth)} ${currentMonth.getFullYear()}`}
-              </h2>
-            </div>
-            <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
-              {weekDays[i18n.language].map((day) => (
-                <div key={day} className="bg-white dark:bg-gray-800 p-2">
-                  <h3 className="text-sm font-medium text-df-primary dark:text-white">
-                    {day}
-                  </h3>
+          <div className="max-w-7xl mx-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <PageHeader title={t("tasks")} />
+                <div className="flex items-center space-x-4">
+                  {isAdmin && (
+                    <label className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={showArchived}
+                        onChange={(e) => setShowArchived(e.target.checked)}
+                        className="form-checkbox h-4 w-4 text-df-primary rounded border-gray-300 focus:ring-df-primary dark:border-gray-600 dark:bg-gray-700"
+                      />
+                      <span>{t("showInactive")}</span>
+                    </label>
+                  )}
                 </div>
-              ))}
-              {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
-                <div
-                  key={`empty-${index}`}
-                  className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
-                />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, index) => {
-                const date = new Date(
-                  currentMonth.getFullYear(),
-                  currentMonth.getMonth(),
-                  index + 1
-                );
-                const dayTasks = tasks.filter(
-                  (task) =>
-                    format(new Date(task.dueDate), "yyyy-MM-dd") ===
-                    format(date, "yyyy-MM-dd")
-                );
-
-                return (
-                  <div
-                    key={index}
-                    className={`bg-white dark:bg-gray-800 p-4 min-h-[120px] ${
-                      isAdmin
-                        ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                        : ""
-                    }`}
-                    onClick={(e) => {
-                      if (e.target === e.currentTarget && isAdmin) {
-                        handleDayClick(date);
-                      }
-                    }}
-                  >
-                    <p className="text-sm text-df-primary/70 dark:text-gray-400">
-                      {index + 1}
-                    </p>
-                    <div className="space-y-2">
-                      {dayTasks.map((task) => (
-                        <div
-                          key={task._id}
-                          className={`p-2 rounded-lg ${
-                            canEditTask(task)
-                              ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
-                              : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          } cursor-pointer transition-colors duration-150 ${
-                            !task.isActive ? "opacity-50" : ""
-                          }`}
-                          onClick={() => handleTaskClick(task)}
-                        >
-                          <div className="text-sm font-medium text-df-primary dark:text-white truncate">
-                            {task.title}
-                          </div>
-                          <div className="mt-1 flex items-center justify-between">
-                            <span
-                              className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
-                                task.status
-                              )}`}
-                            >
-                              {renderStatus(task.status)}
-                            </span>
-                            <span className="text-xs text-df-primary/70 dark:text-gray-400">
-                              {task.assignedTo?.name || t("unassigned")}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div className="flex justify-between items-center p-4">
+                  <h2 className="text-xl font-semibold text-df-primary dark:text-white">
+                    {`${getMonthName(currentMonth)} ${currentMonth.getFullYear()}`}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
+                  {weekDays[i18n.language].map((day) => (
+                    <div key={day} className="bg-white dark:bg-gray-800 p-2">
+                      <h3 className="text-sm font-medium text-df-primary dark:text-white">
+                        {day}
+                      </h3>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                  {Array.from({ length: firstDayOfMonth - 1 }).map((_, index) => (
+                    <div
+                      key={`empty-${index}`}
+                      className="bg-white dark:bg-gray-800 p-4 min-h-[120px]"
+                    />
+                  ))}
+                  {Array.from({ length: daysInMonth }).map((_, index) => {
+                    const date = new Date(
+                      currentMonth.getFullYear(),
+                      currentMonth.getMonth(),
+                      index + 1
+                    );
+                    const dayTasks = tasks.filter(
+                      (task) =>
+                        format(new Date(task.dueDate), "yyyy-MM-dd") ===
+                        format(date, "yyyy-MM-dd")
+                    );
+
+                    return (
+                      <div
+                        key={index}
+                        className={`bg-white dark:bg-gray-800 p-4 min-h-[120px] ${
+                          isAdmin
+                            ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          if (e.target === e.currentTarget && isAdmin) {
+                            handleDayClick(date);
+                          }
+                        }}
+                      >
+                        <p className="text-sm text-df-primary/70 dark:text-gray-400">
+                          {index + 1}
+                        </p>
+                        <div className="space-y-2">
+                          {dayTasks.map((task) => (
+                            <div
+                              key={task._id}
+                              className={`p-2 rounded-lg ${
+                                canEditTask(task)
+                                  ? "bg-df-primary/10 dark:bg-gray-700 hover:bg-df-primary/20 dark:hover:bg-gray-600"
+                                  : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              } cursor-pointer transition-colors duration-150 ${
+                                !task.isActive ? "opacity-50" : ""
+                              }`}
+                              onClick={() => handleTaskClick(task)}
+                            >
+                              <div className="text-sm font-medium text-df-primary dark:text-white truncate">
+                                {task.title}
+                              </div>
+                              <div className="mt-1 flex items-center justify-between">
+                                <span
+                                  className={`px-2 text-xs font-semibold rounded-full ${getStatusClass(
+                                    task.status
+                                  )}`}
+                                >
+                                  {renderStatus(task.status)}
+                                </span>
+                                <span className="text-xs text-df-primary/70 dark:text-gray-400">
+                                  {task.assignedTo?.name || t("unassigned")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -395,6 +433,7 @@ function MonthView() {
               onSubmit={handleCreateTask}
               onCancel={handleCancelTaskForm}
               users={users}
+              initialData={{ dueDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "" }}
             />
           </div>
         </div>
