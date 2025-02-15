@@ -10,12 +10,59 @@ const imapConfig = {
   tls: true,
   tlsOptions: {
     rejectUnauthorized: false,
-    enableTrace: false,
+    enableTrace: true,
   },
   keepalive: true,
+  debug: console.log
 };
 
+const imap = new Imap(imapConfig);
+
+async function processEmail(stream) {
+  try {
+    console.log('Starting to parse email...');
+    const parsed = await simpleParser(stream);
+    console.log('Email parsed successfully:', {
+      subject: parsed.subject,
+      from: parsed.from,
+      date: parsed.date
+    });
+    
+    console.log('Email content:', parsed.text);
+    
+    const parsedContent = parseEmailContent(parsed.text);
+    console.log('Parsed content:', parsedContent);
+    
+    const pendingTask = new PendingTask({
+      title: parsed.subject || "Ny felanmälan",
+      description: parsedContent.description,
+      reporterName: parsedContent.reporterName,
+      reporterEmail: parsedContent.reporterEmail,
+      reporterPhone: parsedContent.reporterPhone,
+      address: parsedContent.address,
+      apartmentNumber: parsedContent.apartmentNumber,
+      status: "pending"
+    });
+
+    console.log('Created PendingTask object:', pendingTask);
+    
+    const savedTask = await pendingTask.save();
+    console.log('Successfully saved pending task to database:', savedTask._id);
+    
+    return savedTask;
+  } catch (error) {
+    console.error('Error in processEmail:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    throw error;
+  }
+}
+
 function parseEmailContent(emailText) {
+  console.log('Starting to parse email content...');
   const lines = emailText.split("\n");
   let reporterName = "";
   let reporterEmail = "";
@@ -27,28 +74,34 @@ function parseEmailContent(emailText) {
 
   for (const line of lines) {
     const trimmedLine = line.trim();
-
     if (trimmedLine.startsWith("Namn:")) {
       reporterName = trimmedLine.replace("Namn:", "").trim();
+      console.log('Found reporter name:', reporterName);
     } else if (trimmedLine.startsWith("E-post:")) {
       reporterEmail = trimmedLine.replace("E-post:", "").trim();
+      console.log('Found reporter email:', reporterEmail);
     } else if (trimmedLine.startsWith("Telefonnummer:")) {
       reporterPhone = trimmedLine.replace("Telefonnummer:", "").trim();
+      console.log('Found reporter phone:', reporterPhone);
     } else if (trimmedLine.startsWith("Adress:")) {
       address = trimmedLine.replace("Adress:", "").trim();
+      console.log('Found address:', address);
     } else if (trimmedLine.startsWith("Lägenhetsnummer:")) {
       apartmentNumber = trimmedLine.replace("Lägenhetsnummer:", "").trim();
+      console.log('Found apartment number:', apartmentNumber);
     } else if (trimmedLine.startsWith("Meddelande:")) {
       isDescription = true;
-      description.push(trimmedLine.replace("Meddelande:", "").trim());
+      console.log('Starting description section');
+      continue;
     } else if (trimmedLine === "---") {
       isDescription = false;
+      console.log('Ending description section');
     } else if (isDescription && trimmedLine) {
       description.push(trimmedLine);
     }
   }
 
-  return {
+  const result = {
     reporterName,
     reporterEmail,
     reporterPhone,
@@ -56,125 +109,115 @@ function parseEmailContent(emailText) {
     apartmentNumber,
     description: description.join("\n") || "Ingen beskrivning tillgänglig",
   };
+  
+  console.log('Finished parsing email content:', result);
+  return result;
 }
 
-function processEmail(stream, seqno, uid) {
-  simpleParser(stream, async (err, parsed) => {
-    if (err) {
-      console.error("Error parsing email:", err);
-      return;
-    }
-
-    try {
-      const emailContent = parsed.text;
-      const messageId = parsed.messageId; // Unikt ID för e-postmeddelandet
-
-      // Kontrollera om en pending task med samma messageId redan finns
-      const existingTask = await PendingTask.findOne({ messageId });
-      if (existingTask) {
-        console.log("Duplicate email detected, skipping processing");
-        return;
-      }
-
-      const parsedContent = parseEmailContent(emailContent);
-      const title = `${parsedContent.address} - Lgh ${parsedContent.apartmentNumber} - ${parsedContent.reporterPhone}`;
-
-      const pendingTask = new PendingTask({
-        title,
-        description: parsedContent.description,
-        reporterName: parsedContent.reporterName,
-        reporterEmail: parsedContent.reporterEmail,
-        reporterPhone: parsedContent.reporterPhone,
-        address: parsedContent.address,
-        apartmentNumber: parsedContent.apartmentNumber,
-        messageId, // Spara messageId för framtida dubblettkontroll
-      });
-
-      await pendingTask.save();
-      console.log("New pending task created:", title);
-    } catch (error) {
-      console.error("Error creating pending task:", error);
-    }
+export function startEmailListener() {
+  console.log('Starting email listener with config:', {
+    user: imapConfig.user,
+    host: imapConfig.host,
+    port: imapConfig.port
   });
-}
-
-let retryCount = 0;
-const MAX_RETRIES = 5;
-
-function startEmailListener() {
-  const imap = new Imap(imapConfig);
-
-  function handleConnectionError(err) {
-    console.error("IMAP connection error:", err);
-    retryCount++;
-
-    if (retryCount <= MAX_RETRIES) {
-      const delay = Math.min(1000 * Math.pow(2, retryCount), 300000);
-      setTimeout(() => {
-        startEmailListener();
-      }, delay);
-    } else {
-      console.error(
-        "Max retry attempts reached. Please check the email configuration."
-      );
-    }
-  }
-
-  imap.once("ready", () => {
-    retryCount = 0;
-
-    imap.openBox("INBOX", false, (err, box) => {
+  
+  imap.once('ready', function() {
+    console.log('IMAP connection ready');
+    
+    imap.getBoxes((err, boxes) => {
       if (err) {
-        console.error("Error opening inbox:", err);
+        console.error('Error getting mailboxes:', err);
         return;
       }
-
-      imap.on("mail", () => {
-        const fetch = imap.seq.fetch(`${box.messages.total}:*`, {
-          bodies: "",
-          struct: true,
-          markSeen: true,
+      
+      const simplifiedBoxes = Object.keys(boxes).map(key => ({
+        name: key,
+        children: boxes[key].children ? Object.keys(boxes[key].children) : []
+      }));
+      console.log('Available mailboxes:', simplifiedBoxes);
+      
+      imap.openBox('INBOX', false, function(err, box) {
+        if (err) {
+          console.error('Error opening inbox:', err);
+          return;
+        }
+        
+        console.log('Inbox opened successfully. Messages:', {
+          total: box.messages.total,
+          new: box.messages.new,
+          unseen: box.messages.unseen
         });
 
-        fetch.on("message", (msg, seqno) => {
-          let uid;
+        imap.search(['UNSEEN'], function(err, results) {
+          if (err) {
+            console.error('Initial search error:', err);
+            return;
+          }
+          console.log('Initial unread messages:', results);
+          
+          if (results.length > 0) {
+            console.log(`Found ${results.length} unread messages at startup`);
+            const f = imap.fetch(results, { bodies: '', markSeen: true });
+            f.on('message', function(msg, seqno) {
+              console.log('Processing existing message #', seqno);
+              msg.on('body', function(stream) {
+                processEmail(stream);
+              });
+            });
+          }
+        });
 
-          msg.once("attributes", (attrs) => {
-            uid = attrs.uid;
-          });
+        imap.on('mail', function(numNewMsgs) {
+          console.log(`New mail event triggered: ${numNewMsgs} new messages`);
+          
+          imap.search(['UNSEEN'], function(err, results) {
+            if (err) {
+              console.error('Search error:', err);
+              return;
+            }
+            
+            if (!results || !results.length) return;
 
-          msg.on("body", (stream) => {
-            processEmail(stream, seqno, uid);
-          });
-
-          msg.once("end", () => {
-            // Markera meddelandet som läst
-            imap.addFlags(seqno, ["\\Seen"], (err) => {
-              if (err) {
-                console.error("Error marking message as read:", err);
-              }
+            const f = imap.fetch(results, { bodies: '', markSeen: true });
+            
+            f.on('message', function(msg, seqno) {
+              console.log('Processing message #', seqno);
+              msg.on('body', function(stream) {
+                processEmail(stream);
+              });
             });
           });
-        });
-
-        fetch.once("error", (err) => {
-          console.error("Fetch error:", err);
         });
       });
     });
   });
 
-  imap.once("error", handleConnectionError);
-
-  imap.once("end", () => {
-    handleConnectionError(new Error("Connection ended unexpectedly"));
+  imap.on('error', function(err) {
+    console.error('IMAP Error:', err);
+    console.error('Error details:', {
+      message: err.message,
+      source: err.source,
+      type: err.type
+    });
   });
 
-  try {
-    imap.connect();
-  } catch (err) {
-    handleConnectionError(err);
-  }
+  imap.on('end', function() {
+    console.log('IMAP Connection ended');
+    setTimeout(() => {
+      console.log('Attempting to reconnect...');
+      startEmailListener();
+    }, 5000);
+  });
+
+  imap.connect();
+
+  return function cleanup() {
+    try {
+      imap.end();
+    } catch (error) {
+      console.error('Error ending IMAP connection:', error);
+    }
+  };
 }
 
-export { startEmailListener };
+export default startEmailListener;

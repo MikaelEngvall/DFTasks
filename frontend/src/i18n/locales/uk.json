@@ -128,5 +128,11 @@
   "unarchive": "Розархівувати",
   "errorTogglingTaskStatus": "Не вдалося змінити статус завдання",
   "create.user": "Створити Користувача",
-  "edit.task": "Редагувати завдання"
+  "edit.task": "Редагувати завдання",
+  "datum": "Дата",
+  "sidansUrl": "URL сторінки",
+  "useragent": "Браузер",
+  "ip": "IP-адреса",
+  "drivsMed": "Працює на",
+  "beskrivning": "Опис"
 } 

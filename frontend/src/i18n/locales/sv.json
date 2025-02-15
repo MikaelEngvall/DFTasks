@@ -131,5 +131,20 @@
   "markPending": "Markera som väntande",
   "errorTogglingTaskStatus": "Kunde inte ändra uppgiftsstatus",
   "create.user": "Skapa användare",
-  "edit.task": "Redigera uppgift"
+  "edit.task": "Redigera uppgift",
+  "decline": "Avvisa",
+  "declineTask": "Avvisa uppgift",
+  "declineReason": "Anledning till avvisning",
+  "declineReasonPlaceholder": "Ange anledning till avvisning...",
+  "declineReasonRequired": "Du måste ange en anledning till avvisningen",
+  "taskDeclined": "Uppgiften har avvisats",
+  "errorDecliningTask": "Kunde inte avvisa uppgiften",
+  "receivedAt": "Mottaget",
+  "confirm": "Bekräfta",
+  "datum": "Datum",
+  "sidansUrl": "Sidans URL",
+  "useragent": "Webbläsare",
+  "ip": "IP-adress",
+  "drivsMed": "Drivs med",
+  "beskrivning": "Beskrivning"
 } 

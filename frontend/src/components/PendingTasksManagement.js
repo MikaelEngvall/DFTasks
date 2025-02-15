@@ -66,95 +66,92 @@ function PendingTasksManagement() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-df-light dark:bg-dark pt-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <PageHeader title={t("pendingTasks")} />
+  const handleDecline = async (taskId, data) => {
+    try {
+      setError("");
+      await axiosInstance.post(`/tasks/pending/${taskId}/decline`, data);
+      fetchPendingTasks();
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Error declining task:", error);
+      if (error.response?.status === 403) {
+        setError(t("accessDenied"));
+      } else {
+        setError(t("errorDecliningTask"));
+      }
+    }
+  };
 
-          {error ? (
-            <div className="p-4 bg-red-100 dark:bg-red-900/50 border border-red-400 text-red-700 dark:text-red-200 rounded relative">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {t("title")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {t("reporter")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {t("receivedAt")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {t("actions")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {pendingTasks.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-                      >
-                        {t("noPendingTasks")}
-                      </td>
+  return (
+    <div className="min-h-screen bg-df-light dark:bg-dark">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white">
+              {t("pendingTasks")}
+            </h2>
+          </div>
+
+          <div className="p-6">
+            {error ? (
+              <div className="p-4 bg-red-100 dark:bg-red-900/50 border border-red-400 text-red-700 dark:text-red-200 rounded relative">
+                <span className="block sm:inline">{error}</span>
+              </div>
+            ) : pendingTasks.length === 0 ? (
+              <div className="text-gray-500 dark:text-gray-400">{t("noPendingTasks")}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-700">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t("title")}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t("anmalare")}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {t("mottagetDatum")}
+                      </th>
                     </tr>
-                  ) : (
-                    pendingTasks.map((task) => (
-                      <tr key={task._id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-df-primary dark:text-white">
-                            {task.title}
-                          </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {pendingTasks.map((task) => (
+                      <tr
+                        key={task._id}
+                        onClick={() => setSelectedTask(task)}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {task.title}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-gray-300">
-                            {task.reporterName}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {task.reporterEmail}
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {task.reporterName}
+                          <br />
+                          {task.reporterEmail}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-gray-300">
-                            {format(
-                              new Date(task.createdAt),
-                              "yyyy-MM-dd HH:mm"
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => setSelectedTask(task)}
-                            className="text-df-primary hover:text-df-primary/80 dark:text-df-accent dark:hover:text-df-accent/80"
-                          >
-                            {t("review")}
-                          </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {format(new Date(task.createdAt), 'yyyy-MM-dd HH:mm')}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {selectedTask && (
-            <PendingTaskModal
-              task={selectedTask}
-              users={users}
-              onClose={() => setSelectedTask(null)}
-              onApprove={handleApprove}
-            />
-          )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {selectedTask && (
+        <PendingTaskModal
+          task={selectedTask}
+          users={users}
+          onClose={() => setSelectedTask(null)}
+          onApprove={handleApprove}
+          onDecline={handleDecline}
+        />
+      )}
     </div>
   );
 }

@@ -128,5 +128,11 @@
   "unarchive": "Unarchive",
   "errorTogglingTaskStatus": "Could not toggle task status",
   "create.user": "Create User",
-  "edit.task": "Edit Task"
+  "edit.task": "Edit Task",
+  "datum": "Date",
+  "sidansUrl": "Page URL",
+  "useragent": "Browser",
+  "ip": "IP address",
+  "drivsMed": "Powered by",
+  "beskrivning": "Description"
 } 

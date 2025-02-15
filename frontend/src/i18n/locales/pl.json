@@ -128,5 +128,11 @@
   "unarchive": "Przywróć",
   "errorTogglingTaskStatus": "Nie można zmienić statusu zadania",
   "create.user": "Utwórz Użytkownika",
-  "edit.task": "Edytuj zadanie"
+  "edit.task": "Edytuj zadanie",
+  "datum": "Data",
+  "sidansUrl": "URL strony",
+  "useragent": "Przeglądarka",
+  "ip": "Adres IP",
+  "drivsMed": "Zasilany przez",
+  "beskrivning": "Opis"
 } 
