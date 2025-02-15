@@ -4,11 +4,15 @@ import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import OfflineManager from './utils/OfflineManager';
+
+/* global workbox */
+declare const self: ServiceWorkerGlobalScope;
 
 clientsClaim();
 
 // Precache alla statiska tillgångar
-precacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute(workbox.__WB_MANIFEST);
 
 // Hantera alla navigeringsförfrågningar med samma HTML-fil
 const handler = createHandlerBoundToURL('/index.html');
@@ -59,7 +63,7 @@ registerRoute(
 );
 
 // Hantera offline-fallback
-self.addEventListener('fetch', (event) => {
+addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -70,19 +74,21 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Synkronisera offline-data när online igen
-self.addEventListener('sync', (event) => {
+addEventListener('sync', (event) => {
   if (event.tag === 'sync-pending-tasks') {
     event.waitUntil(syncPendingTasks());
   }
 });
 
 async function syncPendingTasks() {
-  const pendingTasks = await getPendingTasks();
-  for (const task of pendingTasks) {
-    try {
-      await syncTask(task);
-    } catch (error) {
-      console.error('Failed to sync task:', error);
-    }
+  try {
+    const pendingActions = await OfflineManager.getPendingActions();
+    await OfflineManager.processPendingActions(pendingActions);
+    return true;
+  } catch (error) {
+    console.error('Failed to sync tasks:', error);
+    return false;
   }
-} 
+}
+
+export {}; 
