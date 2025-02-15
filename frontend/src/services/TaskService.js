@@ -1,20 +1,25 @@
 // Ny service-layer för att hantera task-relaterad logik
 import { BaseService } from './BaseService';
 import { TaskModel } from "../models/TaskModel";
+import DataService from './DataService';
 
 export class TaskService extends BaseService {
   constructor() {
     super('/api/tasks');
+    this.dataService = DataService;
   }
 
   async getTasks(filters = {}) {
-    try {
-      const params = new URLSearchParams(filters);
-      const response = await this.api.get(`?${params}`);
-      return response.data.map(task => new TaskModel(task));
-    } catch (error) {
-      return this.handleError(error, 'error.tasks.fetch');
-    }
+    const cacheKey = `tasks_${JSON.stringify(filters)}`;
+    
+    return this.dataService.fetchWithCache(
+      cacheKey,
+      async () => {
+        const response = await this.api.get('', { params: filters });
+        return response.data.map(task => new TaskModel(task));
+      },
+      { ttl: 5 * 60 * 1000 } // 5 minuter
+    );
   }
 
   async getTask(id) {
@@ -36,12 +41,19 @@ export class TaskService extends BaseService {
   }
 
   async updateTask(id, taskData) {
-    try {
-      const response = await this.api.patch(`/${id}`, taskData);
-      return new TaskModel(response.data);
-    } catch (error) {
-      return this.handleError(error, 'error.task.update');
-    }
+    return this.dataService.optimisticUpdate(
+      `task_${id}`,
+      async (oldTask) => {
+        const response = await this.api.patch(`/${id}`, taskData);
+        return new TaskModel(response.data);
+      },
+      async (oldTask) => {
+        // Rollback-funktion
+        if (oldTask) {
+          await this.api.patch(`/${id}`, oldTask);
+        }
+      }
+    );
   }
 
   async deleteTask(id) {
