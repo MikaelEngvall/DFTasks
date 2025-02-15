@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AuthController from '../controllers/AuthController';
+import AuthController from '../controllers/authController';
 import { TokenService } from '../services/TokenService';
 
 const AuthContext = createContext(null);

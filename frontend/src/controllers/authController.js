@@ -6,11 +6,13 @@ import { validateEmail, validatePassword, validateAuthInput } from "../utils/val
 import { ErrorHandler } from '../utils/errorHandler';
 import { TokenService } from '../services/TokenService';
 import { UserService } from '../services/UserService';
+import { jwtDecode } from "jwt-decode";
 
 class AuthController {
   constructor() {
     this.tokenService = new TokenService();
     this.userService = new UserService();
+    this.token = localStorage.getItem('token');
   }
 
   async login(credentials) {
@@ -64,7 +66,7 @@ class AuthController {
     }
   }
 
-  private generateToken(user) {
+  generateToken(user) {
     return jwt.sign(
       {
         id: user._id,
@@ -86,6 +88,39 @@ class AuthController {
       role: user.role,
       preferredLanguage: user.preferredLanguage
     };
+  }
+
+  isAuthenticated() {
+    if (!this.token) return false;
+    try {
+      const decoded = jwtDecode(this.token);
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
+  getToken() {
+    return this.token;
+  }
+
+  setToken(token) {
+    this.token = token;
+    localStorage.setItem('token', token);
+  }
+
+  clearToken() {
+    this.token = null;
+    localStorage.removeItem('token');
+  }
+
+  getUser() {
+    if (!this.token) return null;
+    try {
+      return jwtDecode(this.token);
+    } catch {
+      return null;
+    }
   }
 }
 

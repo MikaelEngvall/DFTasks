@@ -149,6 +149,12 @@ const tasksSlice = createSlice({
         ];
       }
     },
+    updateTaskStatus: (state, action) => {
+      const { taskId, status } = action.payload;
+      if (state.entities[taskId]) {
+        state.entities[taskId].status = status;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -250,6 +256,7 @@ export const {
   setSelectedTask,
   optimisticUpdateTask,
   optimisticAddComment,
+  updateTaskStatus,
 } = tasksSlice.actions;
 
 export default tasksSlice.reducer;
