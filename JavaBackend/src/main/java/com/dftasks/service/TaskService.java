@@ -88,10 +88,41 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-    public Task updateTaskStatus(String id, String status) {
+    public Task updateTaskStatus(String id, String newStatus, String userId) {
         Task task = getTaskById(id);
-        task.setStatus(status);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        validateStatusTransition(task.getStatus(), newStatus);
+        
+        task.setStatus(newStatus);
+        task.setUpdatedAt(LocalDateTime.now());
+        
+        if (newStatus.equals("in_progress")) {
+            task.setAssignedTo(userId);
+        }
+        
         return taskRepository.save(task);
+    }
+
+    private void validateStatusTransition(String currentStatus, String newStatus) {
+        if (currentStatus.equals(newStatus)) {
+            return;
+        }
+
+        boolean validTransition = switch (currentStatus) {
+            case "pending" -> newStatus.equals("in_progress") || newStatus.equals("cannot_fix");
+            case "in_progress" -> newStatus.equals("completed") || newStatus.equals("cannot_fix");
+            case "completed" -> false; // Completed är ett slutgiltigt tillstånd
+            case "cannot_fix" -> false; // Cannot fix är ett slutgiltigt tillstånd
+            default -> throw new IllegalStateException("Invalid current status: " + currentStatus);
+        };
+
+        if (!validTransition) {
+            throw new IllegalStateException(
+                "Invalid status transition from " + currentStatus + " to " + newStatus
+            );
+        }
     }
 
     public Task addComment(String id, String comment) {
@@ -138,5 +169,18 @@ public class TaskService {
         task.setDeclineReason(reason);
 
         return taskRepository.save(task);
+    }
+
+    public List<Task> getPendingTasks() {
+        return taskRepository.findByStatus("pending");
+    }
+
+    public List<Task> getTasksByStatus(String status) {
+        return taskRepository.findByStatus(status);
+    }
+
+    public List<Task> getTasksByStatus(String status, Integer limit) {
+        List<Task> tasks = taskRepository.findByStatus(status);
+        return limit != null ? tasks.stream().limit(limit).toList() : tasks;
     }
 } 
