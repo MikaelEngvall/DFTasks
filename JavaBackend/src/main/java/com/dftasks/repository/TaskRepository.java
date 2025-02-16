@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface TaskRepository extends MongoRepository<Task, String> {
     List<Task> findByStatus(String status);
-    List<Task> findByAssignedTo(String userId);
+    List<Task> findByAssignedTo(String assignedTo);
+    List<Task> findByStatusAndAssignedTo(String status, String assignedTo);
 } 
